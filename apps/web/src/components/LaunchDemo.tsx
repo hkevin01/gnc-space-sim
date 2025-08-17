@@ -10,6 +10,7 @@ import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { MissionEnvironment, PhaseVisualIndicator } from './MissionEnvironment'
 
 /**
  * Launch Trajectory Visualization Component
@@ -176,28 +177,62 @@ export function LaunchDemo() {
     stateRef.current = { ...initialState, phase: LaunchPhase.LIFTOFF }
   }
 
+  // Utility functions for enhanced visuals
+  const getTrajectoryColor = (phase: LaunchPhase): string => {
+    switch (phase) {
+      case LaunchPhase.LIFTOFF:
+      case LaunchPhase.STAGE1_BURN:
+        return "#FF6B35"
+      case LaunchPhase.MAX_Q:
+        return "#8B5CF6"
+      case LaunchPhase.STAGE1_SEPARATION:
+      case LaunchPhase.STAGE2_IGNITION:
+        return "#10B981"
+      case LaunchPhase.STAGE2_BURN:
+        return "#F59E0B"
+      case LaunchPhase.ORBITAL_INSERTION:
+      case LaunchPhase.ORBIT_CIRCULARIZATION:
+        return "#3B82F6"
+      default:
+        return "#6B7280"
+    }
+  }
+
+  const getMissionDescription = (phase: LaunchPhase, altitude: number): string => {
+    switch (phase) {
+      case LaunchPhase.PRELAUNCH:
+        return "Pre-flight checks complete. Ready for launch."
+      case LaunchPhase.LIFTOFF:
+        return "Vehicle has cleared the launch tower."
+      case LaunchPhase.STAGE1_BURN:
+        return "First stage burning nominally."
+      case LaunchPhase.MAX_Q:
+        return "Passing through maximum dynamic pressure."
+      case LaunchPhase.STAGE1_SEPARATION:
+        return "First stage separation confirmed."
+      case LaunchPhase.STAGE2_IGNITION:
+        return "Second stage ignition confirmed."
+      case LaunchPhase.FAIRING_JETTISON:
+        return "Payload fairing jettisoned."
+      case LaunchPhase.STAGE2_BURN:
+        return "Second stage burn in progress."
+      case LaunchPhase.ORBITAL_INSERTION:
+        return "Performing orbital insertion burn."
+      case LaunchPhase.ORBIT_CIRCULARIZATION:
+        return altitude > 300000 ? "Orbit achieved! Mission success." : "Circularizing orbit."
+      default:
+        return "Mission in progress..."
+    }
+  }
+
   return (
     <group>
-      {/* Earth */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[6.371, 64, 32]} />
-        <meshStandardMaterial
-          color="#4A90E2"
-          transparent
-          opacity={0.8}
-        />
-      </mesh>
-
-      {/* Earth atmosphere */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[6.471, 32, 16]} />
-        <meshBasicMaterial
-          color="#87CEEB"
-          transparent
-          opacity={0.1}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
+      {/* Mission Environment with celestial bodies */}
+      <MissionEnvironment
+        phase={currentState?.phase || LaunchPhase.PRELAUNCH}
+        missionTime={launchTime > 0 ? launchTime : 0}
+        altitude={currentState?.altitude || 0}
+      />
 
       {/* Launch vehicle */}
       <group ref={vehicleRef}>
@@ -222,9 +257,33 @@ export function LaunchDemo() {
             />
           </mesh>
         )}
+
+        {/* Stage separation visual effect */}
+        {currentState?.phase === LaunchPhase.STAGE1_SEPARATION && (
+          <group position={[0, -0.8, 0]}>
+            <mesh>
+              <cylinderGeometry args={[0.04, 0.04, 0.3, 8]} />
+              <meshStandardMaterial color="#808080" />
+            </mesh>
+          </group>
+        )}
+
+        {/* Fairing jettison visual effect */}
+        {currentState?.phase === LaunchPhase.FAIRING_JETTISON && (
+          <>
+            <mesh position={[0.2, 0.3, 0]} rotation={[0, 0, Math.PI / 4]}>
+              <boxGeometry args={[0.1, 0.3, 0.05]} />
+              <meshStandardMaterial color="#CCCCCC" />
+            </mesh>
+            <mesh position={[-0.2, 0.3, 0]} rotation={[0, 0, -Math.PI / 4]}>
+              <boxGeometry args={[0.1, 0.3, 0.05]} />
+              <meshStandardMaterial color="#CCCCCC" />
+            </mesh>
+          </>
+        )}
       </group>
 
-      {/* Trajectory path */}
+      {/* Enhanced trajectory path with phase-based colors */}
       <primitive
         object={new THREE.Line(
           new THREE.BufferGeometry().setFromPoints(
@@ -233,37 +292,74 @@ export function LaunchDemo() {
               !isNaN(point.x) && !isNaN(point.y) && !isNaN(point.z)
             ) : [new THREE.Vector3(0, 0, 0)]
           ),
-          new THREE.LineBasicMaterial({ color: "#FF6B35", linewidth: 2 })
+          new THREE.LineBasicMaterial({
+            color: getTrajectoryColor(currentState?.phase || LaunchPhase.PRELAUNCH),
+            linewidth: 2
+          })
         )}
         ref={trajectoryRef}
       />
 
-      {/* Scientific annotations on vehicle */}
+      {/* Enhanced telemetry display */}
       {currentState && currentState.r.every(coord => isFinite(coord) && !isNaN(coord)) && (
         <Html position={[
           currentState.r[0] / 1e6 + 0.5,
           currentState.r[1] / 1e6 + 0.5,
           currentState.r[2] / 1e6
         ]} distanceFactor={8}>
-          <div className="bg-black/80 text-white px-2 py-1 rounded text-xs pointer-events-none border border-orange-400">
-            <div>Alt: {(currentState.altitude / 1000).toFixed(1)} km</div>
-            <div>V: {(currentState.velocity_magnitude / 1000).toFixed(2)} km/s</div>
-            <div>γ: {(currentState.flight_path_angle * 180 / Math.PI).toFixed(1)}°</div>
+          <div className="bg-black/90 text-white px-3 py-2 rounded-lg text-sm pointer-events-none border border-orange-400 min-w-48">
+            <PhaseVisualIndicator
+              phase={currentState.phase}
+              missionTime={launchTime > 0 ? launchTime : 0}
+            />
+            <div className="mt-2 space-y-1 text-xs">
+              <div className="flex justify-between">
+                <span>Altitude:</span>
+                <span className="text-green-400">{(currentState.altitude / 1000).toFixed(1)} km</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Velocity:</span>
+                <span className="text-blue-400">{(currentState.velocity_magnitude / 1000).toFixed(2)} km/s</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Flight Path:</span>
+                <span className="text-yellow-400">{(currentState.flight_path_angle * 180 / Math.PI).toFixed(1)}°</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Mass:</span>
+                <span className="text-purple-400">{(currentState.mass / 1000).toFixed(1)} t</span>
+              </div>
+            </div>
           </div>
         </Html>
       )}
 
-      {/* Launch initiation button */}
-      {launchTime < 0 && (
-        <Html position={[0, -8, 0]} center>
-          <button
-            onClick={initiateLaunch}
-            className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg"
-          >
-            🚀 INITIATE LAUNCH
-          </button>
-        </Html>
-      )}
+      {/* Mission status display */}
+      <Html position={[0, -12, 0]} center>
+        <div className="bg-black/80 text-white px-4 py-2 rounded-lg border border-gray-600 max-w-md">
+          {launchTime < 0 ? (
+            <div className="text-center">
+              <div className="text-lg font-bold mb-2">🚀 GNC Space Simulation</div>
+              <div className="text-sm mb-3">Real-time guidance, navigation & control simulation</div>
+              <button
+                onClick={initiateLaunch}
+                className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transition-colors"
+              >
+                INITIATE LAUNCH
+              </button>
+            </div>
+          ) : (
+            <div className="text-center">
+              <div className="text-sm">Mission Status</div>
+              {currentState && (
+                <div className="text-xs mt-1 opacity-75">
+                  {getMissionDescription(currentState.phase, currentState.altitude)}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </Html>
     </group>
   )
 }

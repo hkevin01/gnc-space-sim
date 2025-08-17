@@ -4,14 +4,21 @@ A comprehensive guidance, navigation, and control (GNC) simulation suite for spa
 
 ## 🚀 Quick Start
 
-### Docker Development (Recommended)
+### Instant Launch (One Command)
 
 ```bash
-# One-command setup
-./scripts/docker-dev.sh dev:start
+# Run GNC simulation with Docker
+./run.sh
 ```
 
 Access at: <http://localhost:5173>
+
+### Docker Development (Advanced)
+
+```bash
+# Detailed Docker workflow
+./scripts/docker-dev.sh dev:start
+```
 
 ### Local Development
 
@@ -20,6 +27,16 @@ Access at: <http://localhost:5173>
 ```bash
 pnpm install
 pnpm dev
+```
+
+### Run.sh Commands
+
+```bash
+./run.sh           # Start the simulation
+./run.sh stop      # Stop all containers
+./run.sh restart   # Restart the simulation
+./run.sh logs      # View container logs
+./run.sh status    # Check container status
 ```
 
 📖 **[Complete Docker Strategy Documentation](docs/DOCKER_STRATEGY.md)**
@@ -137,16 +154,30 @@ pnpm --filter @gnc/scenarios build   # Generate scenario configurations
 **Core Components:**
 
 - `LaunchDemo.tsx` - Main 3D launch simulation with React Three Fiber
+- `MissionEnvironment.tsx` - Enhanced celestial body visualization system
 - `ScientificDisplay.tsx` - Educational content with real-time formulas
 - `LaunchSimulation.tsx` - Container component with scientific overlays
 - `OrbitDemo.tsx` - Interactive orbital mechanics visualization
 
+**Enhanced Mission Visuals:**
+
+- **Dynamic Celestial Bodies**: Earth, Sun, Moon, Mars, and asteroids appear based on mission phase and altitude
+- **Phase-Aware Environments**: Visual elements change automatically during different mission phases
+- **Real-time Telemetry**: Enhanced HUD with phase indicators, mission time, and comprehensive flight data
+- **Mission Phase Indicators**: Color-coded visual feedback for each launch phase with descriptive status messages
+- **3D Trajectory Visualization**: Phase-based trajectory coloring and enhanced vehicle dynamics
+- **Atmospheric Effects**: Earth atmosphere, clouds, and space environment rendering
+- **Celestial Mechanics**: Realistic positioning and scaling of solar system objects
+
 **Features:**
 
-- Real-time 3D rocket visualization with accurate physics
-- Phase-aware telemetry display (altitude, velocity, mass, thrust)
-- Educational scientific formulas updating with mission state
-- Interactive camera controls and scene navigation
+- **Real-time 3D rocket visualization** with accurate physics and phase-aware vehicle dynamics
+- **Phase-aware telemetry display** with altitude, velocity, mass, thrust, and mission status
+- **Enhanced mission environments** featuring Earth, Sun, Moon, Mars, and asteroids
+- **Educational scientific formulas** updating with mission state and real-time calculations
+- **Interactive camera controls** and scene navigation with smooth transitions
+- **Mission phase progression** with visual indicators and descriptive status messages
+- **Celestial body transitions** showing appropriate space objects based on mission altitude and phase
 
 ### Mission Scenarios (`packages/mission-scenarios/`)
 
