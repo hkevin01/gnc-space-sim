@@ -1,8 +1,8 @@
 import { create } from 'zustand'
 
-type Phase = 'leo' | 'escape' | 'cruise' | 'rendezvous' | 'proximity' | 'tag' | 'mars-transfer' | 'mars-arrival'
+export type Phase = 'leo' | 'escape' | 'cruise' | 'rendezvous' | 'proximity' | 'tag' | 'mars-transfer' | 'mars-arrival'
 
-interface MissionState {
+export interface MissionState {
   phase: Phase
   setPhase: (p: Phase) => void
 }

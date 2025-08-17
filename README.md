@@ -16,7 +16,7 @@ pnpm i
 pnpm dev
 ```
 
-Open http://localhost:5173
+Open <https://localhost:5173>
 
 ## Features
 - Real-time 3D visualization with react-three-fiber

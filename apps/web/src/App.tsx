@@ -3,15 +3,16 @@ import { OrbitControls, StatsGl } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { Suspense } from 'react'
 import { OrbitDemo } from './components/OrbitDemo'
-import { useMissionStore } from './state/missionStore'
+import { useMissionStore, type MissionState, type Phase } from './state/missionStore'
 
 export default function App() {
-  const phase = useMissionStore((s) => s.phase)
+  const phase = useMissionStore((s: MissionState) => s.phase)
+  const setPhase = useMissionStore((s: MissionState) => s.setPhase)
   return (
     <div className="grid grid-cols-[320px_1fr] grid-rows-[1fr] h-screen">
       <aside className="border-r border-zinc-700 p-3 overflow-auto bg-zinc-950">
         <h1 className="text-lg font-semibold mb-3">GNC Space Sim</h1>
-        <MissionPanel />
+  <MissionPanel phase={phase as Phase} onChange={setPhase} />
       </aside>
       <main className="relative">
         <Canvas shadows camera={{ position: [6, 4, 8], fov: 50 }}>
