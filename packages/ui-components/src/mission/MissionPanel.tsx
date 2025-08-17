@@ -1,10 +1,15 @@
 
-type MissionPanelProps = {
+export type MissionPanelProps = {
   phase: string
   onChange?: (phase: string) => void
 }
 
-const phases: Array<{ key: string; label: string }> = [
+type PhaseItem = {
+  key: string
+  label: string
+}
+
+const phases: PhaseItem[] = [
   { key: 'leo', label: 'LEO' },
   { key: 'escape', label: 'Escape' },
   { key: 'cruise', label: 'Cruise' },

@@ -7,12 +7,13 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "echo noop",
-    "lint": "echo noop",
+    "build": "echo 'TS build placeholder'",
+    "lint": "echo 'ESLint placeholder'",
     "typecheck": "tsc --noEmit",
-    "test": "echo noop"
+    "test": "vitest run"
   },
   "devDependencies": {
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "vitest": "^2.0.5"
   }
 }

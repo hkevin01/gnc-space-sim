@@ -2,12 +2,13 @@
 
 - What changed and why
 
-# Checklist
+## Checklist
+
 - [ ] Tests added/updated
 - [ ] Docs updated
 - [ ] Lint & typecheck pass locally
 
-# Screenshots/Recordings
+## Screenshots/Recordings
 
-# Linked issues
+## Linked issues
 
