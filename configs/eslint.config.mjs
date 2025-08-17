@@ -1,11 +1,21 @@
 import eslint from '@eslint/js'
-import tseslint from 'typescript-eslint'
 import reactPlugin from 'eslint-plugin-react'
 import reactHooks from 'eslint-plugin-react-hooks'
+import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   eslint.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    ignores: [
+      '**/dist/**',
+      '**/build/**',
+      '**/node_modules/**',
+      '**/.next/**',
+      '**/coverage/**',
+      '**/*.min.js'
+    ]
+  },
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
     languageOptions: {

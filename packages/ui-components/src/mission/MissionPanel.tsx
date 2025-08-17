@@ -1,11 +1,13 @@
 
+export type Phase = 'leo' | 'escape' | 'cruise' | 'rendezvous' | 'proximity' | 'tag' | 'mars-transfer' | 'mars-arrival'
+
 export type MissionPanelProps = {
-  phase: string
-  onChange?: (phase: string) => void
+  phase: Phase
+  onChange?: (phase: Phase) => void
 }
 
 type PhaseItem = {
-  key: string
+  key: Phase
   label: string
 }
 
