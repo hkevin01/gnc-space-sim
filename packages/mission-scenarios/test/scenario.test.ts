@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 describe('EARTH_ASTEROID_MARS scenario', () => {
   it('should export a mission scenario', async () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 describe('keplerianPropagateTwoBody', () => {
   it('should return a new state', async () => {

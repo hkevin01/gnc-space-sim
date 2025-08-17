@@ -1,40 +1,77 @@
 # GNC Space Sim Monorepo
 
-Packages:
-- apps/web: Frontend React + R3F scene
-- packages/gnc-core: TypeScript GNC utilities
-- packages/gnc-rust: Rust->WASM kernels (placeholder)
-- packages/ui-components: Shared UI components
-- packages/mission-scenarios: Scenario definitions
+A modern, browser-first guidance, navigation, and control (GNC) simulation suite built with TypeScript, React Three Fiber, and WASM.
 
-Use pnpm workspaces.
+## Current Status
 
-## Quick start
+✅ **Monorepo scaffolding** with pnpm workspaces  
+✅ **3D visualization** with React Three Fiber and interactive orbit demo  
+✅ **Mission control UI** with phase selection and Tailwind styling  
+✅ **TypeScript core** with two-body propagation  
+✅ **Development environment** with VS Code, Docker, and CI/CD  
+🚧 **WASM integration** and Lambert solvers (planned)  
+🚧 **Navigation filters** and pork-chop plots (planned)  
+
+## Packages
+
+- `apps/web` - Frontend React app with 3D visualization
+- `packages/gnc-core` - Core GNC algorithms and utilities
+- `packages/ui-components` - Reusable UI components  
+- `packages/mission-scenarios` - Mission scenario definitions
+- `packages/gnc-rust` - Rust crate for WASM kernels (scaffolded)
+
+## Quick Start
+
+**Prerequisites:** Node.js 18+, pnpm 9+
 
 ```bash
-pnpm i
+# Install dependencies
+pnpm install
+
+# Start development server
 pnpm dev
+
+# Open browser to http://localhost:5173
 ```
 
-Open <https://localhost:5173>
+## Available Commands
 
-## Features
-- Real-time 3D visualization with react-three-fiber
-- Orbit propagation: two-body now, n-body planned
-- Guidance (Lambert, pork-chop), Navigation (EKF), Control (att/rcs)
-- Tailwind UI, Plotly charts, time controls
+```bash
+# Development
+pnpm dev              # Start web app dev server
+pnpm build            # Build all packages
+pnpm test             # Run tests across all packages
+pnpm lint             # Lint all packages
+pnpm typecheck        # TypeScript checking
 
-## Repository layout
-- apps/web – UI/scene
-- packages/gnc-core – Core TS + worker bindings
-- packages/gnc-rust – Rust WASM kernels
-- packages/ui-components – Reusable components
-- packages/mission-scenarios – Scenario data
-- docs – Architecture and plans
-- scripts – Utility scripts
+# Individual packages
+pnpm --filter @gnc/web dev    # Web app only
+pnpm --filter @gnc/core test  # Core package tests
+```
+
+## Current Features
+
+- **Real-time 3D orbit visualization** using React Three Fiber
+- **Interactive mission panel** with phase selection (LEO → Escape → Cruise → etc.)
+- **Two-body orbit propagation** with Keplerian elements
+- **Modern TypeScript architecture** with strict typing
+- **Responsive Tailwind UI** with dark theme
+- **Containerized development** with VS Code devcontainer support
+
+## Repository Layout
+
+- `apps/web` – Frontend React app with 3D scene
+- `packages/gnc-core` – Core GNC algorithms and math utilities  
+- `packages/gnc-rust` – Rust WASM kernels (scaffolded)
+- `packages/ui-components` – Reusable React components
+- `packages/mission-scenarios` – Mission scenario data and types
+- `docs/` – Architecture documentation and project plans
+- `scripts/` – Development and deployment utilities
 
 ## Contributing
-See CONTRIBUTING.md
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development guidelines.
 
 ## License
+
 MIT
