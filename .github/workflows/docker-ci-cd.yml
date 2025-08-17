@@ -1,0 +1,252 @@
+# ==========================================
+# Universal Docker CI/CD Pipeline
+# GitHub Actions Workflow
+# ==========================================
+
+name: 🚀 Universal Docker CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ==========================================
+  # Code Quality and Security Checks
+  # ==========================================
+  quality-checks:
+    name: 🔍 Quality & Security
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔒 Run security scan
+        uses: github/codeql-action/analyze@v3
+        continue-on-error: true
+
+      - name: 🧹 Code quality checks
+        run: |
+          docker-compose --profile quality build qa
+          docker-compose --profile quality run --rm qa
+
+      - name: 📊 Upload quality reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-reports
+          path: |
+            coverage/
+            lint-results.json
+            type-check-results.json
+
+  # ==========================================
+  # Automated Testing Suite
+  # ==========================================
+  testing:
+    name: 🧪 Testing Suite
+    runs-on: ubuntu-latest
+    needs: quality-checks
+
+    strategy:
+      matrix:
+        test-type: [unit, integration, e2e]
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Build test environment
+        run: |
+          docker-compose --profile testing build test
+
+      - name: 🧪 Run ${{ matrix.test-type }} tests
+        run: |
+          docker-compose --profile testing run --rm test pnpm test:${{ matrix.test-type }}
+
+      - name: 📊 Upload test results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.test-type }}
+          path: |
+            test-results/
+            coverage/
+        if: always()
+
+  # ==========================================
+  # Build Multi-Architecture Images
+  # ==========================================
+  build:
+    name: 🏗️ Build Images
+    runs-on: ubuntu-latest
+    needs: [quality-checks, testing]
+
+    strategy:
+      matrix:
+        target: [development, production, ci]
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔑 Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏷️ Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=${{ matrix.target }}
+
+      - name: 🏗️ Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: ${{ matrix.target }}
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ==========================================
+  # Security Vulnerability Scanning
+  # ==========================================
+  security-scan:
+    name: 🛡️ Security Scan
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:production
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: 📤 Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # ==========================================
+  # Performance Testing
+  # ==========================================
+  performance:
+    name: ⚡ Performance Tests
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Start test environment
+        run: |
+          docker-compose --profile production up -d production
+          sleep 30 # Wait for services to be ready
+
+      - name: ⚡ Run performance tests
+        run: |
+          docker run --rm --network container:gnc-production \
+            -v ${{ github.workspace }}:/workspace \
+            sitespeedio/sitespeed.io:latest \
+            http://localhost --outputFolder /workspace/performance-results
+
+      - name: 📊 Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
+          path: performance-results/
+
+  # ==========================================
+  # Deployment to Staging
+  # ==========================================
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build, security-scan, performance]
+    if: github.ref == 'refs/heads/develop'
+    environment: staging
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add your staging deployment logic here
+
+      - name: 🧪 Run staging tests
+        run: |
+          echo "Running staging validation tests..."
+          # Add staging validation tests here
+
+  # ==========================================
+  # Production Deployment
+  # ==========================================
+  deploy-production:
+    name: 🏭 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build, security-scan, performance]
+    if: github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏭 Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          # Add your production deployment logic here
+
+      - name: ✅ Post-deployment verification
+        run: |
+          echo "Running production health checks..."
+          # Add production health checks here
+
+  # ==========================================
+  # Cleanup and Notifications
+  # ==========================================
+  cleanup:
+    name: 🧹 Cleanup
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always()
+
+    steps:
+      - name: 🧹 Clean up old images
+        run: |
+          echo "Cleaning up old container images..."
+          # Add cleanup logic here
+
+      - name: 📢 Send notifications
+        if: failure()
+        run: |
+          echo "Sending failure notifications..."
+          # Add notification logic here

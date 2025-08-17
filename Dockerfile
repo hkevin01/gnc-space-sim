@@ -10,19 +10,19 @@ FROM node:22-bullseye-slim as base
 
 # Install system dependencies for development
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    vim \
-    nano \
-    htop \
-    procps \
-    build-essential \
-    python3 \
-    python3-pip \
-    ca-certificates \
-    gnupg \
-    lsb-release \
-    && rm -rf /var/lib/apt/lists/*
+  git \
+  curl \
+  vim \
+  nano \
+  htop \
+  procps \
+  build-essential \
+  python3 \
+  python3-pip \
+  ca-certificates \
+  gnupg \
+  lsb-release \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install Docker CLI for Docker-in-Docker scenarios
 RUN curl -fsSL https://download.docker.com/linux/debian/gpg | gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
@@ -37,7 +37,7 @@ RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 
 # Create non-root user for security
 RUN groupadd --gid 1000 developer && \
-    useradd --uid 1000 --gid developer --shell /bin/bash --create-home developer
+  useradd --uid 1000 --gid developer --shell /bin/bash --create-home developer
 
 # ==========================================
 # Dependencies Layer (Cached when unchanged)
@@ -89,17 +89,17 @@ USER root
 
 # Install additional testing tools
 RUN apt-get update && apt-get install -y \
-    chromium \
-    xvfb \
-    && rm -rf /var/lib/apt/lists/*
+  chromium \
+  xvfb \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install global testing utilities
 RUN pnpm install -g \
-    playwright \
-    @playwright/test \
-    jest \
-    vitest \
-    cypress
+  playwright \
+  @playwright/test \
+  jest \
+  vitest \
+  cypress
 
 USER developer
 
@@ -113,10 +113,10 @@ FROM development as quality
 
 # Install quality tools
 RUN pnpm install -g \
-    eslint \
-    prettier \
-    @typescript-eslint/parser \
-    @typescript-eslint/eslint-plugin
+  eslint \
+  prettier \
+  @typescript-eslint/parser \
+  @typescript-eslint/eslint-plugin
 
 # Default QA command
 CMD ["pnpm", "run", "qa"]
@@ -145,7 +145,7 @@ EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
+  CMD curl -f http://localhost/ || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
 
@@ -158,17 +158,17 @@ USER root
 
 # Install additional CI tools
 RUN apt-get update && apt-get install -y \
-    jq \
-    zip \
-    unzip \
-    awscli \
-    && rm -rf /var/lib/apt/lists/*
+  jq \
+  zip \
+  unzip \
+  awscli \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install security scanning tools
 RUN pnpm install -g \
-    audit-ci \
-    snyk \
-    npm-audit-html
+  audit-ci \
+  snyk \
+  npm-audit-html
 
 USER developer
 

@@ -1,9 +1,281 @@
-version: "3.8"
+# ==========================================
+# Universal Docker Development Strategy
+# Comprehensive Container Orchestration
+# ==========================================
+
+version: '3.8'
+
 services:
+  # ==========================================
+  # Main Development Environment
+  # ==========================================
   web:
-    build: .
+    build:
+      context: .
+      target: development
+      dockerfile: Dockerfile
+    container_name: gnc-web-dev
     ports:
-      - "5173:5173"
+      - '5173:5173' # Vite dev server
+      - '5174:5174' # Backup port
+      - '5175:5175' # Backup port
+      - '3000:3000' # Alternative dev server
     volumes:
       - .:/workspace
+      - node_modules:/workspace/node_modules
+      - /workspace/node_modules/.pnpm
+    environment:
+      - NODE_ENV=development
+      - VITE_HOST=0.0.0.0
+      - CHOKIDAR_USEPOLLING=true
     command: pnpm dev --host 0.0.0.0
+    networks:
+      - gnc-network
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:5173']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ==========================================
+  # Testing Environment
+  # ==========================================
+  test:
+    build:
+      context: .
+      target: testing
+      dockerfile: Dockerfile
+    container_name: gnc-test
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+    environment:
+      - NODE_ENV=test
+      - CI=true
+    command: pnpm test
+    networks:
+      - gnc-network
+    profiles:
+      - testing
+
+  # ==========================================
+  # Quality Assurance (Linting, Type Checking)
+  # ==========================================
+  qa:
+    build:
+      context: .
+      target: quality
+      dockerfile: Dockerfile
+    container_name: gnc-qa
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+    environment:
+      - NODE_ENV=development
+    command: pnpm run qa
+    networks:
+      - gnc-network
+    profiles:
+      - quality
+
+  # ==========================================
+  # Production Build Environment
+  # ==========================================
+  build:
+    build:
+      context: .
+      target: builder
+      dockerfile: Dockerfile
+    container_name: gnc-build
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+      - build_artifacts:/workspace/apps/web/dist
+    environment:
+      - NODE_ENV=production
+    command: pnpm build
+    networks:
+      - gnc-network
+    profiles:
+      - build
+
+  # ==========================================
+  # Production Server
+  # ==========================================
+  production:
+    build:
+      context: .
+      target: production
+      dockerfile: Dockerfile
+    container_name: gnc-production
+    ports:
+      - '8080:80'
+    volumes:
+      - build_artifacts:/usr/share/nginx/html:ro
+    environment:
+      - NODE_ENV=production
+    networks:
+      - gnc-network
+    profiles:
+      - production
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:80']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ==========================================
+  # Documentation Server
+  # ==========================================
+  docs:
+    image: nginx:alpine
+    container_name: gnc-docs
+    ports:
+      - '8081:80'
+    volumes:
+      - ./docs:/usr/share/nginx/html:ro
+      - ./docker/nginx-docs.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - gnc-network
+    profiles:
+      - docs
+    restart: unless-stopped
+
+  # ==========================================
+  # Database (for future backend features)
+  # ==========================================
+  database:
+    image: postgres:15-alpine
+    container_name: gnc-database
+    ports:
+      - '5432:5432'
+    environment:
+      - POSTGRES_DB=gnc_space_sim
+      - POSTGRES_USER=gnc_dev
+      - POSTGRES_PASSWORD=gnc_password_123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - gnc-network
+    profiles:
+      - database
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U gnc_dev']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ==========================================
+  # Redis Cache (for performance optimization)
+  # ==========================================
+  cache:
+    image: redis:7-alpine
+    container_name: gnc-cache
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - gnc-network
+    profiles:
+      - cache
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ==========================================
+  # Monitoring and Observability
+  # ==========================================
+  monitoring:
+    image: prom/prometheus:latest
+    container_name: gnc-monitoring
+    ports:
+      - '9090:9090'
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    networks:
+      - gnc-network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  # ==========================================
+  # Log Aggregation
+  # ==========================================
+  logs:
+    image: grafana/grafana:latest
+    container_name: gnc-logs
+    ports:
+      - '3001:3000'
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=gnc_admin_123
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - gnc-network
+    profiles:
+      - monitoring
+    restart: unless-stopped
+
+  # ==========================================
+  # CI/CD Environment
+  # ==========================================
+  ci:
+    build:
+      context: .
+      target: ci
+      dockerfile: Dockerfile
+    container_name: gnc-ci
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - NODE_ENV=test
+      - CI=true
+    command: pnpm run ci
+    networks:
+      - gnc-network
+    profiles:
+      - ci
+
+# ==========================================
+# Named Volumes for Data Persistence
+# ==========================================
+volumes:
+  node_modules:
+    driver: local
+  build_artifacts:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# ==========================================
+# Custom Network for Service Communication
+# ==========================================
+networks:
+  gnc-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

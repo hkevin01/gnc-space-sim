@@ -8,6 +8,18 @@
     "dev": "pnpm --filter @gnc/web dev",
     "lint": "pnpm -r lint",
     "test": "pnpm -r test",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "format": "pnpm -r format",
+    "clean": "pnpm -r clean",
+    "qa": "pnpm typecheck && pnpm lint && pnpm test",
+    "ci": "pnpm install --frozen-lockfile && pnpm qa && pnpm build",
+    "docker:dev": "./scripts/docker-dev.sh dev:start",
+    "docker:stop": "./scripts/docker-dev.sh dev:stop",
+    "docker:test": "./scripts/docker-dev.sh test:run",
+    "docker:qa": "./scripts/docker-dev.sh qa:run",
+    "docker:build": "./scripts/docker-dev.sh build:prod",
+    "docker:clean": "./scripts/docker-dev.sh clean",
+    "docker:stack": "./scripts/docker-dev.sh stack:start",
+    "docker:monitoring": "./scripts/docker-dev.sh monitoring:start"
   }
 }
