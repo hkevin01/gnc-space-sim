@@ -1,0 +1,19 @@
+[MASTER]
+ignore=venv,node_modules,dist,build,.git,.mypy_cache
+
+[MESSAGES CONTROL]
+disable=C0114,C0115,C0116
+
+[BASIC]
+argument-naming-style=snake_case
+attr-naming-style=snake_case
+class-naming-style=PascalCase
+function-naming-style=snake_case
+method-naming-style=snake_case
+module-naming-style=snake_case
+variable-naming-style=snake_case
+const-naming-style=UPPER_CASE
+
+[FORMAT]
+max-line-length=100
+indent-string='    '

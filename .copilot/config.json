@@ -1,0 +1,9 @@
+{
+  "experiments": {
+    "inlineSuggestions": true,
+    "chatEnhancements": true
+  },
+  "prompts": {
+    "commit": "Write a concise conventional commit message for the staged changes."
+  }
+}

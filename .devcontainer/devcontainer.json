@@ -1,0 +1,24 @@
+{
+  "name": "gnc-space-sim",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bullseye",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {},
+    "ghcr.io/devcontainers/features/rust:1": {}
+  },
+  "postCreateCommand": "pnpm install",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "esbenp.prettier-vscode",
+        "dbaeumer.vscode-eslint",
+        "bradlc.vscode-tailwindcss",
+        "github.copilot",
+        "github.copilot-chat",
+        "ms-python.python",
+        "ms-vscode.cpptools",
+        "redhat.java",
+        "rust-lang.rust-analyzer"
+      ]
+    }
+  }
+}

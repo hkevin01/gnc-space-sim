@@ -1,0 +1,54 @@
+# Node
+node_modules
+.pnpm-store
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Vite
+/dist
+/.vite
+
+# Editor
+.vscode/
+.DS_Store
+.idea/
+
+# Rust/wasm
+**/target/
+**/pkg/
+**/wasm-pack.log
+
+# Python
+**/.venv/
+**/venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.mypy_cache/
+
+# Java
+**/.classpath
+**/.project
+**/.settings/
+**/.factorypath
+
+# C/C++ build
+**/build/
+**/cmake-build-*/
+
+# Coverage
+coverage/
+**/coverage/
+**/.nyc_output/
+
+# Env
+.env
+.env.*.local
+
+# Misc
+*.log
+*.lock
+*.tmp
