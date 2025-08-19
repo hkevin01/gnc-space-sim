@@ -410,3 +410,253 @@ export const LAUNCH_VEHICLES = {
     fairing_mass: 1361      // kg
   }
 } as const
+
+/**
+ * Enhanced guidance system with breakthrough SSSP trajectory optimization
+ * 
+ * Integrates the enhanced single-source shortest path algorithm for
+ * real-time trajectory planning and replanning during launch operations.
+ */
+export class EnhancedGuidanceSystem {
+  private trajectoryPlanner: any = null // EnhancedTrajectoryPlanner
+  private currentPlan: any = null // TrajectoryPlan
+  private lastPlanTime: number = 0
+  private replanThreshold: number = 5.0 // seconds between replanning
+  
+  constructor(
+    private gravityTurnGuidance: GravityTurnGuidance,
+    private planningEnabled: boolean = false
+  ) {
+    if (this.planningEnabled) {
+      this.initializeTrajectoryPlanner()
+    }
+  }
+
+  /**
+   * Initialize enhanced trajectory planner
+   */
+  private async initializeTrajectoryPlanner(): Promise<void> {
+    try {
+      // Dynamic import to handle optional WASM dependency
+      const { EnhancedTrajectoryPlanner, DEFAULT_LAUNCH_PLANNING_CONFIG } = 
+        await import('../planning/trajectory-planner')
+      
+      this.trajectoryPlanner = new EnhancedTrajectoryPlanner(DEFAULT_LAUNCH_PLANNING_CONFIG)
+      await this.trajectoryPlanner.initialize()
+      
+      console.log('Enhanced trajectory planner initialized successfully')
+    } catch (error) {
+      console.warn('Failed to initialize trajectory planner, falling back to gravity turn:', error)
+      this.planningEnabled = false
+    }
+  }
+
+  /**
+   * Compute enhanced guidance commands with trajectory optimization
+   */
+  computeEnhancedGuidance(
+    state: LaunchState,
+    targetState?: SpacecraftState,
+    disturbance?: Vec3
+  ): { pitch: number, yaw: number, throttle: number, planningActive: boolean } {
+    
+    // Always compute gravity turn guidance as baseline
+    const gravityTurnCommands = this.gravityTurnGuidance.computeGuidance(state)
+    
+    if (!this.planningEnabled || !this.trajectoryPlanner) {
+      return { ...gravityTurnCommands, planningActive: false }
+    }
+
+    // Check if replanning is needed
+    const currentTime = state.mission_time
+    const shouldReplan = this.shouldReplan(currentTime, disturbance)
+
+    if (shouldReplan && targetState) {
+      this.replanTrajectory(state, targetState, disturbance)
+    }
+
+    // Use trajectory plan if available and valid
+    if (this.currentPlan && this.isPlanValid(state)) {
+      const trajectoryCommands = this.extractGuidanceFromPlan(state)
+      return { ...trajectoryCommands, planningActive: true }
+    }
+
+    // Fall back to gravity turn guidance
+    return { ...gravityTurnCommands, planningActive: false }
+  }
+
+  /**
+   * Check if trajectory replanning is needed
+   */
+  private shouldReplan(currentTime: number, disturbance?: Vec3): boolean {
+    // Time-based replanning
+    if (currentTime - this.lastPlanTime > this.replanThreshold) {
+      return true
+    }
+
+    // Disturbance-based replanning
+    if (disturbance) {
+      const disturbanceMagnitude = Math.sqrt(
+        disturbance[0]**2 + disturbance[1]**2 + disturbance[2]**2
+      )
+      return disturbanceMagnitude > 10.0 // m/s threshold
+    }
+
+    return false
+  }
+
+  /**
+   * Replan trajectory using enhanced SSSP algorithm
+   */
+  private async replanTrajectory(
+    currentState: LaunchState,
+    targetState: SpacecraftState,
+    disturbance?: Vec3
+  ): Promise<void> {
+    try {
+      const spacecraftState: SpacecraftState = {
+        position: currentState.r,
+        velocity: currentState.v,
+        time: currentState.mission_time,
+        fuelMass: currentState.mass,
+        phase: currentState.phase
+      }
+
+      if (disturbance && this.currentPlan) {
+        // Replan with disturbance
+        this.currentPlan = await this.trajectoryPlanner.replanTrajectory(
+          spacecraftState,
+          this.currentPlan,
+          disturbance
+        )
+      } else {
+        // Plan new trajectory
+        this.currentPlan = await this.trajectoryPlanner.planTrajectory(
+          spacecraftState,
+          targetState
+        )
+      }
+
+      this.lastPlanTime = currentState.mission_time
+
+      console.log(
+        `Trajectory replanned: ${this.currentPlan.states.length} states, ` +
+        `${this.currentPlan.totalCost.toFixed(2)} total cost, ` +
+        `${this.currentPlan.planningTime.toFixed(2)}ms planning time`
+      )
+
+    } catch (error) {
+      console.error('Trajectory replanning failed:', error)
+      this.currentPlan = null
+    }
+  }
+
+  /**
+   * Check if current trajectory plan is still valid
+   */
+  private isPlanValid(state: LaunchState): boolean {
+    if (!this.currentPlan) return false
+
+    // Check if we're still within the planned timeline
+    const planStart = this.currentPlan.states[0]?.time || 0
+    const planEnd = this.currentPlan.states[this.currentPlan.states.length - 1]?.time || 0
+
+    return state.mission_time >= planStart && state.mission_time <= planEnd
+  }
+
+  /**
+   * Extract guidance commands from trajectory plan
+   */
+  private extractGuidanceFromPlan(state: LaunchState): { pitch: number, yaw: number, throttle: number } {
+    if (!this.currentPlan || this.currentPlan.states.length === 0) {
+      return this.gravityTurnGuidance.computeGuidance(state)
+    }
+
+    // Find nearest state in plan
+    const nearestState = this.findNearestPlannedState(state.mission_time)
+    if (!nearestState) {
+      return this.gravityTurnGuidance.computeGuidance(state)
+    }
+
+    // Compute guidance to follow planned trajectory
+    const targetVelocity = nearestState.velocity
+    const currentVelocity = state.v
+
+    // Compute required acceleration
+    const deltaV = [
+      targetVelocity[0] - currentVelocity[0],
+      targetVelocity[1] - currentVelocity[1],
+      targetVelocity[2] - currentVelocity[2]
+    ]
+
+    // Convert to spherical coordinates for pitch/yaw
+    const deltaVMag = Math.sqrt(deltaV[0]**2 + deltaV[1]**2 + deltaV[2]**2)
+    const pitch = Math.asin(deltaV[2] / deltaVMag)
+    const yaw = Math.atan2(deltaV[1], deltaV[0])
+
+    // Throttle based on required acceleration magnitude
+    const throttle = Math.min(1.0, deltaVMag / 100.0) // Simplified throttle control
+
+    return { pitch, yaw, throttle }
+  }
+
+  /**
+   * Find nearest state in trajectory plan
+   */
+  private findNearestPlannedState(missionTime: number): SpacecraftState | null {
+    if (!this.currentPlan || this.currentPlan.states.length === 0) {
+      return null
+    }
+
+    // Binary search for nearest time
+    let left = 0
+    let right = this.currentPlan.states.length - 1
+
+    while (left <= right) {
+      const mid = Math.floor((left + right) / 2)
+      const midTime = this.currentPlan.states[mid].time
+
+      if (midTime === missionTime) {
+        return this.currentPlan.states[mid]
+      } else if (midTime < missionTime) {
+        left = mid + 1
+      } else {
+        right = mid - 1
+      }
+    }
+
+    // Return nearest state
+    const nearestIndex = Math.min(left, this.currentPlan.states.length - 1)
+    return this.currentPlan.states[nearestIndex]
+  }
+
+  /**
+   * Get trajectory planning performance metrics
+   */
+  getPerformanceMetrics(): {
+    planningEnabled: boolean
+    currentPlanValid: boolean
+    lastPlanningTime?: number
+    planStates?: number
+    totalCost?: number
+  } {
+    return {
+      planningEnabled: this.planningEnabled,
+      currentPlanValid: this.currentPlan !== null,
+      lastPlanningTime: this.currentPlan?.planningTime,
+      planStates: this.currentPlan?.states.length,
+      totalCost: this.currentPlan?.totalCost
+    }
+  }
+
+  /**
+   * Run performance benchmark against classical algorithms
+   */
+  async benchmarkPerformance(iterations: number = 50): Promise<any> {
+    if (!this.trajectoryPlanner) {
+      throw new Error('Trajectory planner not available for benchmarking')
+    }
+
+    return await this.trajectoryPlanner.benchmarkPerformance(iterations)
+  }
+}
