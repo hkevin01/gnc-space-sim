@@ -413,7 +413,7 @@ export const LAUNCH_VEHICLES = {
 
 /**
  * Enhanced guidance system with breakthrough SSSP trajectory optimization
- * 
+ *
  * Integrates the enhanced single-source shortest path algorithm for
  * real-time trajectory planning and replanning during launch operations.
  */
@@ -422,7 +422,7 @@ export class EnhancedGuidanceSystem {
   private currentPlan: any = null // TrajectoryPlan
   private lastPlanTime: number = 0
   private replanThreshold: number = 5.0 // seconds between replanning
-  
+
   constructor(
     private gravityTurnGuidance: GravityTurnGuidance,
     private planningEnabled: boolean = false
@@ -438,12 +438,12 @@ export class EnhancedGuidanceSystem {
   private async initializeTrajectoryPlanner(): Promise<void> {
     try {
       // Dynamic import to handle optional WASM dependency
-      const { EnhancedTrajectoryPlanner, DEFAULT_LAUNCH_PLANNING_CONFIG } = 
+      const { EnhancedTrajectoryPlanner, DEFAULT_LAUNCH_PLANNING_CONFIG } =
         await import('../planning/trajectory-planner')
-      
+
       this.trajectoryPlanner = new EnhancedTrajectoryPlanner(DEFAULT_LAUNCH_PLANNING_CONFIG)
       await this.trajectoryPlanner.initialize()
-      
+
       console.log('Enhanced trajectory planner initialized successfully')
     } catch (error) {
       console.warn('Failed to initialize trajectory planner, falling back to gravity turn:', error)
@@ -459,10 +459,10 @@ export class EnhancedGuidanceSystem {
     targetState?: SpacecraftState,
     disturbance?: Vec3
   ): { pitch: number, yaw: number, throttle: number, planningActive: boolean } {
-    
+
     // Always compute gravity turn guidance as baseline
     const gravityTurnCommands = this.gravityTurnGuidance.computeGuidance(state)
-    
+
     if (!this.planningEnabled || !this.trajectoryPlanner) {
       return { ...gravityTurnCommands, planningActive: false }
     }

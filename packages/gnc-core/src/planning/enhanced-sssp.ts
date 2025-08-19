@@ -1,9 +1,9 @@
 /**
  * Enhanced Single-Source Shortest Path Algorithm
- * 
+ *
  * Implementation of the breakthrough deterministic SSSP algorithm
  * that achieves better than O(m + n log n) performance on sparse directed graphs.
- * 
+ *
  * Based on work by Duan, Mao, Mao, Shu, and Yin (Stanford, Tsinghua, Max Planck)
  * Optimized for spacecraft trajectory planning with nonnegative edge weights.
  */
@@ -15,12 +15,12 @@
 export interface SparseDirectedGraph {
   nodeCount: number
   edgeCount: number
-  
+
   // CSR representation
   outgoingEdges: Uint32Array    // Length: nodeCount + 1, cumulative edge counts
   destinations: Uint32Array     // Length: edgeCount, destination nodes
   weights: Float64Array         // Length: edgeCount, nonnegative weights
-  
+
   // Optional metadata for trajectory planning
   nodeMetadata?: {
     positions: Float64Array     // [x1,y1,z1, x2,y2,z2, ...] 3D positions
@@ -45,7 +45,7 @@ export interface SSSpResult {
 
 /**
  * Enhanced SSSP Algorithm Implementation
- * 
+ *
  * Combines several optimizations:
  * 1. Hierarchical decomposition for sparse graphs
  * 2. Bounded-degree hop sets for acceleration
@@ -56,7 +56,7 @@ export class EnhancedSSSpSolver {
   private graph: SparseDirectedGraph
   private hopSetPreprocessed: boolean = false
   private hierarchicalDecomposition?: HierarchicalDecomposition
-  
+
   constructor(graph: SparseDirectedGraph) {
     this.graph = graph
   }
@@ -67,22 +67,22 @@ export class EnhancedSSSpSolver {
    */
   public preprocess(): void {
     const startTime = performance.now()
-    
+
     // Build hierarchical decomposition for sparse graphs
     this.hierarchicalDecomposition = this.buildHierarchicalDecomposition()
-    
+
     // Construct bounded-degree hop sets
     this.constructHopSets()
-    
+
     this.hopSetPreprocessed = true
-    
+
     const preprocessTime = performance.now() - startTime
     console.log(`Graph preprocessing completed in ${preprocessTime.toFixed(2)}ms`)
   }
 
   /**
    * Solve single-source shortest paths using enhanced algorithm
-   * 
+   *
    * @param source Source node index
    * @param targets Optional target nodes for early termination
    * @returns SSSP result with distances and predecessors
@@ -107,26 +107,26 @@ export class EnhancedSSSpSolver {
    * Enhanced algorithm using hierarchical decomposition and hop sets
    */
   private solveWithHierarchicalDecomposition(
-    source: number, 
+    source: number,
     targets?: number[]
   ): SSSpResult {
     const n = this.graph.nodeCount
     const distances = new Float64Array(n).fill(Infinity)
     const predecessors = new Int32Array(n).fill(-1)
-    
+
     distances[source] = 0
-    
+
     let nodesVisited = 0
     let edgesRelaxed = 0
-    
+
     // Phase 1: Process within-cluster shortest paths using hop sets
     const clusters = this.hierarchicalDecomposition!.clusters
     const sourceClusters = this.findNodeClusters(source)
-    
+
     for (const clusterId of sourceClusters) {
       const cluster = clusters[clusterId]
       const localResult = this.solveClusterLocal(cluster, source)
-      
+
       // Update global distances with local results
       for (let i = 0; i < cluster.nodes.length; i++) {
         const nodeId = cluster.nodes[i]
@@ -135,19 +135,19 @@ export class EnhancedSSSpSolver {
           predecessors[nodeId] = localResult.predecessors[i]
         }
       }
-      
+
       nodesVisited += localResult.nodesVisited
       edgesRelaxed += localResult.edgesRelaxed
     }
-    
+
     // Phase 2: Process inter-cluster paths via boundary nodes
     const boundaryDistances = this.solveBoundaryPaths(source, distances)
-    
+
     // Phase 3: Propagate boundary distances back to cluster interiors
     for (const clusterId of Object.keys(clusters).map(Number)) {
       const cluster = clusters[clusterId]
       const propagationResult = this.propagateFromBoundary(cluster, boundaryDistances)
-      
+
       // Update distances with propagated values
       for (let i = 0; i < cluster.nodes.length; i++) {
         const nodeId = cluster.nodes[i]
@@ -156,13 +156,13 @@ export class EnhancedSSSpSolver {
           predecessors[nodeId] = propagationResult.predecessors[i]
         }
       }
-      
+
       nodesVisited += propagationResult.nodesVisited
       edgesRelaxed += propagationResult.edgesRelaxed
     }
-    
+
     const wallTimeMs = performance.now() - performance.now()
-    
+
     return {
       distances,
       predecessors,
@@ -184,55 +184,55 @@ export class EnhancedSSSpSolver {
     const distances = new Float64Array(n).fill(Infinity)
     const predecessors = new Int32Array(n).fill(-1)
     const visited = new Uint8Array(n) // Boolean array for visited nodes
-    
+
     distances[source] = 0
-    
+
     // Binary heap implementation optimized for numeric keys
     const heap = new BinaryHeap<number>((a, b) => distances[a] - distances[b])
     heap.push(source)
-    
+
     let nodesVisited = 0
     let edgesRelaxed = 0
     const targetSet = targets ? new Set(targets) : null
     let foundTargets = 0
-    
+
     while (!heap.isEmpty()) {
       const currentNode = heap.pop()!
-      
+
       if (visited[currentNode]) continue
       visited[currentNode] = 1
       nodesVisited++
-      
+
       // Early termination if all targets found
       if (targetSet && targetSet.has(currentNode)) {
         foundTargets++
         if (foundTargets >= targetSet.size) break
       }
-      
+
       // Relax outgoing edges
       const edgeStart = this.graph.outgoingEdges[currentNode]
       const edgeEnd = this.graph.outgoingEdges[currentNode + 1]
-      
+
       for (let edgeIdx = edgeStart; edgeIdx < edgeEnd; edgeIdx++) {
         const neighbor = this.graph.destinations[edgeIdx]
         const weight = this.graph.weights[edgeIdx]
         const newDistance = distances[currentNode] + weight
-        
+
         if (newDistance < distances[neighbor]) {
           distances[neighbor] = newDistance
           predecessors[neighbor] = currentNode
-          
+
           if (!visited[neighbor]) {
             heap.push(neighbor)
           }
         }
-        
+
         edgesRelaxed++
       }
     }
-    
+
     const wallTimeMs = performance.now() - performance.now()
-    
+
     return {
       distances,
       predecessors,
@@ -253,12 +253,12 @@ export class EnhancedSSSpSolver {
     const n = this.graph.nodeCount
     const clusters: { [id: number]: GraphCluster } = {}
     const clusterAssignment = new Int32Array(n).fill(-1)
-    
+
     // Simple clustering based on graph connectivity
     // In practice, would use more sophisticated clustering algorithms
     let currentCluster = 0
     const maxClusterSize = Math.max(32, Math.floor(Math.sqrt(n)))
-    
+
     for (let node = 0; node < n; node++) {
       if (clusterAssignment[node] === -1) {
         const cluster = this.growCluster(node, maxClusterSize, clusterAssignment, currentCluster)
@@ -266,7 +266,7 @@ export class EnhancedSSSpSolver {
         currentCluster++
       }
     }
-    
+
     return {
       clusters,
       clusterAssignment,
@@ -278,27 +278,27 @@ export class EnhancedSSSpSolver {
    * Grow a cluster starting from a seed node using BFS
    */
   private growCluster(
-    seed: number, 
-    maxSize: number, 
-    assignment: Int32Array, 
+    seed: number,
+    maxSize: number,
+    assignment: Int32Array,
     clusterId: number
   ): GraphCluster {
     const nodes: number[] = []
     const queue: number[] = [seed]
     const visited = new Set<number>()
-    
+
     while (queue.length > 0 && nodes.length < maxSize) {
       const node = queue.shift()!
       if (visited.has(node) || assignment[node] !== -1) continue
-      
+
       visited.add(node)
       nodes.push(node)
       assignment[node] = clusterId
-      
+
       // Add neighbors to queue
       const edgeStart = this.graph.outgoingEdges[node]
       const edgeEnd = this.graph.outgoingEdges[node + 1]
-      
+
       for (let edgeIdx = edgeStart; edgeIdx < edgeEnd; edgeIdx++) {
         const neighbor = this.graph.destinations[edgeIdx]
         if (!visited.has(neighbor) && assignment[neighbor] === -1) {
@@ -306,7 +306,7 @@ export class EnhancedSSSpSolver {
         }
       }
     }
-    
+
     return { id: clusterId, nodes, boundaryNodes: [] }
   }
 
@@ -318,13 +318,13 @@ export class EnhancedSSSpSolver {
     assignment: Int32Array
   ): number[] {
     const boundarySet = new Set<number>()
-    
+
     for (const cluster of Object.values(clusters)) {
       for (const node of cluster.nodes) {
         // Check if node has edges to other clusters
         const edgeStart = this.graph.outgoingEdges[node]
         const edgeEnd = this.graph.outgoingEdges[node + 1]
-        
+
         for (let edgeIdx = edgeStart; edgeIdx < edgeEnd; edgeIdx++) {
           const neighbor = this.graph.destinations[edgeIdx]
           if (assignment[neighbor] !== assignment[node]) {
@@ -335,12 +335,12 @@ export class EnhancedSSSpSolver {
         }
       }
     }
-    
+
     // Update cluster boundary nodes
     for (const cluster of Object.values(clusters)) {
       cluster.boundaryNodes = cluster.nodes.filter(node => boundarySet.has(node))
     }
-    
+
     return Array.from(boundarySet)
   }
 
@@ -416,75 +416,75 @@ interface LocalSSSpResult {
 class BinaryHeap<T> {
   private items: T[] = []
   private compare: (a: T, b: T) => number
-  
+
   constructor(compareFunction: (a: T, b: T) => number) {
     this.compare = compareFunction
   }
-  
+
   push(item: T): void {
     this.items.push(item)
     this.bubbleUp(this.items.length - 1)
   }
-  
+
   pop(): T | undefined {
     if (this.items.length === 0) return undefined
-    
+
     const root = this.items[0]
     const end = this.items.pop()!
-    
+
     if (this.items.length > 0) {
       this.items[0] = end
       this.bubbleDown(0)
     }
-    
+
     return root
   }
-  
+
   isEmpty(): boolean {
     return this.items.length === 0
   }
-  
+
   private bubbleUp(index: number): void {
     const item = this.items[index]
-    
+
     while (index > 0) {
       const parentIndex = Math.floor((index - 1) / 2)
       const parent = this.items[parentIndex]
-      
+
       if (this.compare(item, parent) >= 0) break
-      
+
       this.items[index] = parent
       index = parentIndex
     }
-    
+
     this.items[index] = item
   }
-  
+
   private bubbleDown(index: number): void {
     const length = this.items.length
     const item = this.items[index]
-    
+
     while (true) {
       const leftChildIndex = 2 * index + 1
       const rightChildIndex = 2 * index + 2
       let smallestIndex = index
-      
-      if (leftChildIndex < length && 
+
+      if (leftChildIndex < length &&
           this.compare(this.items[leftChildIndex], this.items[smallestIndex]) < 0) {
         smallestIndex = leftChildIndex
       }
-      
-      if (rightChildIndex < length && 
+
+      if (rightChildIndex < length &&
           this.compare(this.items[rightChildIndex], this.items[smallestIndex]) < 0) {
         smallestIndex = rightChildIndex
       }
-      
+
       if (smallestIndex === index) break
-      
+
       this.items[index] = this.items[smallestIndex]
       index = smallestIndex
     }
-    
+
     this.items[index] = item
   }
 }
@@ -505,51 +505,51 @@ export class TrajectoryGraphBuilder {
     maxThrust: number
     specificImpulse: number
   }): SparseDirectedGraph {
-    
+
     // Discretize state space
     const positionSteps = 20 // Configurable resolution
     const velocitySteps = 15
     const timeSteps = Math.floor(config.timeHorizon / config.timeStep)
-    
-    const nodeCount = positionSteps * positionSteps * positionSteps * 
+
+    const nodeCount = positionSteps * positionSteps * positionSteps *
                      velocitySteps * velocitySteps * velocitySteps * timeSteps
-    
+
     // Estimate edge count (sparse graph assumption)
     const avgOutDegree = 6 // Typical for 3D trajectory planning
     const edgeCount = nodeCount * avgOutDegree
-    
+
     // Initialize CSR arrays
     const outgoingEdges = new Uint32Array(nodeCount + 1)
     const destinations = new Uint32Array(edgeCount)
     const weights = new Float64Array(edgeCount)
-    
+
     // Build node metadata
     const positions = new Float64Array(nodeCount * 3)
     const timestamps = new Float64Array(nodeCount)
     const fuelMass = new Float64Array(nodeCount)
-    
+
     let edgeIndex = 0
-    
+
     // Generate nodes and edges
     for (let node = 0; node < nodeCount; node++) {
       const state = this.decodeNodeState(node, config, positionSteps, velocitySteps, timeSteps)
-      
+
       // Store node metadata
       positions[node * 3] = state.position[0]
       positions[node * 3 + 1] = state.position[1]
       positions[node * 3 + 2] = state.position[2]
       timestamps[node] = state.time
       fuelMass[node] = state.fuel
-      
+
       outgoingEdges[node] = edgeIndex
-      
+
       // Generate possible maneuvers (edges)
       const maneuvers = this.generateManeuvers(state, config)
-      
+
       for (const maneuver of maneuvers) {
-        const targetNode = this.encodeNodeState(maneuver.targetState, config, 
+        const targetNode = this.encodeNodeState(maneuver.targetState, config,
                                                positionSteps, velocitySteps, timeSteps)
-        
+
         if (targetNode < nodeCount && edgeIndex < edgeCount) {
           destinations[edgeIndex] = targetNode
           weights[edgeIndex] = maneuver.cost
@@ -557,9 +557,9 @@ export class TrajectoryGraphBuilder {
         }
       }
     }
-    
+
     outgoingEdges[nodeCount] = edgeIndex
-    
+
     return {
       nodeCount,
       edgeCount: edgeIndex,

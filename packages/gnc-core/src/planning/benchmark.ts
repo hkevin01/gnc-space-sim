@@ -1,11 +1,11 @@
 /**
  * Performance Benchmark Suite for Enhanced SSSP Algorithm
- * 
+ *
  * Comprehensive benchmarking and validation of the breakthrough SSSP algorithm
  * against classical methods in spacecraft trajectory planning scenarios.
  */
 
-import { EnhancedTrajectoryPlanner, DEFAULT_LAUNCH_PLANNING_CONFIG, type BenchmarkResult } from './trajectory-planner'
+import { DEFAULT_LAUNCH_PLANNING_CONFIG, EnhancedTrajectoryPlanner, type BenchmarkResult } from './trajectory-planner'
 
 /**
  * Benchmark configuration for different test scenarios
@@ -112,11 +112,11 @@ export class TrajectoryPlanningBenchmark {
     for (const scenario of BENCHMARK_SCENARIOS) {
       console.log(`\n📊 Running benchmark: ${scenario.name}`)
       console.log(`   ${scenario.description}`)
-      
+
       try {
         const result = await this.runBenchmarkScenario(scenario)
         this.results.push(result)
-        
+
         console.log(`✅ Completed: ${result.results.speedupFactor.toFixed(2)}x speedup`)
       } catch (error) {
         console.error(`❌ Failed benchmark ${scenario.name}:`, error)
@@ -143,7 +143,7 @@ export class TrajectoryPlanningBenchmark {
     }
 
     const planner = new EnhancedTrajectoryPlanner(trajectoryConfig)
-    
+
     // Initialize and run core benchmark
     await planner.initialize()
     const benchmarkResult = await planner.benchmarkPerformance(config.iterations)
@@ -171,7 +171,7 @@ export class TrajectoryPlanningBenchmark {
    * Validate algorithm correctness against known optimal solutions
    */
   private async validateCorrectness(
-    planner: EnhancedTrajectoryPlanner, 
+    planner: EnhancedTrajectoryPlanner,
     config: BenchmarkConfig
   ): Promise<{ correctness: boolean, pathLengthMatch: boolean, optimalityGap: number }> {
     try {
@@ -201,7 +201,7 @@ export class TrajectoryPlanningBenchmark {
 
       // Estimate optimality gap (simplified)
       const theoreticalMinDeltaV = 9400 // m/s for LEO insertion
-      const actualDeltaV = plan.maneuvers.reduce((sum, m) => 
+      const actualDeltaV = plan.maneuvers.reduce((sum, m) =>
         sum + Math.sqrt(m.deltaV[0]**2 + m.deltaV[1]**2 + m.deltaV[2]**2), 0)
       const optimalityGap = ((actualDeltaV - theoreticalMinDeltaV) / theoreticalMinDeltaV) * 100
 
@@ -231,7 +231,7 @@ export class TrajectoryPlanningBenchmark {
     try {
       // Measure planning latency for real-time scenarios
       const startTime = performance.now()
-      
+
       const initialState = {
         position: [6.371e6, 0, 0] as [number, number, number],
         velocity: [0, 464, 0] as [number, number, number],
@@ -253,9 +253,9 @@ export class TrajectoryPlanningBenchmark {
 
       // Calculate trajectory metrics
       const trajectoryLength = plan.maneuvers.length
-      const totalDeltaV = plan.maneuvers.reduce((sum, m) => 
+      const totalDeltaV = plan.maneuvers.reduce((sum, m) =>
         sum + Math.sqrt(m.deltaV[0]**2 + m.deltaV[1]**2 + m.deltaV[2]**2), 0)
-      
+
       // Estimate fuel efficiency vs naive approach
       const naiveDeltaV = 12000 // Typical inefficient ascent
       const fuelSaved = (naiveDeltaV - totalDeltaV) * 0.1 // kg per m/s (simplified)
@@ -277,12 +277,12 @@ export class TrajectoryPlanningBenchmark {
    */
   private estimateMemoryUsage(graphSize: { nodes: number, avgOutDegree: number }): number {
     const edges = graphSize.nodes * graphSize.avgOutDegree
-    
+
     // CSR representation: outgoing_edges + destinations + weights
     const outgoingEdgesBytes = (graphSize.nodes + 1) * 4 // Uint32Array
-    const destinationsBytes = edges * 4 // Uint32Array  
+    const destinationsBytes = edges * 4 // Uint32Array
     const weightsBytes = edges * 8 // Float64Array
-    
+
     const totalBytes = outgoingEdgesBytes + destinationsBytes + weightsBytes
     return totalBytes / (1024 * 1024) // Convert to MB
   }
@@ -294,7 +294,7 @@ export class TrajectoryPlanningBenchmark {
     // Heuristic: better cache efficiency leads to better performance
     const expectedOpsPerNode = 5 // Expected operations per node
     const actualOpsPerNode = result.edgesRelaxed / result.nodesVisited
-    
+
     return Math.max(0, Math.min(100, 100 * expectedOpsPerNode / actualOpsPerNode))
   }
 
@@ -314,18 +314,18 @@ export class TrajectoryPlanningBenchmark {
       console.log(`\n🎯 Scenario: ${config.name}`)
       console.log(`   Description: ${config.description}`)
       console.log(`   Graph Size: ${config.graphSize.nodes} nodes, ~${config.graphSize.nodes * config.graphSize.avgOutDegree} edges`)
-      
+
       console.log(`\n   Performance:`)
       console.log(`   • Enhanced SSSP: ${results.enhancedTimeMs.toFixed(2)}ms`)
       console.log(`   • Dijkstra:      ${results.dijkstraTimeMs.toFixed(2)}ms`)
       console.log(`   • Speedup:       ${results.speedupFactor.toFixed(2)}x`)
       console.log(`   • Expected:      ${config.expectedSpeedup}x`)
-      
+
       console.log(`\n   Validation:`)
       console.log(`   • Correctness:   ${validation.correctness ? '✅' : '❌'}`)
       console.log(`   • Path Valid:    ${validation.pathLengthMatch ? '✅' : '❌'}`)
       console.log(`   • Optimality:    ${validation.optimalityGap.toFixed(1)}% gap`)
-      
+
       console.log(`\n   Real-World Metrics:`)
       console.log(`   • Trajectory:    ${realWorldMetrics.trajectoryLength} maneuvers`)
       console.log(`   • Total ΔV:      ${realWorldMetrics.totalDeltaV.toFixed(0)} m/s`)
@@ -388,17 +388,17 @@ export class TrajectoryPlanningBenchmark {
  */
 export async function runQuickBenchmark(): Promise<BenchmarkResult> {
   console.log('🚀 Running quick SSSP performance benchmark...')
-  
+
   const planner = new EnhancedTrajectoryPlanner(DEFAULT_LAUNCH_PLANNING_CONFIG)
   await planner.initialize()
-  
+
   const result = await planner.benchmarkPerformance(50)
-  
+
   console.log(`⚡ Quick benchmark results:`)
   console.log(`   Enhanced: ${result.enhancedTimeMs.toFixed(2)}ms`)
-  console.log(`   Dijkstra: ${result.dijkstraTimeMs.toFixed(2)}ms`) 
+  console.log(`   Dijkstra: ${result.dijkstraTimeMs.toFixed(2)}ms`)
   console.log(`   Speedup:  ${result.speedupFactor.toFixed(2)}x`)
-  
+
   return result
 }
 
@@ -407,19 +407,19 @@ export async function runQuickBenchmark(): Promise<BenchmarkResult> {
  */
 export async function validateAlgorithm(): Promise<boolean> {
   console.log('🔍 Validating Enhanced SSSP algorithm...')
-  
+
   try {
     const benchmark = new TrajectoryPlanningBenchmark()
     const testScenario = BENCHMARK_SCENARIOS[0] // Use smallest scenario
-    
+
     const result = await benchmark.runBenchmarkScenario(testScenario)
-    
-    const isValid = result.validation.correctness && 
+
+    const isValid = result.validation.correctness &&
                    result.results.speedupFactor > 1.0 &&
                    result.validation.optimalityGap < 50
 
     console.log(`${isValid ? '✅' : '❌'} Algorithm validation ${isValid ? 'passed' : 'failed'}`)
-    
+
     return isValid
   } catch (error) {
     console.error('❌ Validation failed:', error)

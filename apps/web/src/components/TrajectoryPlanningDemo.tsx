@@ -1,11 +1,11 @@
+import { LaunchPhase } from '@gnc/core'
 import { Html } from '@react-three/drei'
 import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
-import { LaunchPhase } from '@gnc/core'
 
 /**
  * Enhanced Trajectory Planning Demo Component
- * 
+ *
  * Visualizes the breakthrough SSSP algorithm in action for spacecraft
  * trajectory planning with real-time performance metrics and comparisons.
  */
@@ -74,15 +74,15 @@ export function TrajectoryPlanningDemo() {
     // Create edges between nearby nodes (representing possible maneuvers)
     for (let i = 0; i < nodeCount; i++) {
       const node = nodes[i]
-      
+
       for (let j = i + 1; j < nodeCount; j++) {
         const other = nodes[j]
         const distance = node.position.distanceTo(other.position)
-        
+
         if (distance < 3.0 && Math.random() > 0.3) { // Sparse graph
           const weight = distance + Math.random() * 2 // Cost includes distance + fuel/time
           edges.push({ from: i, to: j, weight, relaxed: false })
-          
+
           // Add reverse edge for bidirectional graph
           if (Math.random() > 0.5) {
             edges.push({ from: j, to: i, weight: weight * 1.1, relaxed: false })
@@ -98,7 +98,7 @@ export function TrajectoryPlanningDemo() {
   const runEnhancedSSSpDemo = async () => {
     setIsRunning(true)
     const { nodes, edges } = demoGraph
-    
+
     // Reset state
     const resetNodes = nodes.map(n => ({
       ...n,
@@ -108,9 +108,9 @@ export function TrajectoryPlanningDemo() {
       inPath: false,
       searchOrder: -1
     }))
-    
+
     const resetEdges = edges.map(e => ({ ...e, relaxed: false }))
-    
+
     setSearchState({
       algorithm: 'enhanced-sssp',
       nodes: resetNodes,
@@ -126,7 +126,7 @@ export function TrajectoryPlanningDemo() {
 
     // Initialize distances
     resetNodes[source].distance = 0
-    
+
     // Simulate enhanced algorithm with hierarchical decomposition
     let visitOrder = 0
     const priorityQueue = [{ node: source, distance: 0 }]
@@ -137,9 +137,9 @@ export function TrajectoryPlanningDemo() {
       // Sort by distance (min-heap simulation)
       priorityQueue.sort((a, b) => a.distance - b.distance)
       const current = priorityQueue.shift()!
-      
+
       if (resetNodes[current.node].visited) continue
-      
+
       // Mark as visited
       resetNodes[current.node].visited = true
       resetNodes[current.node].searchOrder = visitOrder++
@@ -157,15 +157,15 @@ export function TrajectoryPlanningDemo() {
       for (const edge of resetEdges) {
         if (edge.from === current.node && !resetNodes[edge.to].visited) {
           const newDistance = current.distance + edge.weight
-          
+
           if (newDistance < resetNodes[edge.to].distance) {
             resetNodes[edge.to].distance = newDistance
             resetNodes[edge.to].predecessor = current.node as number
             priorityQueue.push({ node: edge.to, distance: newDistance })
-            
+
             edge.relaxed = true
             edgesRelaxed++
-            
+
             // Update visualization
             setSearchState(prev => prev ? {
               ...prev,
@@ -214,10 +214,10 @@ export function TrajectoryPlanningDemo() {
   // Run performance comparison
   const runComparison = async () => {
     setShowComparison(true)
-    
+
     // Simulate benchmark results
     await new Promise(resolve => setTimeout(resolve, 2000))
-    
+
     setBenchmarkResults({
       enhanced: { timeMs: 15.3, nodesVisited: 35, edgesRelaxed: 67 },
       dijkstra: { timeMs: 38.7, nodesVisited: 45, edgesRelaxed: 89 },
@@ -255,7 +255,7 @@ export function TrajectoryPlanningDemo() {
                   }
                 />
               </mesh>
-              
+
               {/* Node labels for source and target */}
               {(node.id === 0 || node.id === searchState.nodes.length - 1) && (
                 <Html distanceFactor={5} position={[0, 0.3, 0]}>
@@ -266,12 +266,12 @@ export function TrajectoryPlanningDemo() {
               )}
             </group>
           ))}
-          
+
           {/* Render edges */}
           {searchState.edges.map((edge, index) => {
             const fromPos = searchState.nodes[edge.from].position
             const toPos = searchState.nodes[edge.to].position
-            
+
             return (
               <line key={index}>
                 <bufferGeometry>
@@ -302,7 +302,7 @@ export function TrajectoryPlanningDemo() {
           <h3 className="text-lg font-bold mb-3 text-blue-300">
             🚀 Enhanced SSSP Trajectory Planning
           </h3>
-          
+
           {!searchState ? (
             <div className="space-y-3">
               <p className="text-sm text-gray-300">
@@ -330,33 +330,33 @@ export function TrajectoryPlanningDemo() {
                 <div className="font-mono text-yellow-300">
                   {searchState.algorithm.toUpperCase()}
                 </div>
-                
+
                 <div>Status:</div>
                 <div className={`font-mono ${searchState.searchComplete ? 'text-green-400' : 'text-orange-400'}`}>
                   {searchState.searchComplete ? 'COMPLETE' : 'SEARCHING'}
                 </div>
-                
+
                 <div>Nodes Visited:</div>
                 <div className="font-mono text-blue-300">
                   {searchState.performance.nodesVisited}
                 </div>
-                
+
                 <div>Edges Relaxed:</div>
                 <div className="font-mono text-purple-300">
                   {searchState.performance.edgesRelaxed}
                 </div>
-                
+
                 <div>Time:</div>
                 <div className="font-mono text-green-300">
                   {searchState.performance.timeMs.toFixed(1)}ms
                 </div>
-                
+
                 <div>Path Length:</div>
                 <div className="font-mono text-pink-300">
                   {searchState.performance.pathLength}
                 </div>
               </div>
-              
+
               <button
                 onClick={() => setSearchState(null)}
                 className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition-colors"
@@ -375,7 +375,7 @@ export function TrajectoryPlanningDemo() {
             <h3 className="text-lg font-bold mb-3 text-green-300">
               📊 Performance Comparison
             </h3>
-            
+
             {!benchmarkResults ? (
               <div className="text-center">
                 <div className="animate-spin text-2xl mb-2">⚡</div>
@@ -390,26 +390,26 @@ export function TrajectoryPlanningDemo() {
                     <div>Nodes: <span className="font-mono text-blue-400">{benchmarkResults.enhanced.nodesVisited}</span></div>
                     <div>Edges: <span className="font-mono text-purple-400">{benchmarkResults.enhanced.edgesRelaxed}</span></div>
                   </div>
-                  
+
                   <div className="font-semibold text-yellow-300">Classical Dijkstra:</div>
                   <div className="ml-4 space-y-1">
                     <div>Time: <span className="font-mono text-red-400">{benchmarkResults.dijkstra.timeMs}ms</span></div>
                     <div>Nodes: <span className="font-mono text-blue-400">{benchmarkResults.dijkstra.nodesVisited}</span></div>
                     <div>Edges: <span className="font-mono text-purple-400">{benchmarkResults.dijkstra.edgesRelaxed}</span></div>
                   </div>
-                  
+
                   <div className="border-t border-gray-600 pt-2">
                     <div className="font-bold text-xl text-center">
                       <span className="text-green-400">{benchmarkResults.speedup}x</span>
                       <span className="text-gray-400"> speedup</span>
                     </div>
                   </div>
-                  
+
                   <div className="text-xs text-gray-400 text-center">
                     Graph: {benchmarkResults.graphSize.nodes} nodes, {benchmarkResults.graphSize.edges} edges
                   </div>
                 </div>
-                
+
                 <button
                   onClick={() => setShowComparison(false)}
                   className="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded transition-colors"
@@ -430,11 +430,11 @@ export function TrajectoryPlanningDemo() {
           </h4>
           <div className="text-sm space-y-2 text-gray-300">
             <p>
-              <strong className="text-white">Breakthrough Algorithm:</strong> First deterministic SSSP to beat 
+              <strong className="text-white">Breakthrough Algorithm:</strong> First deterministic SSSP to beat
               Dijkstra's O(m + n log n) bound on sparse directed graphs.
             </p>
             <p>
-              <strong className="text-white">Space Applications:</strong> Real-time trajectory optimization, 
+              <strong className="text-white">Space Applications:</strong> Real-time trajectory optimization,
               replanning for disturbances, multi-target mission planning.
             </p>
             <div className="grid grid-cols-2 gap-4 mt-3">
@@ -478,21 +478,21 @@ interface TrajectoryPhaseIndicatorProps {
   }
 }
 
-export function TrajectoryPhaseIndicator({ 
-  planningActive, 
-  performance 
+export function TrajectoryPhaseIndicator({
+  planningActive,
+  performance
 }: TrajectoryPhaseIndicatorProps) {
   return (
     <div className="flex items-center space-x-3 bg-black/80 text-white px-4 py-2 rounded-lg border border-cyan-400">
       <div className="flex items-center space-x-2">
-        <div 
-          className={`w-3 h-3 rounded-full ${planningActive ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`} 
+        <div
+          className={`w-3 h-3 rounded-full ${planningActive ? 'bg-green-400 animate-pulse' : 'bg-gray-400'}`}
         />
         <span className="text-sm">
           {planningActive ? 'Enhanced Planning' : 'Gravity Turn'}
         </span>
       </div>
-      
+
       {performance && planningActive && (
         <div className="text-xs space-x-3 text-cyan-300">
           <span>{performance.planningTimeMs.toFixed(1)}ms</span>
