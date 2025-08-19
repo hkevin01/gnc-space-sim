@@ -1,5 +1,6 @@
 import { LaunchPhase } from '@gnc/core'
-import { useMemo } from 'react'
+import { Stars, useTexture } from '@react-three/drei'
+import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
 /**
@@ -15,21 +16,23 @@ interface MissionEnvironmentProps {
 }
 
 export function MissionEnvironment({ phase, missionTime, altitude }: MissionEnvironmentProps) {
+  const group = useRef<THREE.Group>(null)
+
   // Calculate which celestial bodies to show based on mission phase and parameters
   const environment = useMemo(() => {
-    const showEarth = altitude < 10000000 // Show Earth within 10,000 km
-    const showMoon = altitude > 1000000   // Show Moon after 1,000 km altitude
-    const showSun = altitude > 500000     // Show Sun after 500 km altitude
+    const showEarth = altitude < 10_000_000
+    const showMoon = altitude > 1_000_000
+    const showSun = altitude > 500_000
     const showMars = phase === LaunchPhase.ORBITAL_INSERTION ||
                      phase === LaunchPhase.ORBIT_CIRCULARIZATION ||
-                     missionTime > 300 // Show Mars for deep space phases or after 5 minutes
-    const showAsteroid = missionTime > 200 && altitude > 2000000 // Show asteroid after 3.3 min and high altitude
+                     missionTime > 300
+    const showAsteroid = missionTime > 200 && altitude > 2_000_000
 
     return { showEarth, showMoon, showSun, showMars, showAsteroid }
   }, [phase, missionTime, altitude])
 
   return (
-    <group>
+    <group ref={group}>
       {/* Earth - always visible during launch */}
       {environment.showEarth && <EarthVisual />}
 
@@ -46,55 +49,49 @@ export function MissionEnvironment({ phase, missionTime, altitude }: MissionEnvi
       {environment.showAsteroid && <AsteroidVisual />}
 
       {/* Starfield background */}
-      <StarfieldBackground />
+      <Stars radius={1000} depth={50} count={4000} factor={4} saturation={0} fade speed={0.6} />
     </group>
   )
 }
 
 function EarthVisual() {
+  // Use stable textures from threejs.org examples
+  const textures = useTexture({
+    map: 'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg',
+    emissiveMap: 'https://threejs.org/examples/textures/planets/earth_lights_2048.png'
+  }) as unknown as { map: THREE.Texture; emissiveMap: THREE.Texture }
+  const clouds = useTexture('https://threejs.org/examples/textures/planets/earth_clouds_1024.png') as THREE.Texture
+  const ref = useRef<THREE.Mesh>(null)
+  const cloudsRef = useRef<THREE.Mesh>(null)
+
   return (
     <group>
-      {/* Earth surface */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[6.371, 64, 32]} />
-        <meshPhongMaterial
-          color="#1E3A8A"
-          transparent
-          opacity={0.9}
-          shininess={30}
+      <mesh ref={ref} rotation={[0, Math.PI, 0]}>
+        <sphereGeometry args={[6.371, 128, 64]} />
+        <meshStandardMaterial
+          map={textures.map}
+          emissiveMap={textures.emissiveMap}
+          emissive={new THREE.Color('#0b1a2a')}
+          emissiveIntensity={0.25}
+          roughness={1}
+          metalness={0}
         />
       </mesh>
-
-      {/* Earth continents (simplified) */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[6.372, 64, 32]} />
-        <meshPhongMaterial
-          color="#22C55E"
+      {/* Atmosphere */}
+      <mesh>
+        <sphereGeometry args={[6.471, 64, 32]} />
+        <meshPhysicalMaterial
           transparent
-          opacity={0.6}
+          opacity={0.12}
+          roughness={1}
+          thickness={0.5}
+          color={'#87CEEB'}
         />
       </mesh>
-
-      {/* Earth atmosphere */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[6.471, 32, 16]} />
-        <meshBasicMaterial
-          color="#87CEEB"
-          transparent
-          opacity={0.15}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-
-      {/* Earth clouds */}
-      <mesh position={[0, 0, 0]}>
-        <sphereGeometry args={[6.375, 32, 16]} />
-        <meshBasicMaterial
-          color="#FFFFFF"
-          transparent
-          opacity={0.3}
-          side={THREE.DoubleSide}
-        />
+      {/* Clouds */}
+      <mesh ref={cloudsRef}>
+        <sphereGeometry args={[6.39, 128, 64]} />
+        <meshPhongMaterial map={clouds} transparent opacity={0.35} depthWrite={false} />
       </mesh>
     </group>
   )
@@ -103,116 +100,34 @@ function EarthVisual() {
 function SunVisual() {
   return (
     <group position={[-150, 50, -200]}>
-      {/* Sun core */}
       <mesh>
-        <sphereGeometry args={[8, 32, 16]} />
-        <meshStandardMaterial
-          color="#FFD700"
-          emissive="#FFA500"
-          emissiveIntensity={0.5}
-        />
+        <sphereGeometry args={[8, 64, 32]} />
+        <meshStandardMaterial color="#FFD700" emissive="#FFA500" emissiveIntensity={1.2} />
       </mesh>
-
-      {/* Sun corona */}
-      <mesh>
-        <sphereGeometry args={[12, 16, 8]} />
-        <meshBasicMaterial
-          color="#FFE55C"
-          transparent
-          opacity={0.2}
-          side={THREE.DoubleSide}
-        />
-      </mesh>
-
-      {/* Sunlight */}
-      <pointLight
-        color="#FFE55C"
-        intensity={1.0}
-        distance={500}
-        decay={2}
-      />
+      <pointLight color="#FFE55C" intensity={1.2} distance={800} decay={2} />
     </group>
   )
 }
 
 function MoonVisual() {
+  const texture = useTexture('https://threejs.org/examples/textures/planets/moon_1024.jpg') as THREE.Texture
   return (
     <group position={[60, 10, 30]}>
-      {/* Moon surface */}
       <mesh>
-        <sphereGeometry args={[1.737, 32, 16]} />
-        <meshPhongMaterial
-          color="#C0C0C0"
-          transparent
-          opacity={0.8}
-          shininess={5}
-        />
-      </mesh>
-
-      {/* Moon craters (simplified) */}
-      <mesh position={[0.5, 0.3, 0.8]}>
-        <sphereGeometry args={[0.2, 8, 4]} />
-        <meshPhongMaterial
-          color="#A0A0A0"
-          transparent
-          opacity={0.7}
-        />
-      </mesh>
-
-      <mesh position={[-0.4, -0.2, 0.9]}>
-        <sphereGeometry args={[0.15, 8, 4]} />
-        <meshPhongMaterial
-          color="#A0A0A0"
-          transparent
-          opacity={0.7}
-        />
+        <sphereGeometry args={[1.737, 64, 32]} />
+        <meshStandardMaterial map={texture} roughness={1} metalness={0} />
       </mesh>
     </group>
   )
 }
 
 function MarsVisual() {
+  const texture = useTexture('https://threejs.org/examples/textures/planets/mars_1k_color.jpg') as THREE.Texture
   return (
     <group position={[200, -30, 150]}>
-      {/* Mars surface */}
       <mesh>
-        <sphereGeometry args={[3.39, 32, 16]} />
-        <meshPhongMaterial
-          color="#CD5C5C"
-          transparent
-          opacity={0.9}
-          shininess={10}
-        />
-      </mesh>
-
-      {/* Mars polar ice caps */}
-      <mesh position={[0, 3.2, 0]}>
-        <sphereGeometry args={[0.5, 8, 4]} />
-        <meshPhongMaterial
-          color="#FFFFFF"
-          transparent
-          opacity={0.8}
-        />
-      </mesh>
-
-      <mesh position={[0, -3.2, 0]}>
-        <sphereGeometry args={[0.3, 8, 4]} />
-        <meshPhongMaterial
-          color="#FFFFFF"
-          transparent
-          opacity={0.8}
-        />
-      </mesh>
-
-      {/* Mars thin atmosphere */}
-      <mesh>
-        <sphereGeometry args={[3.42, 16, 8]} />
-        <meshBasicMaterial
-          color="#FFB6C1"
-          transparent
-          opacity={0.1}
-          side={THREE.DoubleSide}
-        />
+        <sphereGeometry args={[3.39, 64, 32]} />
+        <meshStandardMaterial map={texture} roughness={1} metalness={0} />
       </mesh>
     </group>
   )
@@ -221,79 +136,21 @@ function MarsVisual() {
 function AsteroidVisual() {
   return (
     <group position={[100, 40, -80]}>
-      {/* Main asteroid body (irregular shape) */}
       <mesh rotation={[0.3, 0.7, 0.2]}>
         <dodecahedronGeometry args={[1.2, 1]} />
-        <meshPhongMaterial
-          color="#696969"
-          transparent
-          opacity={0.9}
-          shininess={2}
-        />
+        <meshStandardMaterial color="#696969" roughness={1} metalness={0} />
       </mesh>
-
-      {/* Asteroid debris field */}
       {Array.from({ length: 8 }).map((_, i) => (
         <mesh
           key={i}
-          position={[
-            (Math.random() - 0.5) * 10,
-            (Math.random() - 0.5) * 10,
-            (Math.random() - 0.5) * 10
-          ]}
-          rotation={[
-            Math.random() * Math.PI,
-            Math.random() * Math.PI,
-            Math.random() * Math.PI
-          ]}
+          position={[(Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 10]}
+          rotation={[Math.random() * Math.PI, Math.random() * Math.PI, Math.random() * Math.PI]}
         >
           <octahedronGeometry args={[0.1 + Math.random() * 0.3, 0]} />
-          <meshPhongMaterial
-            color="#555555"
-            transparent
-            opacity={0.8}
-          />
+          <meshStandardMaterial color="#555555" roughness={1} metalness={0} />
         </mesh>
       ))}
     </group>
-  )
-}
-
-function StarfieldBackground() {
-  const starCount = 1000
-  const positions = useMemo(() => {
-    const positions = new Float32Array(starCount * 3)
-    for (let i = 0; i < starCount; i++) {
-      // Generate random positions on a large sphere
-      const radius = 1000
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos(2 * Math.random() - 1)
-
-      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta)
-      positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta)
-      positions[i * 3 + 2] = radius * Math.cos(phi)
-    }
-    return positions
-  }, [])
-
-  return (
-    <points>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          array={positions}
-          count={positions.length / 3}
-          itemSize={3}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        color="#FFFFFF"
-        size={2}
-        sizeAttenuation={false}
-        transparent
-        opacity={0.8}
-      />
-    </points>
   )
 }
 
@@ -335,10 +192,7 @@ export function PhaseVisualIndicator({ phase, missionTime }: PhaseIndicatorProps
 
   return (
     <div className="flex items-center space-x-2 text-white">
-      <div
-        className="w-3 h-3 rounded-full animate-pulse"
-        style={{ backgroundColor: phaseConfig.color }}
-      />
+      <div className="w-3 h-3 rounded-full animate-pulse" style={{ backgroundColor: phaseConfig.color }} />
       <span className="text-lg">{phaseConfig.icon}</span>
       <span className="font-bold">{phaseConfig.label}</span>
       <span className="text-sm opacity-75">
