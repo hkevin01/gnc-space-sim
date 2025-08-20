@@ -6,9 +6,10 @@ import * as THREE from 'three'
 import { assetUrl, useSafeTexture } from '../utils/textures'
 import { MISSION_SCENARIOS, MissionControl } from './MissionTypes'
 import { SpaceDataDisplay } from './NASAAPIIntegration'
-import { OrbitalSystem } from './OrbitalMechanics'
+// import { OrbitalSystem } from './OrbitalMechanics'
 import { PostProcessingEffects } from './PostProcessing'
 import { AnimationManagerProvider, EnhancedSceneManager } from './SceneManager'
+import { SolarSystem } from './SolarSystem'
 import { SpacecraftModel, SpacecraftType } from './SpacecraftModels'
 import { TerrainControlsPanel, TerrainControlsProvider, useTerrain } from './TerrainControls'
 import { MissionControlPanel } from './UIComponents'
@@ -184,12 +185,7 @@ export function MissionEnvironment3D({
             shadow-camera-bottom={-100}
           />
 
-          {/* Realistic Orbital System */}
-          <OrbitalSystem
-            simulationTime={simulationTime}
-            showOrbits={altitude > 1_000_000}
-            showLabels={altitude > 500_000}
-          />
+          {/* Orbital system rendered via SolarSystem component (Earth-centered) */}
 
           {/* Enhanced Spacecraft Model (optional) */}
           {showSpacecraft && (
@@ -204,12 +200,13 @@ export function MissionEnvironment3D({
             />
           )}
 
-          {/* Celestial bodies with textures and graceful fallbacks */}
+          {/* Complete Solar System with proper planetary positioning */}
           <Suspense fallback={null}>
-            {environment.showEarth && <EarthVisual />}
-            {environment.showSun && <SunVisual />}
-            {environment.showMoon && <MoonVisual />}
-            {environment.showMars && <MarsVisual />}
+            <SolarSystem
+              showOrbits={altitude > 1_000_000}
+              missionTime={simulationTime}
+              centerOn="EARTH"
+            />
             {environment.showAsteroid && <AsteroidVisual />}
           </Suspense>
 

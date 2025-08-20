@@ -6,12 +6,16 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { LaunchSimulation } from './components/LaunchSimulation'
 import { OrbitDemo } from './components/OrbitDemo'
 import { TrajectoryPlanningDemo } from './components/TrajectoryPlanningDemo'
+import { useLaunchControl } from './state/launchControlStore'
 import { useMissionStore, type MissionState } from './state/missionStore'
 
 export default function App() {
   const phase = useMissionStore((s: MissionState) => s.phase)
   const setPhase = useMissionStore((s: MissionState) => s.setPhase)
   const [simMode, setSimMode] = useState<'launch' | 'orbit' | 'trajectory'>('launch')
+
+  // Launch control state
+  const { launchTime, initiateLaunch, resetLaunch } = useLaunchControl()
 
   return (
     <ErrorBoundary>
@@ -55,6 +59,41 @@ export default function App() {
               </button>
             </div>
           </div>
+
+          {/* Launch Control Panel */}
+          {simMode === 'launch' && (
+            <div className="mb-4 p-3 bg-red-900/30 rounded border border-red-700">
+              <h3 className="text-sm font-semibold mb-2 text-red-400">🚀 Launch Control</h3>
+              <div className="space-y-2">
+                <div className="text-xs text-zinc-300">
+                  Mission Time: T{launchTime < 0 ? `${launchTime.toFixed(1)}s` : `+${launchTime.toFixed(1)}s`}
+                </div>
+                <div className="flex gap-2">
+                  {launchTime < 0 ? (
+                    <button
+                      onClick={initiateLaunch}
+                      className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm shadow-lg transition-colors flex-1"
+                    >
+                      🚀 INITIATE LAUNCH
+                    </button>
+                  ) : (
+                    <button
+                      onClick={resetLaunch}
+                      className="bg-zinc-600 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded text-sm transition-colors flex-1"
+                    >
+                      🔄 RESET MISSION
+                    </button>
+                  )}
+                </div>
+                <div className="text-xs text-zinc-400 mt-2">
+                  {launchTime < 0
+                    ? 'All systems nominal. Ready for launch.'
+                    : 'Mission in progress. Monitor telemetry on the right.'
+                  }
+                </div>
+              </div>
+            </div>
+          )}
 
           <MissionPanel phase={phase} onChange={setPhase} />
 

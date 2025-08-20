@@ -1,0 +1,362 @@
+import { useFrame } from '@react-three/fiber'
+import { useRef } from 'react'
+import * as THREE from 'three'
+import { assetUrl, useSafeTexture } from '../utils/textures'
+
+// Simplified solar system data structure
+interface PlanetData {
+  radius: number
+  sceneRadius: number
+  orbitRadius?: number
+  position: number[]
+  color: string
+  rotationSpeed: number
+  orbitSpeed?: number
+  hasRings?: boolean
+  parentOrbitRadius?: number // For moons
+}
+
+// Solar system data (scaled for visualization)
+const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
+  SUN: {
+    radius: 6.96e8,
+    sceneRadius: 8,
+    position: [0, 0, 0],
+    color: '#FDB813',
+    rotationSpeed: 0.002
+  },
+  MERCURY: {
+    radius: 2.44e6,
+    sceneRadius: 0.38,
+    orbitRadius: 58,
+    position: [58, 0, 0],
+    color: '#8C7853',
+    rotationSpeed: 0.004,
+    orbitSpeed: 0.08
+  },
+  VENUS: {
+    radius: 6.05e6,
+    sceneRadius: 0.95,
+    orbitRadius: 108,
+    position: [108, 0, 0],
+    color: '#FFC649',
+    rotationSpeed: -0.002,
+    orbitSpeed: 0.035
+  },
+  EARTH: {
+    radius: 6.37e6,
+    sceneRadius: 1.0,
+    orbitRadius: 150,
+    position: [150, 0, 0],
+    color: '#6B93D6',
+    rotationSpeed: 0.01,
+    orbitSpeed: 0.027
+  },
+  MARS: {
+    radius: 3.39e6,
+    sceneRadius: 0.53,
+    orbitRadius: 228,
+    position: [228, 0, 0],
+    color: '#CD5C5C',
+    rotationSpeed: 0.0097,
+    orbitSpeed: 0.024
+  },
+  JUPITER: {
+    radius: 6.99e7,
+    sceneRadius: 11.2,
+    orbitRadius: 400, // Scaled down for visibility
+    position: [400, 0, 0],
+    color: '#D8CA9D',
+    rotationSpeed: 0.024,
+    orbitSpeed: 0.013
+  },
+  SATURN: {
+    radius: 5.83e7,
+    sceneRadius: 9.4,
+    orbitRadius: 500, // Scaled down for visibility
+    position: [500, 0, 0],
+    color: '#FAD5A5',
+    rotationSpeed: 0.022,
+    orbitSpeed: 0.0097,
+    hasRings: true
+  },
+  URANUS: {
+    radius: 2.54e7,
+    sceneRadius: 4.0,
+    orbitRadius: 600, // Scaled down for visibility
+    position: [600, 0, 0],
+    color: '#4FD0E7',
+    rotationSpeed: 0.014,
+    orbitSpeed: 0.0068
+  },
+  NEPTUNE: {
+    radius: 2.46e7,
+    sceneRadius: 3.9,
+    orbitRadius: 700, // Scaled down for visibility
+    position: [700, 0, 0],
+    color: '#4B70DD',
+    rotationSpeed: 0.016,
+    orbitSpeed: 0.0054
+  },
+  MOON: {
+    radius: 1.74e6,
+    sceneRadius: 0.27,
+    orbitRadius: 38.4,
+    parentOrbitRadius: 150, // Earth's orbit
+    position: [150 + 38.4, 0, 0],
+    color: '#C0C0C0',
+    rotationSpeed: 0.0005,
+    orbitSpeed: 0.365
+  }
+}
+
+interface PlanetProps {
+  name: keyof typeof SOLAR_SYSTEM_DATA
+  showOrbit?: boolean
+  missionTime?: number
+  offset?: [number, number, number]
+}
+
+export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 0, 0] }: PlanetProps) {
+  const meshRef = useRef<THREE.Mesh>(null)
+  const groupRef = useRef<THREE.Group>(null)
+  const data = SOLAR_SYSTEM_DATA[name]
+
+  // Calculate orbital position based on mission time
+  const getOrbitalPosition = (): [number, number, number] => {
+    if (name === 'SUN') return [0, 0, 0]
+
+    if (name === 'MOON' && data.parentOrbitRadius !== undefined) {
+      // Moon orbits Earth
+      const earthData = SOLAR_SYSTEM_DATA.EARTH
+      const earthAngle = missionTime * (earthData.orbitSpeed || 0) * 0.001
+      const moonAngle = missionTime * (data.orbitSpeed || 0) * 0.001
+      const earthX = Math.cos(earthAngle) * (earthData.orbitRadius || 0)
+      const earthZ = Math.sin(earthAngle) * (earthData.orbitRadius || 0)
+      const moonX = earthX + Math.cos(moonAngle) * (data.orbitRadius || 0)
+      const moonZ = earthZ + Math.sin(moonAngle) * (data.orbitRadius || 0)
+      return [moonX, 0, moonZ]
+    }
+
+    // Other planets orbit the Sun
+    if (data.orbitRadius && data.orbitSpeed) {
+      const angle = missionTime * data.orbitSpeed * 0.001
+      const x = Math.cos(angle) * data.orbitRadius
+      const z = Math.sin(angle) * data.orbitRadius
+      return [x, 0, z]
+    }
+
+    return [0, 0, 0]
+  }
+
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.rotation.y += data.rotationSpeed
+    }
+    if (groupRef.current) {
+      const [x, y, z] = getOrbitalPosition()
+  groupRef.current.position.set(x - offset[0], y - offset[1], z - offset[2])
+    }
+  })
+
+  return (
+    <>
+      {/* Orbital path */}
+      {showOrbit && name !== 'SUN' && name !== 'MOON' && data.orbitRadius && (
+        <mesh position={[-offset[0], -offset[1], -offset[2]]}>
+          <ringGeometry args={[data.orbitRadius - 0.5, data.orbitRadius + 0.5, 128]} />
+          <meshBasicMaterial color="#333333" transparent opacity={0.2} side={THREE.DoubleSide} />
+        </mesh>
+      )}
+
+      <group ref={groupRef}>
+        <mesh ref={meshRef}>
+          <sphereGeometry args={[data.sceneRadius, 32, 32]} />
+          <meshStandardMaterial
+            color={data.color}
+            roughness={name === 'SUN' ? 0 : 0.8}
+            metalness={0.1}
+            emissive={name === 'SUN' ? data.color : '#000000'}
+            emissiveIntensity={name === 'SUN' ? 0.3 : 0}
+          />
+        </mesh>
+
+        {/* Saturn's rings */}
+        {name === 'SATURN' && data.hasRings && (
+          <mesh rotation={[Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[data.sceneRadius * 1.2, data.sceneRadius * 2.2, 64]} />
+            <meshStandardMaterial
+              color="#C4A875"
+              transparent
+              opacity={0.7}
+              side={THREE.DoubleSide}
+            />
+          </mesh>
+        )}
+      </group>
+    </>
+  )
+}
+
+interface SolarSystemProps {
+  showOrbits?: boolean
+  missionTime?: number
+  centerOn?: 'SUN' | 'EARTH' | 'MOON'
+}
+
+function getBodyPosition(name: keyof typeof SOLAR_SYSTEM_DATA, missionTime: number): [number, number, number] {
+  if (name === 'SUN') return [0, 0, 0]
+  if (name === 'EARTH') {
+    const d = SOLAR_SYSTEM_DATA.EARTH
+    const angle = (d.orbitSpeed || 0) * missionTime * 0.001
+    return [Math.cos(angle) * (d.orbitRadius || 0), 0, Math.sin(angle) * (d.orbitRadius || 0)]
+  }
+  if (name === 'MOON') {
+    const e = SOLAR_SYSTEM_DATA.EARTH
+    const m = SOLAR_SYSTEM_DATA.MOON
+    const earthAngle = (e.orbitSpeed || 0) * missionTime * 0.001
+    const moonAngle = (m.orbitSpeed || 0) * missionTime * 0.001
+    const ex = Math.cos(earthAngle) * (e.orbitRadius || 0)
+    const ez = Math.sin(earthAngle) * (e.orbitRadius || 0)
+    const mx = ex + Math.cos(moonAngle) * (m.orbitRadius || 0)
+    const mz = ez + Math.sin(moonAngle) * (m.orbitRadius || 0)
+    return [mx, 0, mz]
+  }
+  const d = SOLAR_SYSTEM_DATA[name]
+  const angle = (d.orbitSpeed || 0) * missionTime * 0.001
+  return [Math.cos(angle) * (d.orbitRadius || 0), 0, Math.sin(angle) * (d.orbitRadius || 0)]
+}
+
+export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'SUN' }: SolarSystemProps) {
+  // Compute offset so that the selected body is at the origin
+  const centerPos = centerOn === 'SUN' ? [0, 0, 0] as [number, number, number] : getBodyPosition(centerOn, missionTime)
+  const offset: [number, number, number] = [centerPos[0], centerPos[1], centerPos[2]]
+  return (
+    <group>
+      {/* Light source from the Sun */}
+      <pointLight
+        position={[-offset[0], -offset[1], -offset[2]]}
+        intensity={2}
+        color="#ffffff"
+        castShadow
+        shadow-mapSize={[2048, 2048]}
+        shadow-camera-near={1}
+        shadow-camera-far={1000}
+      />
+
+      {/* Ambient light for overall visibility */}
+      <ambientLight intensity={0.3} />
+
+  {/* All solar system bodies */}
+  <Planet name="SUN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+  <Planet name="MERCURY" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+  <Planet name="VENUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+  <Planet name="EARTH" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+  <Planet name="MOON" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+  <Planet name="MARS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+  <Planet name="JUPITER" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+  <Planet name="SATURN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+  <Planet name="URANUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+  <Planet name="NEPTUNE" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+    </group>
+  )
+}
+
+export function EnhancedEarthVisual() {
+  const ref = useRef<THREE.Mesh>(null)
+  const cloudsRef = useRef<THREE.Mesh>(null)
+  const atmosphereRef = useRef<THREE.Mesh>(null)
+
+  const dayMap = useSafeTexture({
+    url: [
+      assetUrl('assets/earth/earth_day.jpg'),
+      assetUrl('textures/earth/earth_day.jpg'),
+    ],
+    anisotropy: 8,
+    fallbackPattern: {
+      type: 'earth',
+      size: 1024,
+      squares: 64
+    }
+  })
+
+  useFrame(() => {
+    if (ref.current) {
+      ref.current.rotation.y += 0.01
+    }
+    if (cloudsRef.current) {
+      cloudsRef.current.rotation.y += 0.012
+    }
+    if (atmosphereRef.current) {
+      atmosphereRef.current.rotation.y += 0.008
+    }
+  })
+
+  return (
+    <>
+      {/* Main Earth */}
+      <mesh ref={ref}>
+        <sphereGeometry args={[SOLAR_SYSTEM_DATA.EARTH.sceneRadius, 64, 64]} />
+        {dayMap ? (
+          <meshStandardMaterial map={dayMap} />
+        ) : (
+          <meshStandardMaterial color={SOLAR_SYSTEM_DATA.EARTH.color} />
+        )}
+      </mesh>
+
+      {/* Cloud layer */}
+      <mesh ref={cloudsRef}>
+        <sphereGeometry args={[SOLAR_SYSTEM_DATA.EARTH.sceneRadius * 1.01, 32, 32]} />
+        <meshStandardMaterial
+          color="#ffffff"
+          transparent
+          opacity={0.3}
+          alphaMap={dayMap}
+        />
+      </mesh>
+
+      {/* Atmosphere glow */}
+      <mesh ref={atmosphereRef}>
+        <sphereGeometry args={[SOLAR_SYSTEM_DATA.EARTH.sceneRadius * 1.05, 16, 16]} />
+        <meshBasicMaterial
+          color="#6B93D6"
+          transparent
+          opacity={0.1}
+          side={THREE.BackSide}
+        />
+      </mesh>
+    </>
+  )
+}
+
+export function EnhancedMarsVisual() {
+  const ref = useRef<THREE.Mesh>(null)
+
+  const marsColor = useSafeTexture({
+    url: [
+      assetUrl('assets/mars/mars_color.jpg'),
+      assetUrl('textures/mars/mars_color.jpg')
+    ],
+    anisotropy: 8,
+    fallbackPattern: { type: 'checker', colors: ['#cd5c5c', '#8b3a3a'], size: 512, squares: 12 }
+  })
+
+  useFrame(() => {
+    if (ref.current) {
+      ref.current.rotation.y += 0.0097
+    }
+  })
+
+  return (
+    <mesh ref={ref}>
+      <sphereGeometry args={[SOLAR_SYSTEM_DATA.MARS.sceneRadius, 32, 32]} />
+      {marsColor ? (
+        <meshStandardMaterial map={marsColor} />
+      ) : (
+        <meshStandardMaterial color={SOLAR_SYSTEM_DATA.MARS.color} />
+      )}
+    </mesh>
+  )
+}
+
+export { SOLAR_SYSTEM_DATA }

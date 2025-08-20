@@ -11,10 +11,19 @@ import { Html } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
+import { useLaunchControl } from '../state/launchControlStore';
 import { MissionEnvironment3D, PhaseVisualIndicator } from './MissionEnvironment';
 import { SpacecraftType } from './SpacecraftModels';
 
 export function LaunchDemo() {
+  // Use global launch control store instead of local state
+  const launchTime = useLaunchControl((state) => state.launchTime);
+  const setLaunchTime = useLaunchControl((state) => state.setLaunchTime);
+  const currentState = useLaunchControl((state) => state.currentState);
+  const setCurrentState = useLaunchControl((state) => state.setCurrentState);
+  const resetLaunch = useLaunchControl((state) => state.resetLaunch);
+  const isLaunched = useLaunchControl((state) => state.isLaunched);
+
   const trajectoryRef = useRef<THREE.Line | null>(null);
   const trajectoryGeomRef = useRef<THREE.BufferGeometry | null>(null);
   const trajectoryMatRef = useRef<THREE.LineBasicMaterial | null>(null);
@@ -22,8 +31,6 @@ export function LaunchDemo() {
   const vehicleRef = useRef<THREE.Group>(null);
   const groupRef = useRef<THREE.Group>(null);
 
-  const [launchTime, setLaunchTime] = useState(-10);
-  const [currentState, setCurrentState] = useState<LaunchState | null>(null);
   const [simulationTime, setSimulationTime] = useState(0);
   const invalidStateCount = useRef(0);
 
@@ -95,6 +102,11 @@ export function LaunchDemo() {
   const lastSampleTimeRef = useRef(0);
 
   useFrame((_, renderDelta) => {
+    // Only start countdown/simulation if launch has been initiated
+    if (!isLaunched) {
+      return;
+    }
+
     if (launchTime < 0) {
       const d = Math.min(Math.max(renderDelta, 1 / 300), 0.1);
       setLaunchTime((prev) => prev + d);
@@ -123,7 +135,7 @@ export function LaunchDemo() {
           if (invalidStateCount.current > 5) {
             stateRef.current = initialState;
             setCurrentState(initialState);
-            setLaunchTime(-10);
+            resetLaunch();
             invalidStateCount.current = 0;
           }
           continue;
@@ -180,7 +192,7 @@ export function LaunchDemo() {
         if (invalidStateCount.current > 5) {
           stateRef.current = initialState;
           setCurrentState(initialState);
-          setLaunchTime(-10);
+          resetLaunch();
           invalidStateCount.current = 0;
         }
       }
@@ -196,18 +208,6 @@ export function LaunchDemo() {
       }
     }
   }, [trajectory]);
-
-  const initiateLaunch = () => {
-    invalidStateCount.current = 0;
-    accumulator.current = 0;
-    lastSampleTimeRef.current = 0;
-    const launchState: LaunchState = { ...initialState, phase: LaunchPhase.LIFTOFF };
-    const isFiniteArrayLocal = (arr: number[]) => arr.every((v) => Number.isFinite(v) && !Number.isNaN(v));
-    if (!isFiniteArrayLocal(launchState.r) || !isFiniteArrayLocal(launchState.v)) return;
-    stateRef.current = launchState;
-    setCurrentState(launchState);
-    setLaunchTime(0);
-  };
 
   function getTrajectoryColor(phase: LaunchPhase): string {
     switch (phase) {
@@ -229,32 +229,7 @@ export function LaunchDemo() {
     }
   }
 
-  function getMissionDescription(phase: LaunchPhase, altitude: number): string {
-    switch (phase) {
-      case LaunchPhase.PRELAUNCH:
-        return 'Pre-flight checks complete. Ready for launch.';
-      case LaunchPhase.LIFTOFF:
-        return 'Vehicle has cleared the launch tower.';
-      case LaunchPhase.STAGE1_BURN:
-        return 'First stage burning nominally.';
-      case LaunchPhase.MAX_Q:
-        return 'Passing through maximum dynamic pressure.';
-      case LaunchPhase.STAGE1_SEPARATION:
-        return 'First stage separation confirmed.';
-      case LaunchPhase.STAGE2_IGNITION:
-        return 'Second stage ignition confirmed.';
-      case LaunchPhase.FAIRING_JETTISON:
-        return 'Payload fairing jettisoned.';
-      case LaunchPhase.STAGE2_BURN:
-        return 'Second stage burn in progress.';
-      case LaunchPhase.ORBITAL_INSERTION:
-        return 'Performing orbital insertion burn.';
-      case LaunchPhase.ORBIT_CIRCULARIZATION:
-        return altitude > 300000 ? 'Orbit achieved! Mission success.' : 'Circularizing orbit.';
-      default:
-        return 'Mission in progress...';
-    }
-  }
+
 
   const handleTimeUpdate = (_deltaTime: number, totalTime: number) => {
     setSimulationTime(totalTime);
@@ -357,29 +332,7 @@ export function LaunchDemo() {
         </Html>
       )}
 
-      <Html position={[0, -12, 0]} center>
-        <div className="bg-black/80 text-white px-4 py-2 rounded-lg border border-gray-600 max-w-md">
-          {launchTime < 0 ? (
-            <div className="text-center">
-              <div className="text-lg font-bold mb-2">🚀 GNC Space Simulation</div>
-              <div className="text-sm mb-3">Real-time guidance, navigation & control simulation</div>
-              <button
-                onClick={initiateLaunch}
-                className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg text-lg shadow-lg transition-colors"
-              >
-                INITIATE LAUNCH
-              </button>
-            </div>
-          ) : (
-            <div className="text-center">
-              <div className="text-sm">Mission Status</div>
-              {currentState && (
-                <div className="text-xs mt-1 opacity-75">{getMissionDescription(currentState.phase, currentState.altitude)}</div>
-              )}
-            </div>
-          )}
-        </div>
-      </Html>
+
     </group>
   );
 }
