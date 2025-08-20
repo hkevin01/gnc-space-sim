@@ -1,8 +1,9 @@
 import { LaunchPhase } from '@gnc/core'
 import { Stars } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { useMemo, useRef, useState } from 'react'
+import { Suspense, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { assetUrl, useSafeTexture } from '../utils/textures'
 import { MISSION_SCENARIOS, MissionControl } from './MissionTypes'
 import { SpaceDataDisplay } from './NASAAPIIntegration'
 import { OrbitalSystem } from './OrbitalMechanics'
@@ -202,12 +203,14 @@ export function MissionEnvironment3D({
             />
           )}
 
-          {/* Legacy celestial bodies for compatibility */}
-          {environment.showEarth && <EarthVisual />}
-          {environment.showSun && <SunVisual />}
-          {environment.showMoon && <MoonVisual />}
-          {environment.showMars && <MarsVisual />}
-          {environment.showAsteroid && <AsteroidVisual />}
+          {/* Celestial bodies with textures and graceful fallbacks */}
+          <Suspense fallback={null}>
+            {environment.showEarth && <EarthVisual />}
+            {environment.showSun && <SunVisual />}
+            {environment.showMoon && <MoonVisual />}
+            {environment.showMars && <MarsVisual />}
+            {environment.showAsteroid && <AsteroidVisual />}
+          </Suspense>
 
           {/* Enhanced starfield background */}
           <Stars
@@ -344,16 +347,59 @@ function EarthVisual() {
   const cloudsRef = useRef<THREE.Mesh>(null)
   const atmosphereRef = useRef<THREE.Mesh>(null)
 
-  // For now, use procedural materials with enhanced appearance
-  // TODO: Add texture loading when assets are available
-  const earthMaterial = useMemo(() => new THREE.MeshStandardMaterial({
-    color: new THREE.Color(0.1, 0.3, 0.8), // Ocean blue
-    roughness: 0.9,
-    metalness: 0.05,
-    // Add some variation with a simple gradient
-    emissive: new THREE.Color(0.02, 0.05, 0.1),
-    emissiveIntensity: 0.1
-  }), [])
+  // Load textures from public assets with graceful fallback
+  const dayMap = useSafeTexture({
+    url: [
+      assetUrl('assets/earth/earth_day.jpg'),
+      assetUrl('textures/earth/earth_day.jpg'),
+      assetUrl('textures/earth/earth_day_4k.jpg')
+    ],
+    anisotropy: 8,
+    fallbackPattern: {
+      type: 'earth',
+      size: 1024,
+      squares: 64
+    }
+  })
+  const normalMap = useSafeTexture({
+    url: [
+      assetUrl('assets/earth/earth_normal.jpg'),
+      assetUrl('textures/earth/earth_normal.jpg')
+    ],
+  anisotropy: 8,
+  isColor: false
+  })
+  const specMap = useSafeTexture({
+    url: [
+  assetUrl('assets/earth/earth_spec.png'),
+  assetUrl('assets/earth/earth_spec.jpg'),
+  assetUrl('textures/earth/earth_spec.png'),
+  assetUrl('textures/earth/earth_spec.jpg')
+    ],
+  anisotropy: 8,
+  isColor: false
+  })
+
+  const earthMaterial = useMemo(() => {
+    if (dayMap) {
+      const mat = new THREE.MeshStandardMaterial({
+        roughness: 1.0,
+        metalness: 0.0
+      })
+      mat.map = dayMap
+      if (normalMap) mat.normalMap = normalMap
+      if (specMap) mat.metalnessMap = specMap
+      return mat
+    }
+    // Fallback procedural look
+    return new THREE.MeshStandardMaterial({
+      color: new THREE.Color(0.1, 0.3, 0.8),
+      roughness: 0.9,
+      metalness: 0.05,
+      emissive: new THREE.Color(0.02, 0.05, 0.1),
+      emissiveIntensity: 0.1
+    })
+  }, [dayMap, normalMap, specMap])
 
   // Animate rotation for realism
   useFrame(() => {
@@ -364,7 +410,7 @@ function EarthVisual() {
 
   return (
     <group>
-      {/* Main Earth body with enhanced procedural material */}
+  {/* Main Earth body with texture or fallback */}
       <mesh ref={ref} rotation={[0, Math.PI, 0]} material={earthMaterial}>
         <sphereGeometry args={[6.371, 128, 64]} />
       </mesh>
@@ -403,6 +449,14 @@ function EarthVisual() {
 
 function SunVisual() {
   const ref = useRef<THREE.Mesh>(null)
+  const sunMap = useSafeTexture({
+    url: [
+      assetUrl('assets/sun/sun_color.jpg'),
+      assetUrl('textures/sun/sun_color.jpg')
+    ],
+    anisotropy: 4,
+    fallbackPattern: { type: 'stripes', colors: ['#ffcc66', '#ff9933', '#ff6600'], size: 512, squares: 24 }
+  })
 
   // Animate sun rotation and pulsing
   useFrame((state) => {
@@ -416,15 +470,14 @@ function SunVisual() {
 
   return (
     <group position={[-150, 50, -200]}>
-      {/* Enhanced sun with procedural material */}
+      {/* Emissive sun with texture fallback */}
       <mesh ref={ref}>
         <sphereGeometry args={[8, 64, 32]} />
-        <meshStandardMaterial
-          color="#FFD700"
-          emissive={new THREE.Color("#FFA500")}
-          emissiveIntensity={1.5}
-          toneMapped={false}
-        />
+        {sunMap ? (
+          <meshBasicMaterial map={sunMap} />
+        ) : (
+          <meshBasicMaterial color="#ffaa33" />
+        )}
       </mesh>
 
       {/* Corona effect */}
@@ -464,6 +517,23 @@ function SunVisual() {
 
 function MoonVisual() {
   const ref = useRef<THREE.Mesh>(null)
+  const moonColor = useSafeTexture({
+    url: [
+      assetUrl('assets/moon/moon_color.jpg'),
+      assetUrl('textures/moon/moon_color.jpg')
+    ],
+    anisotropy: 8,
+    fallbackPattern: { type: 'checker', colors: ['#bdbdbd', '#9e9e9e', '#8c8c8c'], size: 1024, squares: 32 }
+  })
+  const moonDisplacement = useSafeTexture({
+    url: [
+      assetUrl('assets/moon/moon_displacement.tif'), // preferred (float/uint16) if served; three can't load tif natively
+      assetUrl('assets/moon/moon_displacement.png'), // converted preview
+      assetUrl('assets/moon/moon_displacement.jpg') // fallback preview
+    ],
+    anisotropy: 1,
+    isColor: false
+  })
 
   // Animate moon rotation (tidally locked, so very slow)
   useFrame(() => {
@@ -475,14 +545,18 @@ function MoonVisual() {
   return (
     <group position={[60, 10, 30]}>
       <mesh ref={ref}>
-        <sphereGeometry args={[1.737, 64, 32]} />
-        <meshStandardMaterial
-          color="#C0C0C0"
-          roughness={1}
-          metalness={0.05}
-          emissive={new THREE.Color("#1a1a1a")}
-          emissiveIntensity={0.02}
-        />
+        <sphereGeometry args={[1.737, 128, 64]} />
+        {moonColor ? (
+          <meshStandardMaterial map={moonColor} roughness={1} metalness={0.05} displacementMap={moonDisplacement ?? undefined} displacementScale={0.02} />
+        ) : (
+          <meshStandardMaterial
+            color="#C0C0C0"
+            roughness={1}
+            metalness={0.05}
+            emissive={new THREE.Color('#1a1a1a')}
+            emissiveIntensity={0.02}
+          />
+        )}
       </mesh>
     </group>
   )
@@ -491,6 +565,30 @@ function MoonVisual() {
 function MarsVisual() {
   const ref = useRef<THREE.Mesh>(null)
   const atmosphereRef = useRef<THREE.Mesh>(null)
+  const marsColor = useSafeTexture({
+    url: [
+      assetUrl('assets/mars/mars_color.jpg'),
+      assetUrl('textures/mars/mars_color.jpg')
+    ],
+    anisotropy: 8,
+    fallbackPattern: { type: 'checker', colors: ['#cd5c5c', '#8b3a3a'], size: 512, squares: 12 }
+  })
+  const marsNormal = useSafeTexture({
+    url: [
+      assetUrl('assets/mars/mars_normal.jpg'),
+      assetUrl('textures/mars/mars_normal.jpg')
+    ],
+    anisotropy: 8,
+    isColor: false
+  })
+  const marsDisplacement = useSafeTexture({
+    url: [
+      assetUrl('assets/mars/mars_displacement.jpg'),
+      assetUrl('assets/mars/mars_displacement.png')
+    ],
+    anisotropy: 1,
+    isColor: false
+  })
 
   // Animate Mars rotation
   useFrame(() => {
@@ -504,16 +602,14 @@ function MarsVisual() {
 
   return (
     <group position={[200, -30, 150]}>
-      {/* Mars surface */}
+      {/* Mars surface with texture fallback */}
       <mesh ref={ref}>
-        <sphereGeometry args={[3.39, 64, 32]} />
-        <meshStandardMaterial
-          color="#CD5C5C"
-          roughness={1}
-          metalness={0.02}
-          emissive={new THREE.Color("#4a1a1a")}
-          emissiveIntensity={0.01}
-        />
+        <sphereGeometry args={[3.39, 128, 64]} />
+        {marsColor ? (
+          <meshStandardMaterial map={marsColor} normalMap={marsNormal ?? undefined} displacementMap={marsDisplacement ?? undefined} displacementScale={0.05} roughness={1} metalness={0.0} />
+        ) : (
+          <meshStandardMaterial color="#CD5C5C" roughness={1} metalness={0.02} />
+        )}
       </mesh>
 
       {/* Thin atmosphere */}
