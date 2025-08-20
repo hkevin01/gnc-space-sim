@@ -1,13 +1,21 @@
 import { LaunchPhase } from '@gnc/core'
 import { Stars, useTexture } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
-import { useMemo, useRef } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
+import { MISSION_SCENARIOS, MissionControl } from './MissionTypes'
+import { SpaceDataDisplay } from './NASAAPIIntegration'
+import { OrbitalSystem } from './OrbitalMechanics'
+import { PostProcessingEffects } from './PostProcessing'
+import { AnimationManagerProvider, EnhancedSceneManager } from './SceneManager'
+import { SpacecraftModel, SpacecraftType } from './SpacecraftModels'
+import { MissionControlPanel } from './UIComponents'
 
 /**
- * Mission Environment Visualizer
+ * Enhanced Mission Environment Visualizer
  *
  * Renders appropriate celestial bodies and environments based on mission phase
+ * with advanced lighting, orbital mechanics, and UI components
  */
 
 interface MissionEnvironmentProps {
@@ -18,6 +26,12 @@ interface MissionEnvironmentProps {
 
 export function MissionEnvironment({ phase, missionTime, altitude }: MissionEnvironmentProps) {
   const group = useRef<THREE.Group>(null)
+  const [timeMultiplier, setTimeMultiplier] = useState(1)
+  const [targetBody, setTargetBody] = useState<string>('earth')
+  const [simulationTime, setSimulationTime] = useState(0)
+  const [currentMission, setCurrentMission] = useState('earthOrbit')
+  const [showSpaceData, setShowSpaceData] = useState(true)
+  const [showMissionControl, setShowMissionControl] = useState(false)
 
   // Calculate which celestial bodies to show based on mission phase and parameters
   const environment = useMemo(() => {
@@ -32,52 +46,200 @@ export function MissionEnvironment({ phase, missionTime, altitude }: MissionEnvi
     return { showEarth, showMoon, showSun, showMars, showAsteroid }
   }, [phase, missionTime, altitude])
 
+  // Mission data for UI components
+  const missionData = useMemo(() => ({
+    phase: phase.toString(),
+    altitude,
+    velocity: Math.sqrt(398600.4418 / (6371 + altitude / 1000)) * 1000, // Orbital velocity approximation
+    missionTime,
+    fuel: Math.max(0, 100 - (missionTime / 600) * 100), // Simple fuel consumption model
+    targetBody
+  }), [phase, altitude, missionTime, targetBody])
+
+  // Determine spacecraft type based on mission
+  const spacecraftType = useMemo(() => {
+    const mission = MISSION_SCENARIOS[currentMission]
+    const spacecraftName = mission?.spacecraft || 'falcon9'
+
+    // Map spacecraft names to enum values
+    switch (spacecraftName) {
+      case 'falcon9': return SpacecraftType.FALCON9
+      case 'dragon': return SpacecraftType.DRAGON
+      case 'sls': return SpacecraftType.SLS
+      case 'orion': return SpacecraftType.ORION
+      case 'starship': return SpacecraftType.STARSHIP
+      case 'probe': return SpacecraftType.INTERPLANETARY_PROBE
+      default: return SpacecraftType.FALCON9
+    }
+  }, [currentMission])
+
+  // Determine mission phase for spacecraft
+  const missionPhase = useMemo(() => {
+    if (phase === LaunchPhase.LIFTOFF || phase === LaunchPhase.STAGE1_SEPARATION) return 'launch'
+    if (phase === LaunchPhase.ORBITAL_INSERTION || phase === LaunchPhase.ORBIT_CIRCULARIZATION) return 'landing'
+    return 'cruise'
+  }, [phase])
+
+  const handleTimeUpdate = (deltaTime: number, totalTime: number) => {
+    setSimulationTime(totalTime)
+  }
+
+  const handleMissionChange = (missionId: string) => {
+    setCurrentMission(missionId)
+    // Update target body based on mission
+    const mission = MISSION_SCENARIOS[missionId]
+    if (mission) {
+      setTargetBody(mission.target.toLowerCase())
+    }
+  }
+
+  const handleMissionTimeChange = (time: number) => {
+    // This would integrate with the main mission time system
+    console.log('Mission time changed to:', time)
+  }
+
   return (
-    <group ref={group}>
-      {/* Enhanced ambient lighting for better material visibility */}
-      <ambientLight intensity={0.15} color="#4682B4" />
+    <>
+      {/* Enhanced Animation Manager */}
+      <AnimationManagerProvider
+        timeMultiplier={timeMultiplier}
+        onTimeUpdate={handleTimeUpdate}
+      >
+        {/* Enhanced Scene Manager */}
+        <EnhancedSceneManager />
 
-      {/* Directional light simulating distant starlight */}
-      <directionalLight
-        position={[100, 100, 50]}
-        intensity={0.3}
-        color="#E6E6FA"
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-camera-far={1000}
-        shadow-camera-left={-100}
-        shadow-camera-right={100}
-        shadow-camera-top={100}
-        shadow-camera-bottom={-100}
+        <group ref={group}>
+          {/* Enhanced ambient lighting for better material visibility */}
+          <ambientLight intensity={0.15} color="#4682B4" />
+
+          {/* Directional light simulating distant starlight */}
+          <directionalLight
+            position={[100, 100, 50]}
+            intensity={0.3}
+            color="#E6E6FA"
+            castShadow
+            shadow-mapSize-width={2048}
+            shadow-mapSize-height={2048}
+            shadow-camera-far={1000}
+            shadow-camera-left={-100}
+            shadow-camera-right={100}
+            shadow-camera-top={100}
+            shadow-camera-bottom={-100}
+          />
+
+          {/* Realistic Orbital System */}
+          <OrbitalSystem
+            simulationTime={simulationTime}
+            showOrbits={altitude > 1_000_000}
+            showLabels={altitude > 500_000}
+          />
+
+          {/* Enhanced Spacecraft Model */}
+          <SpacecraftModel
+            type={spacecraftType}
+            position={new THREE.Vector3(0, 0, 0)}
+            rotation={new THREE.Euler(0, 0, 0)}
+            showEngineEffects={missionPhase === 'launch'}
+            phase={missionPhase}
+          />
+
+          {/* Legacy celestial bodies for compatibility */}
+          {environment.showEarth && <EarthVisual />}
+          {environment.showSun && <SunVisual />}
+          {environment.showMoon && <MoonVisual />}
+          {environment.showMars && <MarsVisual />}
+          {environment.showAsteroid && <AsteroidVisual />}
+
+          {/* Enhanced starfield background */}
+          <Stars
+            radius={1000}
+            depth={50}
+            count={6000}
+            factor={4}
+            saturation={0.2}
+            fade
+            speed={0.3}
+          />
+        </group>
+
+        {/* Post-processing effects */}
+        <PostProcessingEffects
+          altitude={altitude}
+          phase={phase.toString()}
+          missionTime={missionTime}
+        />
+      </AnimationManagerProvider>
+
+      {/* Mission Control UI */}
+      <MissionControlPanel
+        missionData={missionData}
+        onTimeControlChange={setTimeMultiplier}
+        onTargetBodyChange={setTargetBody}
+        simulationTime={simulationTime}
       />
 
-      {/* Earth - always visible during launch */}
-      {environment.showEarth && <EarthVisual />}
+      {/* Enhanced Mission Control (toggle visibility) */}
+      {showMissionControl && (
+        <MissionControl
+          currentMission={currentMission}
+          onMissionChange={handleMissionChange}
+          missionTime={missionTime}
+          onTimeChange={handleMissionTimeChange}
+        />
+      )}
 
-      {/* Sun - visible after reaching space */}
-      {environment.showSun && <SunVisual />}
+      {/* Real-time Space Data Display */}
+      {showSpaceData && (
+        <SpaceDataDisplay
+          position={[20, 120, 0]}
+          showISS={true}
+          showCelestialBodies={true}
+          showNEOs={true}
+          compact={true}
+        />
+      )}
 
-      {/* Moon - visible during orbital phases */}
-      {environment.showMoon && <MoonVisual />}
-
-      {/* Mars - visible during deep space phases */}
-      {environment.showMars && <MarsVisual />}
-
-      {/* Asteroid - visible during interplanetary transfer */}
-      {environment.showAsteroid && <AsteroidVisual />}
-
-      {/* Enhanced starfield background with better density and effects */}
-      <Stars
-        radius={1000}
-        depth={50}
-        count={6000}
-        factor={4}
-        saturation={0.2}
-        fade
-        speed={0.3}
-      />
-    </group>
+      {/* Controls for toggling UI elements */}
+      <div style={{
+        position: 'absolute',
+        bottom: '20px',
+        right: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '8px'
+      }}>
+        <button
+          onClick={() => setShowMissionControl(!showMissionControl)}
+          style={{
+            padding: '8px 16px',
+            background: showMissionControl ? '#2563eb' : 'rgba(37, 99, 235, 0.7)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontFamily: 'Courier New, monospace'
+          }}
+        >
+          {showMissionControl ? '🚀 Hide Mission Control' : '🚀 Show Mission Control'}
+        </button>
+        <button
+          onClick={() => setShowSpaceData(!showSpaceData)}
+          style={{
+            padding: '8px 16px',
+            background: showSpaceData ? '#059669' : 'rgba(5, 150, 105, 0.7)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontFamily: 'Courier New, monospace'
+          }}
+        >
+          {showSpaceData ? '🛰️ Hide Space Data' : '🛰️ Show Space Data'}
+        </button>
+      </div>
+    </>
   )
 }
 

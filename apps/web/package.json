@@ -12,30 +12,32 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@gnc/core": "workspace:*",
+    "@gnc/scenarios": "workspace:*",
+    "@gnc/ui": "workspace:*",
+    "@react-three/drei": "^9.121.5",
+    "@react-three/fiber": "^8.17.10",
+    "@react-three/postprocessing": "^2.19.1",
+    "plotly.js-dist-min": "^2.35.3",
+    "postprocessing": "^6.37.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "three": "^0.169.0",
-    "@react-three/fiber": "^8.17.10",
-    "@react-three/drei": "^9.121.5",
-    "zustand": "^5.0.7",
-    "plotly.js-dist-min": "^2.35.3",
-    "@gnc/core": "workspace:*",
-    "@gnc/ui": "workspace:*",
-    "@gnc/scenarios": "workspace:*"
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
-    "typescript": "^5.6.2",
+    "@tailwindcss/vite": "^4.1.0",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
-  "@types/three": "^0.170.0",
-    "vite": "^6.0.0",
+    "@types/three": "^0.170.0",
     "@vitejs/plugin-react": "^4.3.4",
-    "@tailwindcss/vite": "^4.1.0",
-    "tailwindcss": "^4.1.0",
     "eslint": "^9.9.0",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.6.2",
     "typescript-eslint": "^8.6.0",
+    "vite": "^6.0.0",
     "vitest": "^2.0.5"
   }
 }
