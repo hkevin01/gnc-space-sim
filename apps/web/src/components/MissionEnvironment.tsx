@@ -10,6 +10,7 @@ import { OrbitalSystem } from './OrbitalMechanics'
 import { PostProcessingEffects } from './PostProcessing'
 import { AnimationManagerProvider, EnhancedSceneManager } from './SceneManager'
 import { SpacecraftModel, SpacecraftType } from './SpacecraftModels'
+import { TerrainControlsPanel, TerrainControlsProvider, useTerrain } from './TerrainControls'
 import { MissionControlPanel } from './UIComponents'
 
 /**
@@ -98,7 +99,7 @@ export function MissionEnvironment({ phase, missionTime, altitude }: MissionEnvi
   }
 
   return (
-    <>
+    <TerrainControlsProvider>
       {/* Three.js Scene Elements Only */}
       <MissionEnvironment3D
         phase={phase}
@@ -124,7 +125,7 @@ export function MissionEnvironment({ phase, missionTime, altitude }: MissionEnvi
         missionTime={missionTime}
         onTimeChange={handleMissionTimeChange}
       />
-    </>
+    </TerrainControlsProvider>
   )
 }
 
@@ -266,6 +267,7 @@ export function MissionEnvironmentUI({
 }) {
   const [showMissionControl, setShowMissionControl] = useState(false)
   const [showSpaceData, setShowSpaceData] = useState(true)
+  const [showTerrainControls, setShowTerrainControls] = useState(false)
 
   return (
     <>
@@ -297,6 +299,9 @@ export function MissionEnvironmentUI({
           compact={true}
         />
       )}
+
+      {/* Terrain Controls UI */}
+      {showTerrainControls && <TerrainControlsPanel />}
 
       {/* Controls for toggling UI elements */}
       <div style={{
@@ -336,6 +341,21 @@ export function MissionEnvironmentUI({
           }}
         >
           {showSpaceData ? '🛰️ Hide Space Data' : '🛰️ Show Space Data'}
+        </button>
+        <button
+          onClick={() => setShowTerrainControls(!showTerrainControls)}
+          style={{
+            padding: '8px 16px',
+            background: showTerrainControls ? '#dc2626' : 'rgba(220, 38, 38, 0.7)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '12px',
+            fontFamily: 'Courier New, monospace'
+          }}
+        >
+          {showTerrainControls ? '🏔️ Hide Terrain' : '🏔️ Show Terrain'}
         </button>
       </div>
     </>
@@ -517,6 +537,7 @@ function SunVisual() {
 
 function MoonVisual() {
   const ref = useRef<THREE.Mesh>(null)
+  const { settings } = useTerrain()
   const moonColor = useSafeTexture({
     url: [
       assetUrl('assets/moon/moon_color.jpg'),
@@ -527,8 +548,7 @@ function MoonVisual() {
   })
   const moonDisplacement = useSafeTexture({
     url: [
-      assetUrl('assets/moon/moon_displacement.tif'), // preferred (float/uint16) if served; three can't load tif natively
-      assetUrl('assets/moon/moon_displacement.png'), // converted preview
+      assetUrl('assets/moon/moon_displacement.png'), // preferred 16-bit PNG
       assetUrl('assets/moon/moon_displacement.jpg') // fallback preview
     ],
     anisotropy: 1,
@@ -547,7 +567,13 @@ function MoonVisual() {
       <mesh ref={ref}>
         <sphereGeometry args={[1.737, 128, 64]} />
         {moonColor ? (
-          <meshStandardMaterial map={moonColor} roughness={1} metalness={0.05} displacementMap={moonDisplacement ?? undefined} displacementScale={0.02} />
+          <meshStandardMaterial
+            map={moonColor}
+            roughness={1}
+            metalness={0.05}
+            displacementMap={settings.enableDisplacement ? moonDisplacement ?? undefined : undefined}
+            displacementScale={settings.enableDisplacement ? settings.moonDisplacementScale : 0}
+          />
         ) : (
           <meshStandardMaterial
             color="#C0C0C0"
@@ -565,6 +591,7 @@ function MoonVisual() {
 function MarsVisual() {
   const ref = useRef<THREE.Mesh>(null)
   const atmosphereRef = useRef<THREE.Mesh>(null)
+  const { settings } = useTerrain()
   const marsColor = useSafeTexture({
     url: [
       assetUrl('assets/mars/mars_color.jpg'),
@@ -583,8 +610,8 @@ function MarsVisual() {
   })
   const marsDisplacement = useSafeTexture({
     url: [
-      assetUrl('assets/mars/mars_displacement.jpg'),
-      assetUrl('assets/mars/mars_displacement.png')
+      assetUrl('assets/mars/mars_displacement.png'), // preferred 16-bit PNG
+      assetUrl('assets/mars/mars_displacement.jpg')  // fallback preview
     ],
     anisotropy: 1,
     isColor: false
@@ -606,7 +633,14 @@ function MarsVisual() {
       <mesh ref={ref}>
         <sphereGeometry args={[3.39, 128, 64]} />
         {marsColor ? (
-          <meshStandardMaterial map={marsColor} normalMap={marsNormal ?? undefined} displacementMap={marsDisplacement ?? undefined} displacementScale={0.05} roughness={1} metalness={0.0} />
+          <meshStandardMaterial
+            map={marsColor}
+            normalMap={marsNormal ?? undefined}
+            displacementMap={settings.enableDisplacement ? marsDisplacement ?? undefined : undefined}
+            displacementScale={settings.enableDisplacement ? settings.marsDisplacementScale : 0}
+            roughness={1}
+            metalness={0.0}
+          />
         ) : (
           <meshStandardMaterial color="#CD5C5C" roughness={1} metalness={0.02} />
         )}

@@ -21,10 +21,16 @@ curl -L -o earth/earth_spec.png "https://eoimages.gsfc.nasa.gov/images/imagereco
 echo "Failed to download Earth specular texture"
 
 echo "Downloading Mars textures..."
-# Mars color (USGS Viking mosaic)
-wget -O mars/mars_color.jpg "https://planetarymaps.usgs.gov/mosaic/mars_viking_mdim21_color/MDIM21_ClrMosaic_global_1024.jpg" || \
-curl -L -o mars/mars_color.jpg "https://planetarymaps.usgs.gov/mosaic/mars_viking_mdim21_color/MDIM21_ClrMosaic_global_1024.jpg" || \
-echo "Failed to download Mars color texture"
+# Mars color (USGS Viking mosaic) - try 2K first, fallback to 1K
+echo "Trying Mars 2K color texture..."
+wget -O mars/mars_color.jpg "https://astrogeology.usgs.gov/ckan/dataset/7131d503-cdc9-45a5-8f83-5126c0fd397e/resource/5ea881c6-01b3-41fa-a7af-42d2131b54f1/download/mars_viking_mdim21_clrmosaic_1km.jpg" || \
+curl -L -o mars/mars_color.jpg "https://astrogeology.usgs.gov/ckan/dataset/7131d503-cdc9-45a5-8f83-5126c0fd397e/resource/5ea881c6-01b3-41fa-a7af-42d2131b54f1/download/mars_viking_mdim21_clrmosaic_1km.jpg" || \
+{
+  echo "2K failed, trying 1K fallback..."
+  wget -O mars/mars_color.jpg "https://planetarymaps.usgs.gov/mosaic/mars_viking_mdim21_color/MDIM21_ClrMosaic_global_1024.jpg" || \
+  curl -L -o mars/mars_color.jpg "https://planetarymaps.usgs.gov/mosaic/mars_viking_mdim21_color/MDIM21_ClrMosaic_global_1024.jpg" || \
+  echo "Failed to download Mars color texture"
+}
 
 # Copy Mars color as normal placeholder
 cp mars/mars_color.jpg mars/mars_normal.jpg 2>/dev/null || true
@@ -59,10 +65,16 @@ ls -lh earth/ mars/ moon/ sun/ 2>/dev/null || echo "No files downloaded"
 cat << 'EOS'
 
 Notes:
+- Mars color: tries 2K (~1000px) from USGS, falls back to 1K if needed. The ~1000px version has better detail than the 1024px fallback.
 - The Mars displacement here uses a 1024px browse JPG as a lightweight stand-in for the 11 GB GeoTIFF DEM. It encodes shaded relief, not raw elevation; use small displacementScale.
 - For the Moon, the ldem_3_8bit.jpg is a browse image. For accurate displacement, download one of the TIFFs from https://svs.gsfc.nasa.gov/4720/ (ldem_4, 16 or 64 ppd), then convert to PNG:
-		# Requires ImageMagick
-		convert ldem_64ppd_16bit.tif -auto-level -gamma 1.0 moon_displacement.png
-	Then place it at public/assets/moon/moon_displacement.png. Adjust displacementScale as needed.
+    # Requires ImageMagick
+    convert ldem_64ppd_16bit.tif -auto-level -gamma 1.0 moon/moon_displacement.png
+  Then place it at public/assets/moon/moon_displacement.png. Use the live terrain controls to adjust displacementScale.
+
+For high-precision displacement maps:
+- Download NASA SVS Moon Kit TIFFs (16-bit or float) and convert using convert-dem-examples.sh
+- Convert Mars HRSC+MOLA blended DEM subset using the same approach
+- These provide true elevation data vs the browse images
 
 EOS
