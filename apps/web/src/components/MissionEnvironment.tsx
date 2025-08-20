@@ -30,8 +30,6 @@ export function MissionEnvironment({ phase, missionTime, altitude }: MissionEnvi
   const [targetBody, setTargetBody] = useState<string>('earth')
   const [simulationTime, setSimulationTime] = useState(0)
   const [currentMission, setCurrentMission] = useState('earthOrbit')
-  const [showSpaceData, setShowSpaceData] = useState(true)
-  const [showMissionControl, setShowMissionControl] = useState(false)
 
   // Calculate which celestial bodies to show based on mission phase and parameters
   const environment = useMemo(() => {
@@ -100,10 +98,65 @@ export function MissionEnvironment({ phase, missionTime, altitude }: MissionEnvi
 
   return (
     <>
+      {/* Three.js Scene Elements Only */}
+      <MissionEnvironment3D
+        phase={phase}
+        missionTime={missionTime}
+        altitude={altitude}
+        timeMultiplier={timeMultiplier}
+        simulationTime={simulationTime}
+        onTimeUpdate={handleTimeUpdate}
+        environment={environment}
+        spacecraftType={spacecraftType}
+        missionPhase={missionPhase}
+        group={group}
+      />
+
+      {/* HTML UI Elements */}
+      <MissionEnvironmentUI
+        missionData={missionData}
+        onTimeControlChange={setTimeMultiplier}
+        onTargetBodyChange={setTargetBody}
+        simulationTime={simulationTime}
+        currentMission={currentMission}
+        onMissionChange={handleMissionChange}
+        missionTime={missionTime}
+        onTimeChange={handleMissionTimeChange}
+      />
+    </>
+  )
+}
+
+// Three.js scene elements only - safe for use inside Canvas
+export function MissionEnvironment3D({
+  phase,
+  missionTime,
+  altitude,
+  timeMultiplier,
+  simulationTime,
+  onTimeUpdate,
+  environment,
+  spacecraftType,
+  missionPhase,
+  group
+}: {
+  phase: LaunchPhase
+  missionTime: number
+  altitude: number
+  timeMultiplier: number
+  simulationTime: number
+  onTimeUpdate: (deltaTime: number, totalTime: number) => void
+  environment: { showEarth: boolean; showMoon: boolean; showSun: boolean; showMars: boolean; showAsteroid: boolean }
+  spacecraftType: SpacecraftType
+  missionPhase: string
+  group: React.RefObject<THREE.Group>
+}) {
+  return (
+    <>
       {/* Enhanced Animation Manager */}
       <AnimationManagerProvider
         timeMultiplier={timeMultiplier}
-        onTimeUpdate={handleTimeUpdate}
+        onTimeUpdate={onTimeUpdate}
       >
         {/* Enhanced Scene Manager */}
         <EnhancedSceneManager />
@@ -169,12 +222,49 @@ export function MissionEnvironment({ phase, missionTime, altitude }: MissionEnvi
           missionTime={missionTime}
         />
       </AnimationManagerProvider>
+    </>
+  )
+}
 
+interface MissionData {
+  phase: string
+  altitude: number
+  velocity: number
+  missionTime: number
+  fuel: number
+  targetBody: string
+}
+
+// HTML UI elements only - must be outside Canvas
+export function MissionEnvironmentUI({
+  missionData,
+  onTimeControlChange,
+  onTargetBodyChange,
+  simulationTime,
+  currentMission,
+  onMissionChange,
+  missionTime,
+  onTimeChange
+}: {
+  missionData: MissionData
+  onTimeControlChange: (multiplier: number) => void
+  onTargetBodyChange: (body: string) => void
+  simulationTime: number
+  currentMission: string
+  onMissionChange: (missionId: string) => void
+  missionTime: number
+  onTimeChange: (time: number) => void
+}) {
+  const [showMissionControl, setShowMissionControl] = useState(false)
+  const [showSpaceData, setShowSpaceData] = useState(true)
+
+  return (
+    <>
       {/* Mission Control UI */}
       <MissionControlPanel
         missionData={missionData}
-        onTimeControlChange={setTimeMultiplier}
-        onTargetBodyChange={setTargetBody}
+        onTimeControlChange={onTimeControlChange}
+        onTargetBodyChange={onTargetBodyChange}
         simulationTime={simulationTime}
       />
 
@@ -182,9 +272,9 @@ export function MissionEnvironment({ phase, missionTime, altitude }: MissionEnvi
       {showMissionControl && (
         <MissionControl
           currentMission={currentMission}
-          onMissionChange={handleMissionChange}
+          onMissionChange={onMissionChange}
           missionTime={missionTime}
-          onTimeChange={handleMissionTimeChange}
+          onTimeChange={onTimeChange}
         />
       )}
 
@@ -241,9 +331,7 @@ export function MissionEnvironment({ phase, missionTime, altitude }: MissionEnvi
       </div>
     </>
   )
-}
-
-function EarthVisual() {
+}function EarthVisual() {
   // Enhanced texture loading with multiple maps for realistic PBR rendering
   const textures = useTexture({
     map: 'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg',

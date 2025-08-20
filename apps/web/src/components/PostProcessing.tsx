@@ -109,44 +109,6 @@ export function PostProcessingEffects({ altitude, phase, missionTime }: PostProc
 }
 
 /**
- * Atmospheric Effects Component
- */
-function AtmosphericEffects({ altitude }: { altitude: number }) {
-  const atmosphereRef = useRef<THREE.Mesh>(null)
-
-  useFrame(() => {
-    if (atmosphereRef.current && altitude < 1_000_000) {
-      // Calculate atmosphere opacity based on altitude
-      const maxAtmosphereAltitude = 100_000 // 100km
-      const atmosphereOpacity = Math.max(0, 1 - (altitude / maxAtmosphereAltitude))
-
-      const material = atmosphereRef.current.material as THREE.MeshBasicMaterial
-      material.opacity = atmosphereOpacity * 0.3
-
-      // Atmospheric color changes with altitude
-      const lowAltColor = new THREE.Color(0x87CEEB) // Sky blue
-      const highAltColor = new THREE.Color(0x191970) // Midnight blue
-      const blendFactor = altitude / maxAtmosphereAltitude
-
-      material.color.lerpColors(lowAltColor, highAltColor, blendFactor)
-    }
-  })
-
-  return (
-    <mesh ref={atmosphereRef} position={[0, 0, 0]}>
-      <sphereGeometry args={[50, 32, 16]} />
-      <meshBasicMaterial
-        transparent
-        side={THREE.BackSide}
-        blending={THREE.AdditiveBlending}
-        opacity={0.1}
-        color="#87CEEB"
-      />
-    </mesh>
-  )
-}
-
-/**
  * Simple Bloom Effect using Three.js built-ins
  */
 export function SimpleBloomEffect({

@@ -10,7 +10,8 @@ import { Html } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
-import { MissionEnvironment, PhaseVisualIndicator } from './MissionEnvironment'
+import { MissionEnvironment3D, PhaseVisualIndicator } from './MissionEnvironment'
+import { SpacecraftType } from './SpacecraftModels'
 
 /**
  * Launch Trajectory Visualization Component
@@ -21,11 +22,14 @@ import { MissionEnvironment, PhaseVisualIndicator } from './MissionEnvironment'
 export function LaunchDemo() {
   const trajectoryRef = useRef<THREE.Line>(null)
   const vehicleRef = useRef<THREE.Group>(null)
+  const groupRef = useRef<THREE.Group>(null)
   const [launchTime, setLaunchTime] = useState(-10) // Start in prelaunch
   const [currentState, setCurrentState] = useState<LaunchState | null>(null)
   const [trajectory, setTrajectory] = useState<THREE.Vector3[]>(() => [
     new THREE.Vector3(6.371, 0, 0) // Initial position at Earth surface (megameters)
   ])
+  const [timeMultiplier, setTimeMultiplier] = useState(1)
+  const [simulationTime, setSimulationTime] = useState(0)
 
   // Initialize launch parameters
   const guidance = useMemo(() => new GravityTurnGuidance(400000, 28.5 * Math.PI / 180), [])
@@ -225,13 +229,34 @@ export function LaunchDemo() {
     }
   }
 
+  // Callback for time updates from MissionEnvironment3D
+  const handleTimeUpdate = (deltaTime: number, totalTime: number) => {
+    setSimulationTime(totalTime)
+  }
+
+  // Environment configuration for MissionEnvironment3D
+  const environment = {
+    showEarth: true,
+    showMoon: false,
+    showSun: true,
+    showMars: false,
+    showAsteroid: false
+  }
+
   return (
     <group>
       {/* Mission Environment with celestial bodies */}
-      <MissionEnvironment
+      <MissionEnvironment3D
         phase={currentState?.phase || LaunchPhase.PRELAUNCH}
         missionTime={launchTime > 0 ? launchTime : 0}
         altitude={currentState?.altitude || 0}
+        timeMultiplier={timeMultiplier}
+        simulationTime={simulationTime}
+        onTimeUpdate={handleTimeUpdate}
+        environment={environment}
+        spacecraftType={SpacecraftType.FALCON9}
+        missionPhase={currentState?.phase || LaunchPhase.PRELAUNCH}
+        group={groupRef}
       />
 
       {/* Launch vehicle */}
