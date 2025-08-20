@@ -36,10 +36,8 @@ WORKDIR /workspace
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 
 # Create non-root user for security
-RUN groupadd --gid 1001 developer && \
-  useradd --uid 1001 --gid developer --shell /bin/bash --create-home developer
-
-# ==========================================
+RUN groupadd --gid 1000 developer && \
+  useradd --uid 1000 --gid developer --shell /bin/bash --create-home developer# ==========================================
 # Dependencies Layer (Cached when unchanged)
 # ==========================================
 FROM base AS dependencies
@@ -86,6 +84,10 @@ ENV PATH=$PNPM_HOME:/home/developer/.local/bin:$PATH
 RUN pnpm config set global-bin-dir /home/developer/.local/bin \
   && pnpm config set global-dir $PNPM_HOME \
   && pnpm install -g @types/node typescript tsx nodemon
+
+# Ensure proper permissions for Vite cache directories
+RUN mkdir -p /workspace/apps/web/node_modules/.vite-temp && \
+  chmod 755 /workspace/apps/web/node_modules/.vite-temp
 
 # Expose common development ports
 EXPOSE 5173 5174 5175 5176 5177 5178 5179 3000 3001 8080 9000

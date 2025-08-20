@@ -1,5 +1,5 @@
 import { LaunchPhase } from '@gnc/core'
-import { Stars, useTexture } from '@react-three/drei'
+import { Stars } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
@@ -138,7 +138,8 @@ export function MissionEnvironment3D({
   environment,
   spacecraftType,
   missionPhase,
-  group
+  group,
+  showSpacecraft = true
 }: {
   phase: LaunchPhase
   missionTime: number
@@ -150,6 +151,7 @@ export function MissionEnvironment3D({
   spacecraftType: SpacecraftType
   missionPhase: string
   group: React.RefObject<THREE.Group>
+  showSpacecraft?: boolean
 }) {
   return (
     <>
@@ -187,14 +189,18 @@ export function MissionEnvironment3D({
             showLabels={altitude > 500_000}
           />
 
-          {/* Enhanced Spacecraft Model */}
-          <SpacecraftModel
-            type={spacecraftType}
-            position={new THREE.Vector3(0, 0, 0)}
-            rotation={new THREE.Euler(0, 0, 0)}
-            showEngineEffects={missionPhase === 'launch'}
-            phase={missionPhase}
-          />
+          {/* Enhanced Spacecraft Model (optional) */}
+          {showSpacecraft && (
+            <SpacecraftModel
+              type={spacecraftType}
+              position={new THREE.Vector3(0, 0, 0)}
+              rotation={new THREE.Euler(0, 0, 0)}
+              // Scale down to match megameter world units (1 unit = 1e6 m)
+              scale={1e-6}
+              showEngineEffects={missionPhase === 'launch'}
+              phase={missionPhase}
+            />
+          )}
 
           {/* Legacy celestial bodies for compatibility */}
           {environment.showEarth && <EarthVisual />}
@@ -331,58 +337,39 @@ export function MissionEnvironmentUI({
       </div>
     </>
   )
-}function EarthVisual() {
-  // Enhanced texture loading with multiple maps for realistic PBR rendering
-  const textures = useTexture({
-    map: 'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg',
-    normalMap: 'https://threejs.org/examples/textures/planets/earth_normal_2048.jpg',
-    specularMap: 'https://threejs.org/examples/textures/planets/earth_specular_2048.jpg',
-    emissiveMap: 'https://threejs.org/examples/textures/planets/earth_lights_2048.png'
-  }) as unknown as {
-    map: THREE.Texture;
-    normalMap: THREE.Texture;
-    specularMap: THREE.Texture;
-    emissiveMap: THREE.Texture;
-  }
+}
 
-  const clouds = useTexture('https://threejs.org/examples/textures/planets/earth_clouds_1024.png') as THREE.Texture
+function EarthVisual() {
   const ref = useRef<THREE.Mesh>(null)
   const cloudsRef = useRef<THREE.Mesh>(null)
   const atmosphereRef = useRef<THREE.Mesh>(null)
 
+  // For now, use procedural materials with enhanced appearance
+  // TODO: Add texture loading when assets are available
+  const earthMaterial = useMemo(() => new THREE.MeshStandardMaterial({
+    color: new THREE.Color(0.1, 0.3, 0.8), // Ocean blue
+    roughness: 0.9,
+    metalness: 0.05,
+    // Add some variation with a simple gradient
+    emissive: new THREE.Color(0.02, 0.05, 0.1),
+    emissiveIntensity: 0.1
+  }), [])
+
   // Animate rotation for realism
   useFrame(() => {
-    if (ref.current) {
-      ref.current.rotation.y += 0.001 // Earth rotation
-    }
-    if (cloudsRef.current) {
-      cloudsRef.current.rotation.y += 0.0015 // Clouds rotate slightly faster
-    }
-    if (atmosphereRef.current) {
-      atmosphereRef.current.rotation.y += 0.0005 // Atmosphere subtle rotation
-    }
+    if (ref.current) ref.current.rotation.y += 0.001
+    if (cloudsRef.current) cloudsRef.current.rotation.y += 0.0015
+    if (atmosphereRef.current) atmosphereRef.current.rotation.y += 0.0005
   })
 
   return (
     <group>
-      {/* Main Earth body with enhanced PBR materials */}
-      <mesh ref={ref} rotation={[0, Math.PI, 0]}>
+      {/* Main Earth body with enhanced procedural material */}
+      <mesh ref={ref} rotation={[0, Math.PI, 0]} material={earthMaterial}>
         <sphereGeometry args={[6.371, 128, 64]} />
-        <meshStandardMaterial
-          map={textures.map}
-          normalMap={textures.normalMap}
-          normalScale={new THREE.Vector2(0.5, 0.5)}
-          roughnessMap={textures.specularMap}
-          roughness={0.9}
-          metalness={0.05}
-          emissiveMap={textures.emissiveMap}
-          emissive={new THREE.Color('#0b1a2a')}
-          emissiveIntensity={0.4}
-          envMapIntensity={0.8}
-        />
       </mesh>
 
-      {/* Enhanced atmosphere with better blending */}
+      {/* Atmosphere */}
       <mesh ref={atmosphereRef}>
         <sphereGeometry args={[6.471, 64, 32]} />
         <meshPhysicalMaterial
@@ -398,13 +385,13 @@ export function MissionEnvironmentUI({
         />
       </mesh>
 
-      {/* Dynamic cloud layer */}
+      {/* Procedural cloud layer */}
       <mesh ref={cloudsRef}>
         <sphereGeometry args={[6.39, 128, 64]} />
         <meshPhongMaterial
-          map={clouds}
+          color="white"
           transparent
-          opacity={0.4}
+          opacity={0.3}
           depthWrite={false}
           side={THREE.FrontSide}
           blending={THREE.AdditiveBlending}
@@ -415,7 +402,6 @@ export function MissionEnvironmentUI({
 }
 
 function SunVisual() {
-  const sunTexture = useTexture('https://threejs.org/examples/textures/planets/sun.jpg') as THREE.Texture
   const ref = useRef<THREE.Mesh>(null)
 
   // Animate sun rotation and pulsing
@@ -430,11 +416,10 @@ function SunVisual() {
 
   return (
     <group position={[-150, 50, -200]}>
-      {/* Enhanced sun with realistic material */}
+      {/* Enhanced sun with procedural material */}
       <mesh ref={ref}>
         <sphereGeometry args={[8, 64, 32]} />
         <meshStandardMaterial
-          map={sunTexture}
           color="#FFD700"
           emissive={new THREE.Color("#FFA500")}
           emissiveIntensity={1.5}
@@ -478,7 +463,6 @@ function SunVisual() {
 }
 
 function MoonVisual() {
-  const texture = useTexture('https://threejs.org/examples/textures/planets/moon_1024.jpg') as THREE.Texture
   const ref = useRef<THREE.Mesh>(null)
 
   // Animate moon rotation (tidally locked, so very slow)
@@ -493,10 +477,9 @@ function MoonVisual() {
       <mesh ref={ref}>
         <sphereGeometry args={[1.737, 64, 32]} />
         <meshStandardMaterial
-          map={texture}
+          color="#C0C0C0"
           roughness={1}
           metalness={0.05}
-          color="#C0C0C0"
           emissive={new THREE.Color("#1a1a1a")}
           emissiveIntensity={0.02}
         />
@@ -506,7 +489,6 @@ function MoonVisual() {
 }
 
 function MarsVisual() {
-  const texture = useTexture('https://threejs.org/examples/textures/planets/mars_1k_color.jpg') as THREE.Texture
   const ref = useRef<THREE.Mesh>(null)
   const atmosphereRef = useRef<THREE.Mesh>(null)
 
@@ -526,10 +508,9 @@ function MarsVisual() {
       <mesh ref={ref}>
         <sphereGeometry args={[3.39, 64, 32]} />
         <meshStandardMaterial
-          map={texture}
+          color="#CD5C5C"
           roughness={1}
           metalness={0.02}
-          color="#CD5C5C"
           emissive={new THREE.Color("#4a1a1a")}
           emissiveIntensity={0.01}
         />

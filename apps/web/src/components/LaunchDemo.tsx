@@ -28,8 +28,9 @@ export function LaunchDemo() {
   const [trajectory, setTrajectory] = useState<THREE.Vector3[]>(() => [
     new THREE.Vector3(6.371, 0, 0) // Initial position at Earth surface (megameters)
   ])
-  const [timeMultiplier, setTimeMultiplier] = useState(1)
+  const [timeMultiplier] = useState(1)
   const [simulationTime, setSimulationTime] = useState(0)
+  const invalidStateCount = useRef(0) // Track consecutive invalid states
 
   // Initialize launch parameters
   const guidance = useMemo(() => new GravityTurnGuidance(400000, 28.5 * Math.PI / 180), [])
@@ -71,8 +72,19 @@ export function LaunchDemo() {
       return // Not launched yet
     }
 
-    // Simulate launch trajectory
-    const dt = Math.min(delta, 0.1) // Clamp timestep for stability
+    // Simulate launch trajectory with adaptive timestep
+    let dt = Math.min(delta, 0.1) // Clamp timestep for stability
+
+    // Use smaller timestep during critical phases
+    const currentPhase = stateRef.current.phase
+    if (currentPhase === LaunchPhase.LIFTOFF || currentPhase === LaunchPhase.MAX_Q) {
+      dt = Math.min(dt, 0.01) // Even smaller timestep for critical phases
+    }
+
+    // Use very small timestep if we've had recent invalid states
+    if (invalidStateCount.current > 0) {
+      dt = Math.min(dt, 0.005)
+    }
 
     try {
       const newState = integrateLaunchTrajectory(
@@ -82,16 +94,40 @@ export function LaunchDemo() {
         dt
       )
 
-      // Validate the new state before using it
-      const hasValidPosition = newState.r.every(coord => isFinite(coord) && !isNaN(coord))
-      const hasValidVelocity = newState.v.every(coord => isFinite(coord) && !isNaN(coord))
+      // Enhanced validation with more specific checks
+      const hasValidPosition = newState.r.every(coord => isFinite(coord) && !isNaN(coord) && Math.abs(coord) < 1e12)
+      const hasValidVelocity = newState.v.every(coord => isFinite(coord) && !isNaN(coord) && Math.abs(coord) < 1e6)
+      const hasValidAltitude = isFinite(newState.altitude) && !isNaN(newState.altitude) && newState.altitude >= -1000
+      const hasValidTime = isFinite(newState.mission_time) && !isNaN(newState.mission_time)
 
-      if (!hasValidPosition || !hasValidVelocity) {
-        console.warn('Invalid state detected, skipping frame', newState)
+      if (!hasValidPosition || !hasValidVelocity || !hasValidAltitude || !hasValidTime) {
+        invalidStateCount.current++
+        console.warn(`Invalid state detected (${invalidStateCount.current} consecutive):`, {
+          position: newState.r,
+          velocity: newState.v,
+          altitude: newState.altitude,
+          time: newState.mission_time,
+          validPos: hasValidPosition,
+          validVel: hasValidVelocity,
+          validAlt: hasValidAltitude,
+          validTime: hasValidTime
+        })
+
+        // Reset simulation if too many consecutive invalid states
+        if (invalidStateCount.current > 5) {
+          console.warn('Too many invalid states, resetting to initial state')
+          stateRef.current = initialState
+          setCurrentState(initialState)
+          setLaunchTime(-10)
+          invalidStateCount.current = 0
+        }
         return
       }
 
-      // Update GNC system
+      // Reset invalid state counter on successful frame
+      invalidStateCount.current = 0
+
+      // Update GNC system only if state is valid
       gncSystem.update(newState)
 
       stateRef.current = newState
@@ -177,8 +213,22 @@ export function LaunchDemo() {
 
   // Launch initiation
   const initiateLaunch = () => {
+    // Reset invalid state counter and ensure clean start
+    invalidStateCount.current = 0
     setLaunchTime(0)
-    stateRef.current = { ...initialState, phase: LaunchPhase.LIFTOFF }
+    const launchState = { ...initialState, phase: LaunchPhase.LIFTOFF }
+
+    // Validate initial launch state
+    const validPos = launchState.r.every(coord => isFinite(coord) && !isNaN(coord))
+    const validVel = launchState.v.every(coord => isFinite(coord) && !isNaN(coord))
+
+    if (!validPos || !validVel) {
+      console.error('Invalid initial state detected, cannot launch')
+      return
+    }
+
+    stateRef.current = launchState
+    setCurrentState(launchState)
   }
 
   // Utility functions for enhanced visuals
@@ -256,13 +306,15 @@ export function LaunchDemo() {
         environment={environment}
         spacecraftType={SpacecraftType.FALCON9}
         missionPhase={currentState?.phase || LaunchPhase.PRELAUNCH}
-        group={groupRef}
+  group={groupRef}
+  showSpacecraft={false}
       />
 
-      {/* Launch vehicle */}
+    {/* Launch vehicle - properly scaled (1 unit = 1,000 km = 1e6 m) */}
       <group ref={vehicleRef}>
         <mesh>
-          <cylinderGeometry args={[0.05, 0.05, 0.5, 8]} />
+      {/* Falcon 9 ~3.7m radius, ~70m height => 3.7/1e6 and 70/1e6 in scene units */}
+      <cylinderGeometry args={[3.7e-6, 3.7e-6, 70e-6, 8]} />
           <meshStandardMaterial
             color={currentState?.phase === LaunchPhase.STAGE1_BURN ||
                    currentState?.phase === LaunchPhase.STAGE2_BURN ?
@@ -273,8 +325,9 @@ export function LaunchDemo() {
         {/* Engine plume during burn */}
         {(currentState?.phase === LaunchPhase.STAGE1_BURN ||
           currentState?.phase === LaunchPhase.STAGE2_BURN) && (
-          <mesh position={[0, -0.4, 0]}>
-            <coneGeometry args={[0.1, 0.3, 8]} />
+          // Engine plume sized to meters->megameters
+          <mesh position={[0, -50e-6, 0]}>
+            <coneGeometry args={[5e-6, 25e-6, 8]} />
             <meshBasicMaterial
               color="#FFD700"
               transparent
@@ -285,9 +338,9 @@ export function LaunchDemo() {
 
         {/* Stage separation visual effect */}
         {currentState?.phase === LaunchPhase.STAGE1_SEPARATION && (
-          <group position={[0, -0.8, 0]}>
+          <group position={[0, -60e-6, 0]}>
             <mesh>
-              <cylinderGeometry args={[0.04, 0.04, 0.3, 8]} />
+              <cylinderGeometry args={[1.5e-6, 1.5e-6, 30e-6, 8]} />
               <meshStandardMaterial color="#808080" />
             </mesh>
           </group>
@@ -296,12 +349,12 @@ export function LaunchDemo() {
         {/* Fairing jettison visual effect */}
         {currentState?.phase === LaunchPhase.FAIRING_JETTISON && (
           <>
-            <mesh position={[0.2, 0.3, 0]} rotation={[0, 0, Math.PI / 4]}>
-              <boxGeometry args={[0.1, 0.3, 0.05]} />
+            <mesh position={[15e-6, 25e-6, 0]} rotation={[0, 0, Math.PI / 4]}>
+              <boxGeometry args={[8e-6, 20e-6, 3e-6]} />
               <meshStandardMaterial color="#CCCCCC" />
             </mesh>
-            <mesh position={[-0.2, 0.3, 0]} rotation={[0, 0, -Math.PI / 4]}>
-              <boxGeometry args={[0.1, 0.3, 0.05]} />
+            <mesh position={[-15e-6, 25e-6, 0]} rotation={[0, 0, -Math.PI / 4]}>
+              <boxGeometry args={[8e-6, 20e-6, 3e-6]} />
               <meshStandardMaterial color="#CCCCCC" />
             </mesh>
           </>
