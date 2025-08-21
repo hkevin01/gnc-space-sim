@@ -36,8 +36,8 @@ WORKDIR /workspace
 RUN corepack enable && corepack prepare pnpm@9.12.0 --activate
 
 # Create non-root user for security
-RUN groupadd --gid 1000 developer && \
-  useradd --uid 1000 --gid developer --shell /bin/bash --create-home developer# ==========================================
+RUN groupadd --gid 1001 developer || true && \
+  useradd --uid 1001 --gid 1001 --shell /bin/bash --create-home developer || true
 # Dependencies Layer (Cached when unchanged)
 # ==========================================
 FROM base AS dependencies

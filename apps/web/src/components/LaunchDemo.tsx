@@ -1,21 +1,32 @@
-// Replaced by safer, fixed-step implementation
 import {
-  GNCSystem,
   GravityTurnGuidance,
   integrateLaunchTrajectory,
   LAUNCH_VEHICLES,
   LaunchPhase,
   LaunchState,
 } from '@gnc/core';
-import { Html } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Html, OrbitControls } from '@react-three/drei';
+import { useFrame, useThree } from '@react-three/fiber';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useLaunchControl } from '../state/launchControlStore';
-import { MissionEnvironment3D, PhaseVisualIndicator } from './MissionEnvironment';
-import { SpacecraftType } from './SpacecraftModels';
+import { PhaseVisualIndicator } from './MissionEnvironment';
+import { SolarSystem } from './SolarSystem';
 
-export function LaunchDemo() {
+export function LaunchDemo({
+  timeMultiplier = 1,
+  showTrajectory = true,
+}: {
+  timeMultiplier?: number;
+  showTrajectory?: boolean;
+}) {
+  // Camera follow state
+  const { camera } = useThree();
+  const controlsRef = useRef<React.ElementRef<typeof OrbitControls> | null>(null);
+  const lastUserInteraction = useRef(Date.now());
+  const snapBackTimeout = useRef<number | null>(null);
+  const [snapBackActive, setSnapBackActive] = useState(false);
+
   // Use global launch control store instead of local state
   const launchTime = useLaunchControl((state) => state.launchTime);
   const setLaunchTime = useLaunchControl((state) => state.setLaunchTime);
@@ -31,23 +42,19 @@ export function LaunchDemo() {
   const vehicleRef = useRef<THREE.Group>(null);
   const groupRef = useRef<THREE.Group>(null);
 
-  const [simulationTime, setSimulationTime] = useState(0);
   const invalidStateCount = useRef(0);
 
   const [trajectory, setTrajectory] = useState<THREE.Vector3[]>(() => [
     new THREE.Vector3(6.371, 0, 0),
   ]);
 
-  const [timeMultiplier] = useState(1);
-  const accumulator = useRef(0);
-  const fixedDt = 1 / 100;
+  const guidance = useMemo(() => {
+    return new GravityTurnGuidance(400000, (28.5 * Math.PI) / 180);
+  }, []);
 
-  const guidance = useMemo(() => new GravityTurnGuidance(400000, (28.5 * Math.PI) / 180), []);
-  const gncSystem = useMemo(() => new GNCSystem(0.1), []);
-  const vehicle = LAUNCH_VEHICLES.FALCON_9;
-
-  const initialState = useMemo<LaunchState>(
-    () => ({
+  const initialState: LaunchState = useMemo(() => {
+    const vehicle = LAUNCH_VEHICLES.FALCON_9;
+    return {
       r: [6371000, 0, 0],
       v: [0, 463.8, 0],
       phase: LaunchPhase.PRELAUNCH,
@@ -56,22 +63,65 @@ export function LaunchDemo() {
       velocity_magnitude: 463.8,
       flight_path_angle: Math.PI / 2,
       heading: Math.PI / 2,
-      mass:
-        vehicle.stage1.mass_dry +
-        vehicle.stage1.mass_propellant +
-        vehicle.stage2.mass_dry +
-        vehicle.stage2.mass_propellant +
-        vehicle.payload_mass +
-        vehicle.fairing_mass,
+      mass: vehicle.stage1.mass_dry + vehicle.stage1.mass_propellant +
+            vehicle.stage2.mass_dry + vehicle.stage2.mass_propellant +
+            vehicle.payload_mass + vehicle.fairing_mass,
       thrust: [0, 0, 0],
       drag: [0, 0, 0],
       atmosphere: { pressure: 101325, density: 1.225, temperature: 288.15 },
       guidance: { pitch_program: Math.PI / 2, yaw_program: Math.PI / 2, throttle: 0 },
-    }),
-    [vehicle]
-  );
+    };
+  }, []);
 
   const stateRef = useRef<LaunchState>(initialState);
+
+  // Helper: get rocket position in world
+  const getRocketPosition = useCallback(() => {
+    if (vehicleRef.current) {
+      const pos = new THREE.Vector3();
+      vehicleRef.current.getWorldPosition(pos);
+      return pos;
+    }
+    return new THREE.Vector3(0, 0, 0);
+  }, []);
+
+  // Listen for user OrbitControls interaction
+  useEffect(() => {
+    if (!controlsRef.current) return;
+    const controls = controlsRef.current;
+    const onStart = () => {
+      lastUserInteraction.current = Date.now();
+      setSnapBackActive(false);
+      if (snapBackTimeout.current) clearTimeout(snapBackTimeout.current);
+    };
+    const onEnd = () => {
+      lastUserInteraction.current = Date.now();
+      if (snapBackTimeout.current) clearTimeout(snapBackTimeout.current);
+      snapBackTimeout.current = window.setTimeout(() => setSnapBackActive(true), 2000);
+    };
+    controls.addEventListener('start', onStart);
+    controls.addEventListener('end', onEnd);
+    return () => {
+      controls.removeEventListener('start', onStart);
+      controls.removeEventListener('end', onEnd);
+      if (snapBackTimeout.current) clearTimeout(snapBackTimeout.current);
+    };
+  }, [controlsRef]);
+
+  // Camera follow logic
+  useFrame(() => {
+    if (snapBackActive && vehicleRef.current) {
+      const rocketPos = getRocketPosition();
+      // Smoothly interpolate camera position toward rocket
+      const target = rocketPos.clone().add(new THREE.Vector3(0, 5, 20));
+      camera.position.lerp(target, 0.05);
+      // Also update controls target
+      if (controlsRef.current) {
+        controlsRef.current.target.lerp(rocketPos, 0.1);
+        controlsRef.current.update();
+      }
+    }
+  });
 
   useEffect(() => {
     if (!trajectoryRef.current) {
@@ -86,115 +136,82 @@ export function LaunchDemo() {
       trajectoryGeomRef.current?.dispose();
       trajectoryMatRef.current?.dispose();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [trajectory]);
 
-  useEffect(() => {
-    if (!trajectoryMatRef.current) return;
-    const colorHex = getTrajectoryColor(currentState?.phase || LaunchPhase.PRELAUNCH);
-    trajectoryMatRef.current.color.set(colorHex);
-  }, [currentState?.phase]);
+  function isFiniteArray(arr: number[]): boolean {
+    return arr.length === 3 && arr.every((x) => Number.isFinite(x));
+  }
 
-  const isFiniteArray = (arr: number[], limit?: number) =>
-    Array.isArray(arr) &&
-    arr.every((v) => Number.isFinite(v) && !Number.isNaN(v) && (limit ? Math.abs(v) < limit : true));
+  useFrame((state, deltaTime) => {
+    if (!isLaunched) return;
 
-  const lastSampleTimeRef = useRef(0);
+    const dt = Math.min(deltaTime * timeMultiplier, 0.1);
+    const nextTime = launchTime + dt;
 
-  useFrame((_, renderDelta) => {
-    // Only start countdown/simulation if launch has been initiated
-    if (!isLaunched) {
-      return;
-    }
+    try {
+      const nextState = integrateLaunchTrajectory(stateRef.current, LAUNCH_VEHICLES.FALCON_9, guidance, dt);
 
-    if (launchTime < 0) {
-      const d = Math.min(Math.max(renderDelta, 1 / 300), 0.1);
-      setLaunchTime((prev) => prev + d);
-      return;
-    }
-
-    const clamped = Math.min(Math.max(renderDelta, 1 / 300), 0.1);
-    accumulator.current += clamped;
-
-    while (accumulator.current >= fixedDt) {
-      accumulator.current -= fixedDt;
-      let dt = fixedDt;
-      const currentPhase = stateRef.current.phase;
-      if (currentPhase === LaunchPhase.LIFTOFF || currentPhase === LaunchPhase.MAX_Q) dt = Math.min(dt, 0.01);
-      if (invalidStateCount.current > 0) dt = Math.min(dt, 0.005);
-
-      try {
-        const newState = integrateLaunchTrajectory(stateRef.current, vehicle, guidance, dt);
-        const hasValidPosition = isFiniteArray(newState.r, 1e12);
-        const hasValidVelocity = isFiniteArray(newState.v, 1e6);
-        const hasValidAltitude = Number.isFinite(newState.altitude) && !Number.isNaN(newState.altitude) && newState.altitude >= -1000;
-        const hasValidTime = Number.isFinite(newState.mission_time) && !Number.isNaN(newState.mission_time);
-
-        if (!hasValidPosition || !hasValidVelocity || !hasValidAltitude || !hasValidTime) {
-          invalidStateCount.current++;
-          if (invalidStateCount.current > 5) {
-            stateRef.current = initialState;
-            setCurrentState(initialState);
-            resetLaunch();
-            invalidStateCount.current = 0;
-          }
-          continue;
-        }
-
-        invalidStateCount.current = 0;
-        try {
-          gncSystem.update(newState);
-        } catch (e) {
-          // Ignore GNC update errors to keep render loop stable
-          console.debug('GNC update error (non-fatal):', e);
-        }
-
-        stateRef.current = newState;
-        setCurrentState(newState);
-        setLaunchTime((prev) => prev + dt);
-
-        if (newState.mission_time - lastSampleTimeRef.current >= 1 - 1e-6) {
-          lastSampleTimeRef.current = newState.mission_time;
-          if (isFiniteArray(newState.r)) {
-            const scale = 1e6;
-            const newPoint = new THREE.Vector3(newState.r[0] / scale, newState.r[1] / scale, newState.r[2] / scale);
-            setTrajectory((prev) => {
-              const updated = prev.length >= 500 ? [...prev.slice(prev.length - 499), newPoint] : [...prev, newPoint];
-              if (trajectoryGeomRef.current) {
-                const safePoints = updated.filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(p.z));
-                trajectoryGeomRef.current.setFromPoints(safePoints);
-                trajectoryGeomRef.current.computeBoundingSphere();
-              }
-              return updated;
-            });
-          }
-        }
-
-        if (vehicleRef.current && isFiniteArray(newState.r)) {
-          const scale = 1e6;
-          const px = newState.r[0] / scale;
-          const py = newState.r[1] / scale;
-          const pz = newState.r[2] / scale;
-          if (Number.isFinite(px) && Number.isFinite(py) && Number.isFinite(pz)) {
-            vehicleRef.current.position.set(px, py, pz);
-          }
-          if (Number.isFinite(newState.flight_path_angle) && !Number.isNaN(newState.flight_path_angle) && Number.isFinite(newState.heading) && !Number.isNaN(newState.heading)) {
-            vehicleRef.current.rotation.x = -newState.flight_path_angle;
-            vehicleRef.current.rotation.z = newState.heading - Math.PI / 2;
-          }
-        }
-
-        if (newState.phase === LaunchPhase.ORBIT_CIRCULARIZATION && newState.altitude > 390000) {
-          console.log('Launch successful! Orbit achieved.');
-        }
-  } catch {
+      if (
+        !nextState ||
+        !isFiniteArray(nextState.r) ||
+        !isFiniteArray(nextState.v) ||
+        nextState.altitude < -1000 ||
+        nextState.altitude > 1e6
+      ) {
+        console.warn('Invalid state detected, resetting launch');
         invalidStateCount.current++;
-        if (invalidStateCount.current > 5) {
-          stateRef.current = initialState;
-          setCurrentState(initialState);
+        if (invalidStateCount.current > 10) {
           resetLaunch();
           invalidStateCount.current = 0;
         }
+        return;
+      }
+
+      invalidStateCount.current = 0;
+      stateRef.current = nextState;
+      setCurrentState(nextState);
+      setLaunchTime(nextTime);
+
+      if (vehicleRef.current && isFiniteArray(nextState.r)) {
+        const scale = 1e-6;
+        vehicleRef.current.position.set(
+          nextState.r[0] * scale,
+          nextState.r[1] * scale,
+          nextState.r[2] * scale
+        );
+
+        if (isFiniteArray(nextState.v)) {
+          const vel = new THREE.Vector3(nextState.v[0], nextState.v[1], nextState.v[2]);
+          if (vel.length() > 0) {
+            vehicleRef.current.lookAt(
+              vehicleRef.current.position.x + vel.x,
+              vehicleRef.current.position.y + vel.y,
+              vehicleRef.current.position.z + vel.z
+            );
+          }
+        }
+      }
+
+      if (showTrajectory && isFiniteArray(nextState.r)) {
+        const newPoint = new THREE.Vector3(
+          nextState.r[0] * 1e-6,
+          nextState.r[1] * 1e-6,
+          nextState.r[2] * 1e-6
+        );
+
+        if (Number.isFinite(newPoint.x) && Number.isFinite(newPoint.y) && Number.isFinite(newPoint.z)) {
+          setTrajectory((prev) => {
+            const updated = [...prev, newPoint];
+            return updated.length > 1000 ? updated.slice(-1000) : updated;
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error in launch simulation:', error);
+      invalidStateCount.current++;
+      if (invalidStateCount.current > 5) {
+        resetLaunch();
+        invalidStateCount.current = 0;
       }
     }
   });
@@ -209,54 +226,12 @@ export function LaunchDemo() {
     }
   }, [trajectory]);
 
-  function getTrajectoryColor(phase: LaunchPhase): string {
-    switch (phase) {
-      case LaunchPhase.LIFTOFF:
-      case LaunchPhase.STAGE1_BURN:
-        return '#FF6B35';
-      case LaunchPhase.MAX_Q:
-        return '#8B5CF6';
-      case LaunchPhase.STAGE1_SEPARATION:
-      case LaunchPhase.STAGE2_IGNITION:
-        return '#10B981';
-      case LaunchPhase.STAGE2_BURN:
-        return '#F59E0B';
-      case LaunchPhase.ORBITAL_INSERTION:
-      case LaunchPhase.ORBIT_CIRCULARIZATION:
-        return '#3B82F6';
-      default:
-        return '#6B7280';
-    }
-  }
-
-
-
-  const handleTimeUpdate = (_deltaTime: number, totalTime: number) => {
-    setSimulationTime(totalTime);
-  };
-
-  const environment = {
-    showEarth: true,
-    showMoon: false,
-    showSun: true,
-    showMars: false,
-    showAsteroid: false,
-  };
-
   return (
     <group ref={groupRef}>
-      <MissionEnvironment3D
-        phase={currentState?.phase || LaunchPhase.PRELAUNCH}
-        missionTime={launchTime > 0 ? launchTime : 0}
-        altitude={currentState?.altitude || 0}
-        timeMultiplier={timeMultiplier}
-        simulationTime={simulationTime}
-        onTimeUpdate={handleTimeUpdate}
-        environment={environment}
-        spacecraftType={SpacecraftType.FALCON9}
-        missionPhase={currentState?.phase || LaunchPhase.PRELAUNCH}
-        group={groupRef}
-        showSpacecraft={false}
+      <SolarSystem
+        centerOn="EARTH"
+        showOrbits={false}
+        missionTime={launchTime}
       />
 
       <group ref={vehicleRef}>
@@ -332,11 +307,8 @@ export function LaunchDemo() {
         </Html>
       )}
 
-
+      {/* OrbitControls for user pan/zoom/rotate, with ref for snap-back logic */}
+      <OrbitControls ref={controlsRef} enablePan enableZoom enableRotate />
     </group>
   );
-}
-
-export function useLaunchState(): LaunchState | null {
-  return null;
 }
