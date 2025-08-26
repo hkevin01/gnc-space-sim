@@ -13,6 +13,13 @@
     "clean": "pnpm -r clean",
     "qa": "pnpm typecheck && pnpm lint && pnpm test",
     "ci": "pnpm install --frozen-lockfile && pnpm qa && pnpm build",
+    "test:e2e": "pnpm -C apps/web test:e2e",
+    "test:playwright": "pnpm -C apps/web test:playwright",
+    "test:cypress": "pnpm -C apps/web test:cypress",
+    "test:cypress:headless": "pnpm -C apps/web test:cypress:headless",
+    "lighthouse": "pnpm -C apps/web lighthouse",
+    "lighthouse:ci": "lhci autorun",
+    "ci:full": "pnpm lint && pnpm typecheck && pnpm -C apps/web build && pnpm -C apps/web test:playwright && pnpm -C apps/web test:cypress:headless && pnpm lighthouse:ci",
     "docker:dev": "./scripts/docker-dev.sh dev:start",
     "docker:stop": "./scripts/docker-dev.sh dev:stop",
     "docker:test": "./scripts/docker-dev.sh test:run",
@@ -21,5 +28,14 @@
     "docker:clean": "./scripts/docker-dev.sh clean",
     "docker:stack": "./scripts/docker-dev.sh stack:start",
     "docker:monitoring": "./scripts/docker-dev.sh monitoring:start"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "lighthouse": "^12.0.0",
+    "@lhci/cli": "^0.13.0",
+    "cypress": "^13.13.0",
+    "start-server-and-test": "^2.0.3",
+    "concurrently": "^8.0.0",
+    "wait-on": "^7.0.1"
   }
 }

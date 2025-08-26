@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "tests/**/*"
+  ],
+  "compilerOptions": {
+    "allowJs": true,
+    "types": [
+      "@types/node",
+      "@playwright/test",
+      "cypress"
+    ]
+  }
+}

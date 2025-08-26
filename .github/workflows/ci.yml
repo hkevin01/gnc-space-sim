@@ -9,16 +9,83 @@ jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v3
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
         with:
           version: 9
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: "22"
-          cache: "pnpm"
-      - run: pnpm install --frozen-lockfile=false
-      - run: pnpm -r build
-      - run: pnpm -r test --if-present
-      - run: pnpm -r typecheck --if-present
-      - run: pnpm -r lint --if-present
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile=false
+
+      - name: TypeScript type checking
+        run: pnpm -r typecheck --if-present
+
+      - name: ESLint code quality
+        run: pnpm -r lint --if-present
+
+      - name: Unit tests
+        run: pnpm -r test --if-present
+
+      - name: Build applications
+        run: pnpm -r build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Playwright E2E tests
+        run: pnpm -C apps/web test:playwright
+        env:
+          CI: true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
+
+      - name: Cypress E2E tests
+        uses: cypress-io/github-action@v6
+        with:
+          working-directory: apps/web
+          start: pnpm preview
+          wait-on: 'http://localhost:5173'
+          wait-on-timeout: 120
+          browser: chrome
+          headless: true
+          spec: tests/cypress/e2e/**/*.cy.ts
+        env:
+          CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY || '' }}
+
+      - name: Upload Cypress artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          path: |
+            apps/web/cypress/videos
+            apps/web/cypress/screenshots
+          retention-days: 7
+
+      - name: Lighthouse CI audit
+        run: pnpm lighthouse:ci
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN || '' }}
+
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+          retention-days: 7
