@@ -5,6 +5,7 @@ import { Suspense, useState } from 'react'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { LaunchSimulation } from './components/LaunchSimulation'
 import { OrbitDemo } from './components/OrbitDemo'
+import { SimpleSLSDemo } from './components/SimpleSLSDemo'
 import { TrajectoryPlanningDemo } from './components/TrajectoryPlanningDemo'
 import { useLaunchControl } from './state/launchControlStore'
 import { useMissionStore, type MissionState } from './state/missionStore'
@@ -12,7 +13,7 @@ import { useMissionStore, type MissionState } from './state/missionStore'
 export default function App() {
   const phase = useMissionStore((s: MissionState) => s.phase)
   const setPhase = useMissionStore((s: MissionState) => s.setPhase)
-  const [simMode, setSimMode] = useState<'launch' | 'orbit' | 'trajectory'>('launch')
+  const [simMode, setSimMode] = useState<'launch' | 'orbit' | 'trajectory' | 'sls'>('sls')
 
   // Launch control state
   const { launchTime, initiateLaunch, resetLaunch } = useLaunchControl()
@@ -56,6 +57,16 @@ export default function App() {
                 }`}
               >
                 🎯 Trajectory
+              </button>
+              <button
+                onClick={() => setSimMode('sls')}
+                className={`px-3 py-1 text-xs rounded ${
+                  simMode === 'sls'
+                    ? 'bg-purple-600 text-white'
+                    : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
+                }`}
+              >
+                🌙 SLS Artemis
               </button>
             </div>
           </div>
@@ -101,7 +112,17 @@ export default function App() {
           <div className="mt-4 p-3 bg-zinc-900 rounded">
             <h3 className="text-sm font-semibold mb-2 text-yellow-400">GNC Systems</h3>
             <div className="text-xs space-y-2 text-zinc-300">
-              {simMode === 'launch' ? (
+              {simMode === 'sls' ? (
+                <>
+                  <div><strong>🚀 Vehicle:</strong> SLS Block 1</div>
+                  <div><strong>🎯 Mission:</strong> Artemis II Lunar Flyby</div>
+                  <div><strong>🌙 Destination:</strong> 10,000 km Lunar Flyby</div>
+                  <div className="mt-2 text-zinc-400">
+                    NASA's most powerful rocket with twin SRBs and RS-25 engines.
+                    First crewed mission beyond Earth orbit since Apollo 17.
+                  </div>
+                </>
+              ) : simMode === 'launch' ? (
                 <>
                   <div><strong>🎯 Guidance:</strong> Gravity Turn Algorithm</div>
                   <div><strong>🧭 Navigation:</strong> IMU + GPS Fusion</div>
@@ -184,6 +205,8 @@ export default function App() {
         <main className="relative">
           {simMode === 'launch' ? (
             <LaunchSimulation />
+          ) : simMode === 'sls' ? (
+            <SimpleSLSDemo />
           ) : simMode === 'orbit' ? (
             <Canvas shadows camera={{ position: [12, 8, 12], fov: 50 }}>
               <ambientLight intensity={0.3} />
