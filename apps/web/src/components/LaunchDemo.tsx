@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import { useLaunchControl } from '../state/launchControlStore';
 import { PhaseVisualIndicator } from './MissionEnvironment';
 import { SolarSystem } from './SolarSystem';
+import { KalmanFilter3D } from '@gnc/core';
 
 export function LaunchDemo({
   timeMultiplier = 1,
@@ -74,6 +75,14 @@ export function LaunchDemo({
   }, []);
 
   const stateRef = useRef<LaunchState>(initialState);
+  const kfRef = useRef<KalmanFilter3D | null>(null);
+  if (!kfRef.current) {
+    kfRef.current = new KalmanFilter3D(
+      { r: initialState.r as [number, number, number], v: initialState.v as [number, number, number] },
+      { posVar: 1e4, velVar: 10 },
+      { processPosStd: 2, processVelStd: 0.5, measPosStd: 20, measVelStd: 1 }
+    );
+  }
 
   // Helper: get rocket position in world
   const getRocketPosition = useCallback(() => {
@@ -171,6 +180,14 @@ export function LaunchDemo({
       stateRef.current = nextState;
       setCurrentState(nextState);
       setLaunchTime(nextTime);
+
+      // KF predict/update with current simulated state as measurement
+      const kf = kfRef.current!;
+      kf.predict(dt);
+      kf.update([
+        nextState.r[0], nextState.r[1], nextState.r[2],
+        nextState.v[0], nextState.v[1], nextState.v[2]
+      ]);
 
       if (vehicleRef.current && isFiniteArray(nextState.r)) {
         const scale = 1e-6;
@@ -301,6 +318,10 @@ export function LaunchDemo({
               <div className="flex justify-between">
                 <span>Mass:</span>
                 <span className="text-purple-400">{(currentState.mass / 1000).toFixed(1)} t</span>
+              </div>
+              <div className="flex justify-between">
+                <span>KF Pos.X:</span>
+                <span className="text-cyan-400">{(kfRef.current?.x[0] ?? 0).toFixed(0)} m</span>
               </div>
             </div>
           </div>

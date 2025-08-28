@@ -4,11 +4,11 @@ This plan tracks phases with actionable checklists. Check off items as they comp
 
 ## Phase 1 – Monorepo & Frontend Scaffold
 
-- [ ] Initialize pnpm monorepo with apps and packages
-- [ ] Scaffold React + Vite + TS app with Tailwind and react-three-fiber
-- [ ] Add ESLint/Prettier and VS Code workspace settings
+- [x] Initialize pnpm monorepo with apps and packages
+- [x] Scaffold React + Vite + TS app with Tailwind and react-three-fiber
+- [x] Add ESLint/Prettier and VS Code workspace settings
 - [ ] Set up CI (build, lint, typecheck) on GitHub Actions
-- [ ] Dockerize dev environment (frontend service)
+- [x] Dockerize dev environment (frontend service)
 
 Details:
 
@@ -18,11 +18,11 @@ Details:
 
 ## Phase 2 – Core Simulation Kernel (TS + WASM stubs)
 
-- [ ] Create @gnc/core TypeScript package (interfaces for states, forces, propagator)
+- [x] Create @gnc/core TypeScript package (interfaces for states, forces, propagator)
 - [ ] Wire Worker + Comlink scaffolding for physics thread
-- [ ] Add @gnc/rust crate for WASM integrators (stub lambert + RKF)
-- [ ] Provide TypeScript bindings and tests
-- [ ] Add minimal scenario loader and time controls
+- [x] Add @gnc/rust crate for WASM (SSSP engine scaffold)
+- [x] Provide TypeScript bindings and tests (unit tests green)
+- [x] Add minimal scenario loader and time controls
 
 Details:
 
@@ -45,7 +45,7 @@ Details:
 ## Phase 4 – Navigation & Sensors
 
 - [ ] Sensor models (IMU, star tracker, sun sensor, optical nav)
-- [ ] EKF/UKF scaffold and covariance propagation
+- [x] EKF/KF scaffold and covariance propagation (KalmanFilter3D added)
 - [ ] Residual plots and covariance ellipsoids in 3D
 - [ ] Fault injection toggles and logs
 - [ ] Monte Carlo harness
@@ -63,6 +63,13 @@ Details:
 - [ ] Export recording (WebM) and scenario share links
 
 Details:
+## Phase 6 – Advanced Control and AI
+
+- [ ] MPC core with QP backend (WASM OSQP integration)
+- [x] MPC interfaces and placeholder solver in TS
+- [ ] ONNX Runtime Web integration for COA inference
+- [ ] COA policy prototype and UI hook
+
 
 - Switch gravity model fidelity by scenario.
 - Add keep-out cones and thermal constraints overlays.

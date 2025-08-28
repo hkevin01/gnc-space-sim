@@ -32,6 +32,21 @@ print_error() {
     echo -e "${RED}❌ $1${NC}"
 }
 
+# Detect Docker Compose command
+detect_docker_compose() {
+    if command -v docker-compose &> /dev/null; then
+        echo "docker-compose"
+    elif docker compose version &> /dev/null; then
+        echo "docker compose"
+    else
+        print_error "Docker Compose not found. Please install Docker Compose."
+        exit 1
+    fi
+}
+
+# Set Docker Compose command
+DOCKER_COMPOSE=$(detect_docker_compose)
+
 # Environment setup
 setup_environment() {
     print_header "Setting up Docker environment"
@@ -79,31 +94,31 @@ EOF
 dev_start() {
     print_header "Starting development environment"
     setup_environment
-    docker-compose up -d web
+    ${DOCKER_COMPOSE} up -d web
     print_success "Development server started at http://localhost:5173"
 }
 
 dev_stop() {
     print_header "Stopping development environment"
-    docker-compose down
+    ${DOCKER_COMPOSE} down
     print_success "Development environment stopped"
 }
 
 dev_restart() {
     print_header "Restarting development environment"
-    docker-compose restart web
+    ${DOCKER_COMPOSE} restart web
     print_success "Development server restarted"
 }
 
 dev_logs() {
     print_header "Showing development logs"
-    docker-compose logs -f web
+    ${DOCKER_COMPOSE} logs -f web
 }
 
 # Testing commands
 test_run() {
     print_header "Running test suite"
-    docker-compose --profile testing up --build test
+    ${DOCKER_COMPOSE} --profile testing up --build test
     print_success "Tests completed"
 }
 

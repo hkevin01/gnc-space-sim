@@ -351,12 +351,19 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
               {/* Trajectory Info */}
               <div>
                 <h4 className="font-medium text-gray-900 mb-2">Trajectory</h4>
-                <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
-                  <div>Apogee: {mission.trajectory.apogee.toLocaleString()} km</div>
-                  <div>Perigee: {mission.trajectory.perigee} km</div>
-                  <div>Inclination: {mission.trajectory.inclination}°</div>
-                  <div>ΔV: {mission.trajectory.deltaV.toLocaleString()} m/s</div>
-                </div>
+                {mission.trajectory ? (
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div>Apogee: {mission.trajectory.apogee.toLocaleString()} km</div>
+                    <div>Perigee: {mission.trajectory.perigee} km</div>
+                    <div>Inclination: {mission.trajectory.inclination}°</div>
+                    <div>ΔV: {mission.trajectory.deltaV.toLocaleString()} m/s</div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div>Target Orbit: {mission.name.includes('Artemis') ? '185 km circular' : 'N/A'}</div>
+                    <div>Inclination: {mission.name.includes('Artemis') ? '28.5°' : 'N/A'}</div>
+                  </div>
+                )}
               </div>
             </CardContent>
 

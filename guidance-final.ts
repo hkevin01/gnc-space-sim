@@ -1,13 +1,23 @@
 import {
-  FAIRING_JETTISON_ALT,
-  KARMAN_LINE,
-  LAUNCH_LAT,
-  MAX_Q_ALT,
-  SCALE_HEIGHT,
-  SEA_LEVEL_PRESSURE,
-  STAGE1_BURN_TIME
+    FAIRING_JETTISON_ALT,
+    KARMAN_LINE,
+    LAUNCH_LAT,
+    MAX_Q_ALT,
+    SCALE_HEIGHT,
+    SEA_LEVEL_PRESSURE,
+    STAGE1_BURN_TIME
 } from '../math/physics'
 import { State6, Vec3 } from '../orbits/twobody'
+
+/**
+ * Spacecraft state for advanced guidance calculations
+ */
+export interface SpacecraftState {
+  position: Vec3
+  velocity: Vec3
+  mass: number
+  time: number
+}
 
 /**
  * Launch Mission Phases - Enhanced for SLS
@@ -15,24 +25,24 @@ import { State6, Vec3 } from '../orbits/twobody'
 export enum LaunchPhase {
   PRELAUNCH = 'prelaunch',
   LIFTOFF = 'liftoff',
-  BOOSTER_BURN = 'booster_burn',
-  STAGE1_BURN = 'stage1_burn',
+  BOOSTER_BURN = 'booster_burn', // SRB + Core Stage
+  STAGE1_BURN = 'stage1_burn', // Legacy compatibility
   MAX_Q = 'max_q',
-  BOOSTER_SEPARATION = 'booster_separation',
-  STAGE1_SEPARATION = 'stage1_separation',
+  BOOSTER_SEPARATION = 'booster_separation', // SRB separation
+  STAGE1_SEPARATION = 'stage1_separation', // Legacy compatibility
   CORE_STAGE_BURN = 'core_stage_burn',
-  LAS_JETTISON = 'las_jettison',
+  LAS_JETTISON = 'las_jettison', // Launch Abort System jettison
   CORE_STAGE_MECO = 'core_stage_meco',
   CORE_SEPARATION = 'core_separation',
   UPPER_STAGE_IGNITION = 'upper_stage_ignition',
-  STAGE2_IGNITION = 'stage2_ignition',
+  STAGE2_IGNITION = 'stage2_ignition', // Legacy compatibility
   FAIRING_JETTISON = 'fairing_jettison',
   UPPER_STAGE_BURN = 'upper_stage_burn',
-  STAGE2_BURN = 'stage2_burn',
+  STAGE2_BURN = 'stage2_burn', // Legacy compatibility
   ORBITAL_INSERTION = 'orbital_insertion',
   ORBIT_CIRCULARIZATION = 'orbit_circularization',
-  TLI_PREP = 'tli_prep',
-  TLI_BURN = 'tli_burn'
+  TLI_PREP = 'tli_prep', // Trans-Lunar Injection preparation
+  TLI_BURN = 'tli_burn' // Trans-Lunar Injection
 }
 
 /**
@@ -40,21 +50,21 @@ export enum LaunchPhase {
  */
 export interface LaunchVehicle {
   stage1: {
-    mass_dry: number
-    mass_propellant: number
-    thrust: number
-    isp: number
-    burn_time: number
+    mass_dry: number      // kg
+    mass_propellant: number // kg
+    thrust: number        // N
+    isp: number          // s
+    burn_time: number    // s
   }
   stage2: {
-    mass_dry: number
-    mass_propellant: number
-    thrust: number
-    isp: number
-    burn_time: number
+    mass_dry: number      // kg
+    mass_propellant: number // kg
+    thrust: number        // N
+    isp: number          // s
+    burn_time: number    // s
   }
-  payload_mass: number
-  fairing_mass: number
+  payload_mass: number    // kg
+  fairing_mass: number   // kg
 }
 
 /**
@@ -62,49 +72,61 @@ export interface LaunchVehicle {
  */
 export interface LaunchState extends State6 {
   phase: LaunchPhase
-  mission_time: number
-  altitude: number
-  velocity_magnitude: number
-  flight_path_angle: number
-  heading: number
-  mass: number
-  thrust: Vec3
-  drag: Vec3
+  mission_time: number      // s since liftoff
+  altitude: number          // m above sea level
+  velocity_magnitude: number // m/s
+  flight_path_angle: number // rad
+  heading: number           // rad (0 = East, π/2 = North)
+  mass: number             // kg current vehicle mass
+  thrust: Vec3             // N thrust vector
+  drag: Vec3               // N drag force
   atmosphere: {
-    pressure: number
-    density: number
-    temperature: number
+    pressure: number       // Pa
+    density: number        // kg/m³
+    temperature: number    // K
   }
   guidance: {
-    pitch_program: number
-    yaw_program: number
-    throttle: number
+    pitch_program: number  // rad commanded pitch
+    yaw_program: number    // rad commanded yaw
+    throttle: number       // 0-1 throttle setting
   }
 }
 
 /**
  * Gravity Turn Launch Guidance Algorithm
+ *
+ * Classical gravity turn profile for efficient atmospheric ascent:
+ * 1. Vertical launch to clear atmosphere
+ * 2. Gradual pitch-over following gravity vector
+ * 3. Constant pitch rate to parking orbit insertion
  */
 export class GravityTurnGuidance {
   protected target_orbit_altitude: number
   protected target_inclination: number
-  private pitch_start_velocity: number = 100
-  private pitch_end_velocity: number = 2000
+  private pitch_start_velocity: number = 100 // m/s
+  private pitch_end_velocity: number = 2000 // m/s
 
   constructor(target_altitude: number, inclination: number) {
     this.target_orbit_altitude = target_altitude
     this.target_inclination = inclination
   }
 
+  /**
+   * Compute guidance commands for current state
+   */
   computeGuidance(state: LaunchState): { pitch: number, yaw: number, throttle: number } {
     const velocity = state.velocity_magnitude
     const altitude = state.altitude
 
+    // Pitch Program: Gravity Turn Profile
     let pitch: number
     if (velocity < this.pitch_start_velocity) {
-      pitch = Math.PI / 2
+      // Vertical flight during initial ascent
+      pitch = Math.PI / 2 // 90 degrees
     } else if (velocity < this.pitch_end_velocity) {
-      const progress = (velocity - this.pitch_start_velocity) / (this.pitch_end_velocity - this.pitch_start_velocity)
+      // Gradual pitch-over following gravity turn
+      const progress = (velocity - this.pitch_start_velocity) /
+                      (this.pitch_end_velocity - this.pitch_start_velocity)
       pitch = Math.PI / 2 * (1 - progress * 0.7) // Pitch from 90° to ~27°
     } else {
       // Shallow ascent for orbital insertion
@@ -348,46 +370,3 @@ export function determineLaunchPhase(
 
   return LaunchPhase.ORBITAL_INSERTION
 }
-
-/**
- * Standard Launch Vehicle Configurations
- */
-export const LAUNCH_VEHICLES = {
-  FALCON_9: {
-    stage1: {
-      mass_dry: 25600,      // kg
-      mass_propellant: 395700, // kg
-      thrust: 7607000,      // N (sea level)
-      isp: 282,             // s (sea level)
-      burn_time: 162        // s
-    },
-    stage2: {
-      mass_dry: 4000,       // kg
-      mass_propellant: 92670, // kg
-      thrust: 934000,       // N (vacuum)
-      isp: 348,             // s (vacuum)
-      burn_time: 397        // s
-    },
-    payload_mass: 22800,    // kg (LEO)
-    fairing_mass: 1750      // kg
-  },
-
-  ATLAS_V: {
-    stage1: {
-      mass_dry: 21054,      // kg
-      mass_propellant: 284450, // kg
-      thrust: 3827000,      // N
-      isp: 311,             // s
-      burn_time: 253        // s
-    },
-    stage2: {
-      mass_dry: 2086,       // kg
-      mass_propellant: 20830, // kg
-      thrust: 99200,        // N
-      isp: 450,             // s
-      burn_time: 842        // s
-    },
-    payload_mass: 18850,    // kg (LEO)
-    fairing_mass: 1361      // kg
-  }
-} as const

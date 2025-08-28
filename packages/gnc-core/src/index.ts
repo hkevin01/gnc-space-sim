@@ -1,10 +1,12 @@
 export * from './control/launch'
+export * from './control/mpc'
 export * from './engines/thrust_curves'
+export * from './launch/guidance'
 export * from './launch/integration'
+export * from './launch/simulation'
 export * from './math/constants'
 export * from './math/physics'
 export * from './navigation/sensors'
+export * from './navigation/kalman'
 export * from './orbits/twobody'
-// Note: guidance.ts temporarily excluded due to compilation errors
-// export * from './launch/guidance'
 

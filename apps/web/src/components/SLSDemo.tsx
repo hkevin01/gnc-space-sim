@@ -5,11 +5,11 @@
  * with 3D visualization and real-time telemetry.
  */
 
+import { SLSGuidance, VehicleIntegrator, type VehicleState } from '@gnc/core'
+import { Artemis2Mission, SLSBlock1 as SLSConfig } from '@gnc/scenarios'
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import React, { useEffect, useRef, useState } from 'react'
-import { SLSGuidance, VehicleIntegrator, type VehicleState } from '../../../../packages/gnc-core/src'
-import { Artemis2Mission, SLSBlock1 as SLSConfig } from '../../../../packages/mission-scenarios/src'
 import { MissionSelector, type MissionConfig } from './MissionSelector'
 import { LaunchPad, SLSBlock1 } from './SLSVisualization'
 import { Badge } from './ui/Badge'
@@ -37,38 +37,17 @@ export const SLSDemo: React.FC<SLSDemoProps> = ({ className = '' }) => {
     if (!selectedMission) return
 
     // Create SLS vehicle integrator
-    const stages = [
-      {
-        name: 'SRB',
-        dryMass: SLSConfig.boosters.massStructural,
-        propMass: SLSConfig.boosters.massPropellant,
-        thrust: SLSConfig.boosters.thrustVacuum,
-        thrustSL: SLSConfig.boosters.thrustSeaLevel,
-        isp: SLSConfig.boosters.ispVacuum,
-        ispSL: SLSConfig.boosters.ispSeaLevel,
-        parallel: true // Twin boosters
-      },
-      {
-        name: 'Core Stage',
-        dryMass: SLSConfig.coreStage.massStructural,
-        propMass: SLSConfig.coreStage.massPropellant,
-        thrust: SLSConfig.coreStage.thrustVacuum,
-        thrustSL: SLSConfig.coreStage.thrustSeaLevel,
-        isp: SLSConfig.coreStage.ispVacuum,
-        ispSL: SLSConfig.coreStage.ispSeaLevel,
-        parallel: false
-      },
-      {
-        name: 'ICPS',
-        dryMass: SLSConfig.icps.massStructural,
-        propMass: SLSConfig.icps.massPropellant,
-        thrust: SLSConfig.icps.thrustVacuum,
-        thrustSL: SLSConfig.icps.thrustVacuum,
-        isp: SLSConfig.icps.ispVacuum,
-        ispSL: SLSConfig.icps.ispVacuum,
-        parallel: false
-      }
-    ]
+    const stages = SLSConfig.stages.map(s => ({
+      name: s.name,
+      dryMass: s.dryMass,
+      propMass: s.propMass,
+      thrust: s.thrust,
+      thrustSL: s.thrustSL,
+      isp: s.isp,
+      ispSL: s.ispSL,
+      parallel: !!s.parallel,
+      gimbalRange: s.gimbalRange
+    }))
 
     const stagingEvents = [
       {
@@ -77,7 +56,7 @@ export const SLSDemo: React.FC<SLSDemoProps> = ({ className = '' }) => {
         value: 126, // 2:06 SRB burnout
         jettison: {
           stageName: 'SRB',
-          mass: SLSConfig.boosters.massStructural
+          mass: 98000 * 2 // both SRBs dry mass jettisoned
         }
       },
       {
@@ -86,7 +65,7 @@ export const SLSDemo: React.FC<SLSDemoProps> = ({ className = '' }) => {
         value: 480, // ~8 minutes
         jettison: {
           stageName: 'Core Stage',
-          mass: SLSConfig.coreStage.massStructural
+          mass: 85000
         }
       },
       {
@@ -99,10 +78,13 @@ export const SLSDemo: React.FC<SLSDemoProps> = ({ className = '' }) => {
       }
     ]
 
-    const payloadMass = SLSConfig.payload.orionMass + SLSConfig.payload.serviceModuleMass
+    const payloadMass = SLSConfig.payload.mass
 
     integrator.current = new VehicleIntegrator(stages, stagingEvents, payloadMass)
-    guidance.current = new SLSGuidance(185000, Artemis2Mission.trajectory.inclination * Math.PI / 180)
+    guidance.current = new SLSGuidance(
+      Artemis2Mission.targetOrbit.altitude * 1000,
+      Artemis2Mission.targetOrbit.inclination * Math.PI / 180
+    )
 
     // Initialize state
     setVehicleState(integrator.current.getState())

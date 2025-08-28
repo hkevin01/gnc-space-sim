@@ -1,6 +1,18 @@
 {
   "extends": "../../configs/tsconfig.base.json",
   "include": ["src"],
+  "exclude": [
+    // Exclude legacy/experimental files that cause duplicate declarations or are unfinished
+    "src/launch/guidance-clean.ts",
+    "src/launch/guidance-clean-complete.ts",
+    "src/launch/guidance-final-clean.ts",
+    "src/launch/guidance-minimal.ts",
+    "src/launch/guidance-new.ts",
+    "src/launch/guidance-fixed.ts",
+    "src/enhanced-trajectory.ts",
+    "src/trajectory-optimizer.ts",
+    "src/planning/**"
+  ],
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "dist",

@@ -5,10 +5,10 @@
  * with realistic staging animations and visual effects.
  */
 
+import { VehicleState } from '@gnc/core'
 import { useFrame } from '@react-three/fiber'
 import React, { useMemo, useRef } from 'react'
-import { Group, Mesh } from 'three'
-import { VehicleState } from '../../../packages/gnc-core/src/launch/integration'
+import { Group, Mesh, MeshStandardMaterial } from 'three'
 
 interface SLSProps {
   position?: [number, number, number]
@@ -117,7 +117,8 @@ export const SLSBlock1: React.FC<SLSProps> = ({
         [srbExhaustLeftRef, srbExhaustRightRef].forEach(ref => {
           if (ref.current) {
             ref.current.scale.y = 10 + throttle * 20
-            ref.current.material.opacity = 0.6 + throttle * 0.4
+            const mat = ref.current.material as MeshStandardMaterial
+            mat.opacity = 0.6 + throttle * 0.4
           }
         })
       }
@@ -125,7 +126,8 @@ export const SLSBlock1: React.FC<SLSProps> = ({
       // Core stage exhaust
       if (animationState.coreActive && coreExhaustRef.current) {
         coreExhaustRef.current.scale.y = 8 + throttle * 15
-        coreExhaustRef.current.material.opacity = 0.5 + throttle * 0.3
+  const mat = coreExhaustRef.current.material as MeshStandardMaterial
+  mat.opacity = 0.5 + throttle * 0.3
       }
     }
 

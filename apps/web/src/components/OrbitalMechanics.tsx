@@ -368,6 +368,8 @@ function Billboard({
 }) {
   // This would be implemented with Html from @react-three/drei
   // For now, return null as placeholder
+  // Use variables to satisfy ESLint unused warnings
+  void _position; void _children;
   return null
 }
 
