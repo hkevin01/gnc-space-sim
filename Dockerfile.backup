@@ -72,6 +72,7 @@ COPY tools/ ./tools/
 COPY . .
 
 # Set permissions for non-root user
+RUN chown -R developer:developer /workspace
 
 # Switch to non-root user
 USER developer
@@ -84,6 +85,9 @@ RUN pnpm config set global-bin-dir /home/developer/.local/bin \
   && pnpm config set global-dir $PNPM_HOME \
   && pnpm install -g @types/node typescript tsx nodemon
 
+# Ensure proper permissions for Vite cache directories
+RUN mkdir -p /workspace/apps/web/node_modules/.vite-temp && \
+  chmod 755 /workspace/apps/web/node_modules/.vite-temp
 
 # Expose common development ports
 EXPOSE 5173 5174 5175 5176 5177 5178 5179 3000 3001 8080 9000
