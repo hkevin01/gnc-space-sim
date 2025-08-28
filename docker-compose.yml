@@ -28,7 +28,7 @@ services:
       - NODE_ENV=development
       - VITE_HOST=0.0.0.0
       - CHOKIDAR_USEPOLLING=true
-    command: sh -lc "pnpm --filter @gnc/web dev -- --host 0.0.0.0"
+    command: sh -lc "cd /workspace/apps/web && npx vite --host 0.0.0.0 --port 5173"
     networks:
       - gnc-network
     restart: unless-stopped
