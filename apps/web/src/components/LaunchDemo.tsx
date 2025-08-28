@@ -1,9 +1,10 @@
 import {
-  GravityTurnGuidance,
-  integrateLaunchTrajectory,
-  LAUNCH_VEHICLES,
-  LaunchPhase,
-  LaunchState,
+    GravityTurnGuidance,
+    integrateLaunchTrajectory,
+    KalmanFilter3D,
+    LAUNCH_VEHICLES,
+    LaunchPhase,
+    LaunchState,
 } from '@gnc/core';
 import { Html, OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
@@ -12,7 +13,6 @@ import * as THREE from 'three';
 import { useLaunchControl } from '../state/launchControlStore';
 import { PhaseVisualIndicator } from './MissionEnvironment';
 import { SolarSystem } from './SolarSystem';
-import { KalmanFilter3D } from '@gnc/core';
 
 export function LaunchDemo({
   timeMultiplier = 1,

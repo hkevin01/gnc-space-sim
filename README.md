@@ -111,6 +111,7 @@ pnpm typecheck        # TypeScript compilation verification
 
 # Docker operations (recommended)
 ./scripts/docker-dev.sh dev:start     # Start containerized development
+./scripts/docker-dev.sh stack:start   # Start full stack (web + db + cache)
 ./scripts/docker-dev.sh test:run      # Run tests in clean environment
 ./scripts/docker-dev.sh qa:run        # Quality assurance pipeline
 ./scripts/docker-dev.sh build:prod    # Production build

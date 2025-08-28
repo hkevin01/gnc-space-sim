@@ -64,12 +64,12 @@ export const SimpleSLSDemo: React.FC<SimpleSLSDemoProps> = ({ className = '' }) 
 
   // Simple simulation timer
   React.useEffect(() => {
-    let interval: number | undefined
+  let interval: ReturnType<typeof setInterval> | undefined
 
     if (isSimulating && currentTime < 600) {
-      interval = setInterval(() => {
+  interval = setInterval(() => {
         setCurrentTime(prev => prev + 1) // 1 second per step
-      }, 100) // 10x speed
+  }, 100) as ReturnType<typeof setInterval> // 10x speed
     } else if (currentTime >= 600) {
       setIsSimulating(false)
     }

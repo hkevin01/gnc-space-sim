@@ -1,21 +1,25 @@
 #!/bin/bash
 
-# Test the improved run.sh script
-echo "Testing improved run.sh script..."
+echo "=== Testing Updated GNC Run Script ==="
+echo ""
 
-# First, clean up any existing processes
-./run.sh clean
+cd /workspaces/gnc-space-sim
 
-# Wait a moment
-sleep 2
+# Make scripts executable
+chmod +x run.sh start-gnc.sh find-server.sh
 
-# Test the status command
-echo "Testing status command..."
+echo "1. Testing status command..."
 ./run.sh status
 
-echo "run.sh script has been improved to work in dev container environments!"
-echo "It will automatically:"
-echo "  - Detect if Docker Compose is available"
-echo "  - Fall back to direct pnpm development if Docker isn't available"
-echo "  - Handle both 'docker-compose' and 'docker compose' commands"
-echo "  - Provide clear feedback about what's happening"
+echo ""
+echo "2. Testing restart capability..."
+echo "   Current process status:"
+ps aux | grep -E "(vite|pnpm)" | grep -v grep | head -3
+
+echo ""
+echo "=== Ready to test restart ==="
+echo "Now you can run:"
+echo "  ./run.sh          # Should restart if something is running"
+echo "  ./run.sh restart  # Force restart"
+echo "  ./start-gnc.sh    # Quick start with cleanup"
+echo ""

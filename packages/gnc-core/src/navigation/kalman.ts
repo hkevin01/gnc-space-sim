@@ -136,7 +136,7 @@ function matVec6(A: number[][], x: Vec6): Vec6 {
 function addVec6(a: Vec6, b: Vec6): Vec6 { return [a[0]+b[0], a[1]+b[1], a[2]+b[2], a[3]+b[3], a[4]+b[4], a[5]+b[5]] }
 function subVec(a: number[], b: number[]): number[] { return a.map((v, i) => v - b[i]) }
 
-// Invert a symmetric positive-definite 6x6 by Gaussian elimination (simple, not optimized). 
+// Invert a symmetric positive-definite 6x6 by Gaussian elimination (simple, not optimized).
 // For stability in production, consider a proper linear algebra library or Cholesky.
 function inv6(Ain: number[][]): number[][] {
   const n = 6

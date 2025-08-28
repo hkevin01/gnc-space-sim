@@ -124,60 +124,60 @@ test_run() {
 
 test_watch() {
     print_header "Running tests in watch mode"
-    docker-compose --profile testing run --rm test pnpm test:watch
+    ${DOCKER_COMPOSE} --profile testing run --rm test pnpm test:watch
 }
 
 # Quality assurance
 qa_run() {
     print_header "Running quality assurance checks"
-    docker-compose --profile quality up --build qa
+    ${DOCKER_COMPOSE} --profile quality up --build qa
     print_success "QA checks completed"
 }
 
 qa_lint() {
     print_header "Running linter"
-    docker-compose --profile quality run --rm qa pnpm lint
+    ${DOCKER_COMPOSE} --profile quality run --rm qa pnpm lint
 }
 
 qa_format() {
     print_header "Formatting code"
-    docker-compose --profile quality run --rm qa pnpm format
+    ${DOCKER_COMPOSE} --profile quality run --rm qa pnpm format
 }
 
 qa_typecheck() {
     print_header "Running TypeScript checks"
-    docker-compose --profile quality run --rm qa pnpm typecheck
+    ${DOCKER_COMPOSE} --profile quality run --rm qa pnpm typecheck
 }
 
 # Build commands
 build_dev() {
     print_header "Building development image"
-    docker-compose build web
+    ${DOCKER_COMPOSE} build web
     print_success "Development image built"
 }
 
 build_prod() {
     print_header "Building for production"
-    docker-compose --profile build up --build build
+    ${DOCKER_COMPOSE} --profile build up --build build
     print_success "Production build completed"
 }
 
 build_all() {
     print_header "Building all images"
-    docker-compose build
+    ${DOCKER_COMPOSE} build
     print_success "All images built"
 }
 
 # Production commands
 prod_start() {
     print_header "Starting production environment"
-    docker-compose --profile production up -d production
+    ${DOCKER_COMPOSE} --profile production up -d production
     print_success "Production server started at http://localhost:8080"
 }
 
 prod_stop() {
     print_header "Stopping production environment"
-    docker-compose --profile production down
+    ${DOCKER_COMPOSE} --profile production down
     print_success "Production environment stopped"
 }
 
@@ -185,8 +185,8 @@ prod_stop() {
 stack_start() {
     print_header "Starting full development stack"
     setup_environment
-    docker-compose --profile database --profile cache up -d
-    docker-compose up -d web
+    ${DOCKER_COMPOSE} --profile database --profile cache up -d
+    ${DOCKER_COMPOSE} up -d web
     print_success "Full stack started"
     echo -e "${BLUE}Services available:${NC}"
     echo -e "  - Web: http://localhost:5173"
@@ -196,14 +196,14 @@ stack_start() {
 
 stack_stop() {
     print_header "Stopping full stack"
-    docker-compose --profile database --profile cache down
+    ${DOCKER_COMPOSE} --profile database --profile cache down
     print_success "Full stack stopped"
 }
 
 # Monitoring commands
 monitoring_start() {
     print_header "Starting monitoring stack"
-    docker-compose --profile monitoring up -d
+    ${DOCKER_COMPOSE} --profile monitoring up -d
     print_success "Monitoring started"
     echo -e "${BLUE}Monitoring available:${NC}"
     echo -e "  - Prometheus: http://localhost:9090"
@@ -212,45 +212,45 @@ monitoring_start() {
 
 monitoring_stop() {
     print_header "Stopping monitoring stack"
-    docker-compose --profile monitoring down
+    ${DOCKER_COMPOSE} --profile monitoring down
     print_success "Monitoring stopped"
 }
 
 # CI/CD commands
 ci_run() {
     print_header "Running CI/CD pipeline"
-    docker-compose --profile ci up --build ci
+    ${DOCKER_COMPOSE} --profile ci up --build ci
     print_success "CI/CD pipeline completed"
 }
 
 # Utility commands
 clean_all() {
     print_header "Cleaning up Docker resources"
-    docker-compose down -v --remove-orphans
+    ${DOCKER_COMPOSE} down -v --remove-orphans
     docker system prune -f
     print_success "Cleanup completed"
 }
 
 logs_all() {
     print_header "Showing all container logs"
-    docker-compose logs -f
+    ${DOCKER_COMPOSE} logs -f
 }
 
 status() {
     print_header "Container status"
-    docker-compose ps
+    ${DOCKER_COMPOSE} ps
 }
 
 # Database utilities
 db_shell() {
     print_header "Opening database shell"
-    docker-compose --profile database exec database psql -U gnc_dev -d gnc_space_sim
+    ${DOCKER_COMPOSE} --profile database exec database psql -U gnc_dev -d gnc_space_sim
 }
 
 db_backup() {
     print_header "Creating database backup"
     timestamp=$(date +%Y%m%d_%H%M%S)
-    docker-compose --profile database exec database pg_dump -U gnc_dev gnc_space_sim > "backup_${timestamp}.sql"
+    ${DOCKER_COMPOSE} --profile database exec database pg_dump -U gnc_dev gnc_space_sim > "backup_${timestamp}.sql"
     print_success "Database backup created: backup_${timestamp}.sql"
 }
 

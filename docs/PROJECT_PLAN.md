@@ -12,7 +12,7 @@ This plan tracks phases with actionable checklists. Check off items as they comp
 
 Details:
 
-- Use pnpm workspaces and workspace:* protocol.
+- Use pnpm workspaces and workspace:\* protocol.
 - Tailwind v4 via @tailwindcss/vite plugin and @import "tailwindcss".
 - Add Vitest for unit tests and Playwright/Puppeteer for headless WebGL smoke tests.
 
@@ -63,13 +63,13 @@ Details:
 - [ ] Export recording (WebM) and scenario share links
 
 Details:
+
 ## Phase 6 – Advanced Control and AI
 
 - [ ] MPC core with QP backend (WASM OSQP integration)
 - [x] MPC interfaces and placeholder solver in TS
 - [ ] ONNX Runtime Web integration for COA inference
 - [ ] COA policy prototype and UI hook
-
 
 - Switch gravity model fidelity by scenario.
 - Add keep-out cones and thermal constraints overlays.

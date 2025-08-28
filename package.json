@@ -29,6 +29,9 @@
     "docker:stack": "./scripts/docker-dev.sh stack:start",
     "docker:monitoring": "./scripts/docker-dev.sh monitoring:start"
   },
+  "scriptsExtra": {
+    "scripts:make-exec": "bash scripts/make-executable.sh"
+  },
   "devDependencies": {
     "@playwright/test": "^1.48.0",
     "lighthouse": "^12.0.0",
