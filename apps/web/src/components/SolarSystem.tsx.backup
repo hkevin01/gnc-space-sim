@@ -33,7 +33,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   SUN: {
     texture: getPlanetTexture('sun'),
     radius: 6.96e8,
-    sceneRadius: 0.5, // Much smaller for visibility
+    sceneRadius: 50,
     position: [0, 0, 0],
     color: '#FDB813',
     rotationSpeed: 0.002

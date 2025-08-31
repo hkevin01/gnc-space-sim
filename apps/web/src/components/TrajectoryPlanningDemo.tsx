@@ -1,5 +1,5 @@
+// apps/web/src/components/TrajectoryPlanningDemo.tsx
 import { Html } from '@react-three/drei'
-import { ScrollableControlPanel } from './ScrollableControlPanel'
 import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { TrajectoryControlPanel } from './TrajectoryControlPanel'
@@ -74,12 +74,12 @@ export function TrajectoryPlanningDemo() {
       }
     })()
 
-  const getNodeCount = () => {
+    const getNodeCount = () => {
       switch (graphSize) {
-    case 'small': return 50
-    case 'medium': return 200
-    case 'large': return 500
-    default: return 200
+        case 'small': return 50
+        case 'medium': return 200
+        case 'large': return 500
+        default: return 200
       }
     }
 
@@ -188,18 +188,20 @@ export function TrajectoryPlanningDemo() {
         performance: { ...prev.performance, nodesVisited }
       } : null)
 
-        // Relax outgoing edges
-        for (const edge of resetEdges) {
-          if (edge.from === current.node && !resetNodes[edge.to].visited) {
-            const newDistance = current.distance + edge.weight
+      // Relax outgoing edges
+      for (const edge of resetEdges) {
+        if (edge.from === current.node && !resetNodes[edge.to].visited) {
+          const newDistance = current.distance + edge.weight
 
-            if (newDistance < resetNodes[edge.to].distance) {
-              resetNodes[edge.to].distance = newDistance
-              resetNodes[edge.to].predecessor = current.node as number
-              priorityQueue.push({ node: edge.to, distance: newDistance })
+          if (newDistance < resetNodes[edge.to].distance) {
+            resetNodes[edge.to].distance = newDistance
+            resetNodes[edge.to].predecessor = current.node as number
+            priorityQueue.push({ node: edge.to, distance: newDistance })
 
-              edge.relaxed = true
-              edgesRelaxed++            // Update visualization
+            edge.relaxed = true
+            edgesRelaxed++
+            
+            // Update visualization
             setSearchState(prev => prev ? {
               ...prev,
               edges: [...resetEdges],
@@ -261,19 +263,8 @@ export function TrajectoryPlanningDemo() {
 
   return (
     <>
-      {/* Control Panel */}
-      <ScrollableControlPanel
-        currentAlgorithm={currentAlgorithm}
-        onAlgorithmChange={setCurrentAlgorithm}
-        onGraphSizeChange={setGraphSize}
-        onMissionChange={setCurrentMission}
-        onRunDemo={runEnhancedSSSpDemo}
-        onRunComparison={runComparison}
-
-      <group ref={groupRef}>
-        {/* Graph visualization */}
       {searchState && (
-        <group>
+        <group ref={groupRef}>
           {/* Render nodes */}
           {searchState.nodes.map((node) => (
             <group key={node.id} position={node.position}>
@@ -305,6 +296,7 @@ export function TrajectoryPlanningDemo() {
                   <div className="text-white text-xs font-bold bg-black/50 px-1 rounded">
                     {node.id === 0 ? 'START' : 'TARGET'}
                   </div>
+                </Html>
               )}
             </group>
           ))}
@@ -338,56 +330,99 @@ export function TrajectoryPlanningDemo() {
         </group>
       )}
 
+      {/* Control Panel */}
+      <TrajectoryControlPanel
+        onAlgorithmChange={setCurrentAlgorithm}
+        onGraphSizeChange={setGraphSize}
+        onMissionChange={setCurrentMission}
+        onRunDemo={runEnhancedSSSpDemo}
+        onRunComparison={runComparison}
+        isRunning={isRunning}
+        currentAlgorithm={currentAlgorithm}
+        graphSize={graphSize}
+        currentMission={currentMission}
+      />
+
       {/* Performance metrics display */}
+      {searchState && searchState.searchComplete && (
+        <Html position={[0, 5, 0]} center>
+          <div className="bg-black/90 text-white p-4 rounded-lg border border-cyan-400">
+            <h3 className="text-lg font-bold mb-2">Performance Metrics</h3>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>Nodes Visited:</div>
+              <div className="font-mono text-sky-300">
+                {searchState.performance.nodesVisited}
+              </div>
 
-                <div>Nodes Visited:</div>
-                <div className="font-mono text-sky-300">
-                  {searchState.performance.nodesVisited}
-                </div>
+              <div>Edges Relaxed:</div>
+              <div className="font-mono text-violet-300">
+                {searchState.performance.edgesRelaxed}
+              </div>
 
-                <div>Edges Relaxed:</div>
-                <div className="font-mono text-violet-300">
-                  {searchState.performance.edgesRelaxed}
-                </div>
+              <div>Time:</div>
+              <div className="font-mono text-emerald-300">
+                {searchState.performance.timeMs.toFixed(1)}ms
+              </div>
 
-                <div>Time:</div>
-                <div className="font-mono text-emerald-300">
-                  {searchState.performance.timeMs.toFixed(1)}ms
-                </div>
+              <div>Path Length:</div>
+              <div className="font-mono text-pink-300">
+                {searchState.performance.pathLength}
+              </div>
+            </div>
 
-                <div>Path Length:</div>
-                <div className="font-mono text-pink-300">
-                  {searchState.performance.pathLength}
+            <button
+              onClick={() => setSearchState(null)}
+              className="w-full mt-3 bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-2 px-4 rounded transition-colors"
+            >
+              🔄 Reset
+            </button>
+          </div>
+        </Html>
+      )}
+
+      {/* Performance comparison panel */}
+      {showComparison && benchmarkResults && (
+        <Html position={[5, 0, 0]} center>
+          <div className="bg-black/90 text-white p-4 rounded-lg border border-yellow-400">
+            <h3 className="text-lg font-bold mb-2">Algorithm Comparison</h3>
+            <div className="space-y-2 text-sm">
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div></div>
+                <div className="font-bold">Enhanced</div>
+                <div className="font-bold">Dijkstra</div>
+                
+                <div>Time (ms):</div>
+                <div className="text-green-400">{benchmarkResults.enhanced.timeMs}</div>
+                <div className="text-red-400">{benchmarkResults.dijkstra.timeMs}</div>
+                
+                <div>Nodes:</div>
+                <div className="text-green-400">{benchmarkResults.enhanced.nodesVisited}</div>
+                <div className="text-red-400">{benchmarkResults.dijkstra.nodesVisited}</div>
+                
+                <div>Edges:</div>
+                <div className="text-green-400">{benchmarkResults.enhanced.edgesRelaxed}</div>
+                <div className="text-red-400">{benchmarkResults.dijkstra.edgesRelaxed}</div>
+              </div>
+              
+              <div className="pt-2 border-t border-gray-600">
+                <div className="text-center">
+                  <span className="text-xl font-bold text-yellow-400">
+                    {benchmarkResults.speedup.toFixed(2)}x
+                  </span>
+                  <span className="text-sm"> speedup</span>
                 </div>
               </div>
 
               <button
-                onClick={() => setSearchState(null)}
+                onClick={() => setShowComparison(false)}
                 className="w-full bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-2 px-4 rounded transition-colors"
               >
-                🔄 Reset
+                ✕ Close
               </button>
             </div>
-          )}
-        </div>
-
-      {/* Performance comparison panel */}
-      {showComparison && (
-                </div>
-
-                <button
-                  onClick={() => setShowComparison(false)}
-                  className="w-full bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-2 px-4 rounded transition-colors"
-                >
-                  ✕ Close
-                </button>
-              </div>
-            )}
           </div>
+        </Html>
       )}
-
-      {/* Algorithm description */}
-      </group>
     </>
   )
 }

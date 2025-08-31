@@ -106,6 +106,27 @@ export default function App() {
             </div>
           )}
 
+          {/* Trajectory Control Panel */}
+          {simMode === 'trajectory' && (
+            <div className="mb-4 p-3 bg-green-900/30 rounded border border-green-700">
+              <h3 className="text-sm font-semibold mb-2 text-green-400">🎯 Trajectory Planning</h3>
+              <div className="space-y-2">
+                <div className="text-xs text-zinc-300">
+                  Enhanced SSSP Algorithm for spacecraft trajectory optimization
+                  
+                  🌌 Solar System: Real astronomical positions (August 2025)
+                  Planets positioned according to current Keplerian orbits
+                </div>
+                <div className="text-xs text-zinc-400">
+                  Real-time pathfinding with O(m + n log n) performance
+                  
+                  📅 Current Date: August 31, 2025
+                  🌍 Planets: Real Keplerian orbits with accurate inclinations
+                  ☄️ Asteroid Belt: 300+ asteroids between Mars and Jupiter
+                </div>
+              </div>
+            </div>
+          )}
           <MissionPanel phase={phase} onChange={setPhase} />
 
           {/* GNC Information Panel */}
