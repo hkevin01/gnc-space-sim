@@ -30,6 +30,7 @@
     "@react-three/drei": "^9.121.5",
     "@react-three/fiber": "^8.17.10",
     "@react-three/postprocessing": "^2.19.1",
+    "lucide-react": "^0.542.0",
     "plotly.js-dist-min": "^2.35.3",
     "postprocessing": "^6.37.7",
     "react": "^18.3.1",
@@ -38,8 +39,7 @@
     "zustand": "^5.0.7"
   },
   "devDependencies": {
-  "vite-tsconfig-paths": "^5.1.4",
-  "jsdom": "^24.1.0",
+    "@lhci/cli": "^0.13.0",
     "@playwright/test": "^1.48.0",
     "@tailwindcss/vite": "^4.1.0",
     "@types/node": "^22.0.0",
@@ -51,14 +51,15 @@
     "eslint": "^9.9.0",
     "eslint-plugin-react": "^7.35.0",
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
+    "jsdom": "^24.1.0",
     "lighthouse": "^12.0.0",
-    "@lhci/cli": "^0.13.0",
     "start-server-and-test": "^2.0.3",
-    "wait-on": "^7.0.1",
     "tailwindcss": "^4.1.0",
     "typescript": "^5.6.2",
     "typescript-eslint": "^8.6.0",
-  "vite": "^6.0.0",
-    "vitest": "^2.0.5"
+    "vite": "^6.0.0",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^2.0.5",
+    "wait-on": "^7.0.1"
   }
 }

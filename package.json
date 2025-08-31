@@ -33,12 +33,15 @@
     "scripts:make-exec": "bash scripts/make-executable.sh"
   },
   "devDependencies": {
-    "@playwright/test": "^1.48.0",
-    "lighthouse": "^12.0.0",
     "@lhci/cli": "^0.13.0",
-    "cypress": "^13.13.0",
-    "start-server-and-test": "^2.0.3",
+    "@playwright/test": "^1.48.0",
     "concurrently": "^8.0.0",
+    "cypress": "^13.13.0",
+    "lighthouse": "^12.0.0",
+    "start-server-and-test": "^2.0.3",
     "wait-on": "^7.0.1"
+  },
+  "dependencies": {
+    "lucide-react": "^0.542.0"
   }
 }
