@@ -107,10 +107,10 @@ export const SimpleSLSDemo: React.FC<SimpleSLSDemoProps> = ({ className = '' }) 
         <div className="flex items-center space-x-3">
           <Rocket className="w-8 h-8 text-blue-600" />
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-white">
               SLS Launch Simulation
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-300">
               NASA Space Launch System • {selectedMission?.name || 'Mission Selected'}
             </p>
           </div>
@@ -188,7 +188,7 @@ export const SimpleSLSDemo: React.FC<SimpleSLSDemoProps> = ({ className = '' }) 
                 <div className="text-2xl font-mono font-bold">
                   T+{formatTime(currentTime)}
                 </div>
-                <div className="text-sm text-gray-600">Mission Elapsed Time</div>
+                <div className="text-sm text-gray-300">Mission Elapsed Time</div>
               </div>
             </CardContent>
           </Card>
@@ -201,25 +201,25 @@ export const SimpleSLSDemo: React.FC<SimpleSLSDemoProps> = ({ className = '' }) 
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <div className="text-gray-600">Altitude</div>
+                  <div className="text-gray-300">Altitude</div>
                   <div className="font-mono font-bold">
                     {(vehicleState.altitude / 1000).toFixed(1)} km
                   </div>
                 </div>
                 <div>
-                  <div className="text-gray-600">Velocity</div>
+                  <div className="text-gray-300">Velocity</div>
                   <div className="font-mono font-bold">
                     {vehicleState.velocity.toFixed(0)} m/s
                   </div>
                 </div>
                 <div>
-                  <div className="text-gray-600">Mass</div>
+                  <div className="text-gray-300">Mass</div>
                   <div className="font-mono font-bold">
                     {(vehicleState.mass / 1000).toFixed(0)} t
                   </div>
                 </div>
                 <div>
-                  <div className="text-gray-600">Thrust</div>
+                  <div className="text-gray-300">Thrust</div>
                   <div className="font-mono font-bold">
                     {(vehicleState.thrust / 1000000).toFixed(1)} MN
                   </div>
@@ -227,14 +227,14 @@ export const SimpleSLSDemo: React.FC<SimpleSLSDemoProps> = ({ className = '' }) 
               </div>
 
               <div>
-                <div className="text-gray-600 mb-2">T/W Ratio</div>
+                <div className="text-gray-300 mb-2">T/W Ratio</div>
                 <div className="font-mono font-bold text-lg">
                   {(vehicleState.thrust / (vehicleState.mass * 9.81)).toFixed(2)}
                 </div>
               </div>
 
               <div>
-                <div className="text-gray-600 mb-2">Active Stages</div>
+                <div className="text-gray-300 mb-2">Active Stages</div>
                 <div className="space-y-1">
                   {vehicleState.activeStages.map((stage: string) => (
                     <Badge key={stage} className="mr-1">
@@ -249,7 +249,7 @@ export const SimpleSLSDemo: React.FC<SimpleSLSDemoProps> = ({ className = '' }) 
 
               {/* Stage Details */}
               <div>
-                <div className="text-gray-600 mb-2">Stage Status</div>
+                <div className="text-gray-300 mb-2">Stage Status</div>
                 <div className="space-y-2 text-xs">
                   {vehicleState.stages.map((stage: { name: string; active: boolean; propRemaining: number }) => (
                     <div key={stage.name} className="flex justify-between">
@@ -277,7 +277,7 @@ export const SimpleSLSDemo: React.FC<SimpleSLSDemoProps> = ({ className = '' }) 
               </CardHeader>
               <CardContent className="space-y-3 text-sm">
                 <div>
-                  <div className="text-gray-600 font-medium">{selectedMission.name}</div>
+                  <div className="text-gray-300 font-medium">{selectedMission.name}</div>
                   <div className="text-gray-500 text-xs">{selectedMission.description}</div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">

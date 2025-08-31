@@ -217,8 +217,8 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
       <div className="flex items-center space-x-3">
         <Rocket className="w-8 h-8 text-blue-600" />
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Mission Selector</h2>
-          <p className="text-gray-600">Choose an SLS mission to simulate</p>
+          <h2 className="text-2xl font-bold text-white">Mission Selector</h2>
+          <p className="text-gray-300">Choose an SLS mission to simulate</p>
         </div>
       </div>
 
@@ -231,13 +231,13 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Status Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-200 mb-2">
                 Mission Status
               </label>
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Statuses</option>
                 <option value="planned">Planned</option>
@@ -249,13 +249,13 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
 
             {/* Destination Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-200 mb-2">
                 Destination
               </label>
               <select
                 value={filterDestination}
                 onChange={(e) => setFilterDestination(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+                className="w-full p-2 bg-gray-800 border border-gray-600 rounded-md text-white focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">All Destinations</option>
                 <option value="Moon">Moon</option>
@@ -276,7 +276,7 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
             className={`cursor-pointer transition-all hover:shadow-lg ${
               selectedMission?.id === mission.id
                 ? 'ring-2 ring-blue-500 bg-blue-50'
-                : 'hover:bg-gray-50'
+                : 'hover:bg-gray-700'
             }`}
             onClick={() => onMissionSelect(mission)}
           >
@@ -286,7 +286,7 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
                   {getDestinationIcon(mission.destination)}
                   <div>
                     <CardTitle className="text-xl">{mission.name}</CardTitle>
-                    <p className="text-gray-600 mt-1">{mission.description}</p>
+                    <p className="text-gray-300 mt-1">{mission.description}</p>
                   </div>
                 </div>
                 <Badge className={getStatusColor(mission.status)}>
@@ -299,30 +299,30 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
               {/* Mission Details */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-center space-x-2">
-                  <Rocket className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-700">{mission.vehicle}</span>
+                  <Rocket className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-200">{mission.vehicle}</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <MapPin className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-700">{mission.launchSite}</span>
+                  <MapPin className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-200">{mission.launchSite}</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Users className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-700">
+                  <Users className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-200">
                     {mission.crew === 0 ? 'Uncrewed' : `${mission.crew} crew`}
                   </span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Clock className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-700">{mission.duration} days</span>
+                  <Clock className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-200">{mission.duration} days</span>
                 </div>
               </div>
 
               {/* Launch Date */}
               {mission.launchDate && (
                 <div className="flex items-center space-x-2 text-sm">
-                  <Calendar className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-700">
+                  <Calendar className="w-4 h-4 text-gray-400" />
+                  <span className="text-gray-200">
                     Launch: {new Date(mission.launchDate).toLocaleDateString()}
                   </span>
                 </div>
@@ -332,8 +332,8 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
 
               {/* Key Objectives */}
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Key Objectives</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
+                <h4 className="font-medium text-white mb-2">Key Objectives</h4>
+                <ul className="text-sm text-gray-300 space-y-1">
                   {mission.objectives.slice(0, 3).map((objective, index) => (
                     <li key={index} className="flex items-start space-x-2">
                       <span className="text-blue-500 mt-1">•</span>
@@ -350,16 +350,16 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
 
               {/* Trajectory Info */}
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Trajectory</h4>
+                <h4 className="font-medium text-white mb-2">Trajectory</h4>
                 {mission.trajectory ? (
-                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-300">
                     <div>Apogee: {mission.trajectory.apogee.toLocaleString()} km</div>
                     <div>Perigee: {mission.trajectory.perigee} km</div>
                     <div>Inclination: {mission.trajectory.inclination}°</div>
                     <div>ΔV: {mission.trajectory.deltaV.toLocaleString()} m/s</div>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-600">
+                  <div className="grid grid-cols-2 gap-2 text-xs text-gray-300">
                     <div>Target Orbit: {mission.name.includes('Artemis') ? '185 km circular' : 'N/A'}</div>
                     <div>Inclination: {mission.name.includes('Artemis') ? '28.5°' : 'N/A'}</div>
                   </div>
@@ -368,7 +368,7 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
             </CardContent>
 
             {/* Action Button */}
-            <div className="p-4 bg-gray-50 rounded-b-lg">
+            <div className="p-4 bg-gray-800 rounded-b-lg">
               <Button
                 className="w-full"
                 variant={selectedMission?.id === mission.id ? "default" : "outline"}
@@ -385,10 +385,10 @@ export const MissionSelector: React.FC<MissionSelectorProps> = ({
         <Card>
           <CardContent className="text-center py-8">
             <Globe className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className="text-lg font-medium text-white mb-2">
               No missions found
             </h3>
-            <p className="text-gray-600">
+            <p className="text-gray-300">
               Try adjusting your filters to see more missions.
             </p>
           </CardContent>

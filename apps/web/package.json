@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "bash ./scripts/guard-app.sh",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview --strictPort --port 5173",

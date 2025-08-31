@@ -12,7 +12,7 @@ export interface CardProps {
 
 export const Card: React.FC<CardProps> = ({ children, className = '', onClick }) => (
   <div
-    className={`bg-white rounded-lg border border-gray-200 shadow-sm ${className}`}
+    className={`bg-gray-800 rounded-lg border border-gray-700 shadow-sm ${className}`}
     onClick={onClick}
   >
     {children}

@@ -331,11 +331,11 @@ export const SLSDemo: React.FC<SLSDemoProps> = ({ className = '' }) => {
               <CardContent className="space-y-3 text-sm">
                 <div className="flex items-center space-x-2">
                   <Globe className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-700">Destination: {selectedMission.destination}</span>
+                  <span className="text-gray-200">Destination: {selectedMission.destination}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Clock className="w-4 h-4 text-gray-500" />
-                  <span className="text-gray-700">Duration: {selectedMission.duration} days</span>
+                  <span className="text-gray-200">Duration: {selectedMission.duration} days</span>
                 </div>
                 <div>
                   <div className="text-gray-600 mb-1">Key Milestones</div>

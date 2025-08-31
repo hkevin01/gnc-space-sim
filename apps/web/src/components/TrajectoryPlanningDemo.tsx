@@ -1,4 +1,5 @@
 import { Html } from '@react-three/drei'
+import { ScrollableControlPanel } from './ScrollableControlPanel'
 import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { TrajectoryControlPanel } from './TrajectoryControlPanel'
@@ -261,18 +262,13 @@ export function TrajectoryPlanningDemo() {
   return (
     <>
       {/* Control Panel */}
-  <Html position={[-8, 8, 0]} transform={false}>
-        <TrajectoryControlPanel
-          currentAlgorithm={currentAlgorithm}
-          onAlgorithmChange={setCurrentAlgorithm}
-          onGraphSizeChange={setGraphSize}
-          onMissionChange={setCurrentMission}
-          onRunDemo={runEnhancedSSSpDemo}
-          onRunComparison={runComparison}
-          onReset={() => setSearchState(null)}
-          isRunning={isRunning}
-        />
-      </Html>
+      <ScrollableControlPanel
+        currentAlgorithm={currentAlgorithm}
+        onAlgorithmChange={setCurrentAlgorithm}
+        onGraphSizeChange={setGraphSize}
+        onMissionChange={setCurrentMission}
+        onRunDemo={runEnhancedSSSpDemo}
+        onRunComparison={runComparison}
 
       <group ref={groupRef}>
         {/* Graph visualization */}
@@ -309,7 +305,6 @@ export function TrajectoryPlanningDemo() {
                   <div className="text-white text-xs font-bold bg-black/50 px-1 rounded">
                     {node.id === 0 ? 'START' : 'TARGET'}
                   </div>
-                </Html>
               )}
             </group>
           ))}
@@ -344,44 +339,6 @@ export function TrajectoryPlanningDemo() {
       )}
 
       {/* Performance metrics display */}
-      <Html position={[-8, 6, 0]} transform={false}>
-        <div className="bg-zinc-900/90 text-zinc-100 p-4 rounded-lg border border-zinc-700 shadow-lg w-80">
-          <h3 className="text-lg font-semibold mb-3 text-zinc-200">
-            🚀 Enhanced SSSP Trajectory Planning
-          </h3>
-
-          {!searchState ? (
-            <div className="space-y-3">
-              <p className="text-sm text-zinc-300">
-                Breakthrough O(m + n log n) algorithm for spacecraft trajectory optimization
-              </p>
-              <button
-                onClick={runEnhancedSSSpDemo}
-                disabled={isRunning}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-zinc-700 text-white font-medium py-2 px-4 rounded transition-colors"
-              >
-                {isRunning ? '🔄 Running...' : '▶️ Start Demo'}
-              </button>
-              <button
-                onClick={runComparison}
-                disabled={showComparison}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-700 text-white font-medium py-2 px-4 rounded transition-colors"
-              >
-                📊 Performance Comparison
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>Algorithm:</div>
-                <div className="font-mono text-amber-300">
-                  {searchState.algorithm.toUpperCase()}
-                </div>
-
-                <div>Status:</div>
-                <div className={`font-mono ${searchState.searchComplete ? 'text-emerald-400' : 'text-orange-400'}`}>
-                  {searchState.searchComplete ? 'COMPLETE' : 'SEARCHING'}
-                </div>
 
                 <div>Nodes Visited:</div>
                 <div className="font-mono text-sky-300">
@@ -413,48 +370,9 @@ export function TrajectoryPlanningDemo() {
             </div>
           )}
         </div>
-      </Html>
 
       {/* Performance comparison panel */}
       {showComparison && (
-        <Html position={[8, 6, 0]} transform={false}>
-          <div className="bg-zinc-900/90 text-zinc-100 p-4 rounded-lg border border-zinc-700 shadow-lg w-80">
-            <h3 className="text-lg font-semibold mb-3 text-zinc-200">
-              📊 Performance Comparison
-            </h3>
-
-            {!benchmarkResults ? (
-              <div className="text-center">
-                <div className="animate-spin text-2xl mb-2">⚡</div>
-                <div className="text-sm text-zinc-300">Running benchmarks...</div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="text-sm space-y-2">
-                  <div className="font-semibold text-amber-300">Enhanced SSSP:</div>
-                  <div className="ml-4 space-y-1">
-                    <div>Time: <span className="font-mono text-emerald-400">{benchmarkResults.enhanced.timeMs}ms</span></div>
-                    <div>Nodes: <span className="font-mono text-sky-400">{benchmarkResults.enhanced.nodesVisited}</span></div>
-                    <div>Edges: <span className="font-mono text-violet-400">{benchmarkResults.enhanced.edgesRelaxed}</span></div>
-                  </div>
-
-                  <div className="font-semibold text-amber-300">Classical Dijkstra:</div>
-                  <div className="ml-4 space-y-1">
-                    <div>Time: <span className="font-mono text-red-400">{benchmarkResults.dijkstra.timeMs}ms</span></div>
-                    <div>Nodes: <span className="font-mono text-sky-400">{benchmarkResults.dijkstra.nodesVisited}</span></div>
-                    <div>Edges: <span className="font-mono text-violet-400">{benchmarkResults.dijkstra.edgesRelaxed}</span></div>
-                  </div>
-
-                  <div className="border-t border-gray-600 pt-2">
-                    <div className="font-bold text-xl text-center">
-                      <span className="text-emerald-400">{benchmarkResults.speedup}x</span>
-                      <span className="text-zinc-400"> speedup</span>
-                    </div>
-                  </div>
-
-                  <div className="text-xs text-zinc-400 text-center">
-                    Graph: {benchmarkResults.graphSize.nodes} nodes, {benchmarkResults.graphSize.edges} edges
-                  </div>
                 </div>
 
                 <button
@@ -466,48 +384,9 @@ export function TrajectoryPlanningDemo() {
               </div>
             )}
           </div>
-        </Html>
       )}
 
       {/* Algorithm description */}
-      <Html position={[0, -8, 0]} center>
-        <div className="bg-zinc-900/80 text-zinc-100 p-4 rounded-lg border border-zinc-700 shadow max-w-2xl">
-          <h4 className="text-lg font-semibold mb-2 text-zinc-200">
-            Enhanced SSSP for Spacecraft Trajectory Planning
-          </h4>
-          <div className="text-sm space-y-2 text-zinc-300">
-            <p>
-              <strong className="text-zinc-100">Breakthrough Algorithm:</strong> First deterministic SSSP to beat
-              Dijkstra's O(m + n log n) bound on sparse directed graphs.
-            </p>
-            <p>
-              <strong className="text-zinc-100">Space Applications:</strong> Real-time trajectory optimization,
-              replanning for disturbances, multi-target mission planning.
-            </p>
-            <div className="grid grid-cols-2 gap-4 mt-3">
-              <div>
-                <strong className="text-amber-300">Visualization:</strong>
-                <ul className="text-xs mt-1 space-y-1">
-                  <li>🔵 Start node</li>
-                  <li>🟣 Target node</li>
-                  <li>🔴 Current search node</li>
-                  <li>🟡 Visited nodes</li>
-                  <li>🟢 Optimal path</li>
-                </ul>
-              </div>
-              <div>
-                <strong className="text-amber-300">Performance:</strong>
-                <ul className="text-xs mt-1 space-y-1">
-                  <li>2-4x faster than Dijkstra</li>
-                  <li>Better cache efficiency</li>
-                  <li>Reduced memory usage</li>
-                  <li>Real-time capable</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Html>
       </group>
     </>
   )

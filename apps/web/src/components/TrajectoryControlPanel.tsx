@@ -43,7 +43,7 @@ export function TrajectoryControlPanel({
   }
 
   return (
-    <div className="absolute top-4 left-4 bg-zinc-900/90 text-zinc-100 p-4 rounded-lg border border-zinc-700 shadow-lg w-80 max-h-[80vh] overflow-y-auto">
+    <div className="absolute top-4 right-4 bg-zinc-900/90 text-zinc-100 p-4 rounded-lg border border-zinc-700 shadow-lg w-80 max-h-[80vh] overflow-y-auto">
       <h2 className="text-lg font-semibold mb-4 text-zinc-200">
         🎯 Trajectory Planning Demo
       </h2>

@@ -2,9 +2,11 @@ import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import * as THREE from 'three'
 import { assetUrl, useSafeTexture } from '../utils/textures'
+import { getPlanetTexture } from '../utils/planetaryTextures'
 
 // Simplified solar system data structure
 interface PlanetData {
+  texture?: any
   radius: number
   sceneRadius: number
   orbitRadius?: number
@@ -19,13 +21,15 @@ interface PlanetData {
 // Solar system data (scaled for visualization)
 const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   SUN: {
+    texture: getPlanetTexture('sun'),
     radius: 6.96e8,
-    sceneRadius: 8,
+    sceneRadius: 50,
     position: [0, 0, 0],
     color: '#FDB813',
     rotationSpeed: 0.002
   },
   MERCURY: {
+    texture: getPlanetTexture('mercury'),
     radius: 2.44e6,
     sceneRadius: 0.38,
     orbitRadius: 58,
@@ -35,6 +39,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     orbitSpeed: 0.08
   },
   VENUS: {
+    texture: getPlanetTexture('venus'),
     radius: 6.05e6,
     sceneRadius: 0.95,
     orbitRadius: 108,
@@ -44,6 +49,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     orbitSpeed: 0.035
   },
   EARTH: {
+    texture: getPlanetTexture('earth'),
     radius: 6.37e6,
     sceneRadius: 1.0,
     orbitRadius: 150,
@@ -53,6 +59,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     orbitSpeed: 0.027
   },
   MARS: {
+    texture: getPlanetTexture('mars'),
     radius: 3.39e6,
     sceneRadius: 0.53,
     orbitRadius: 228,
@@ -62,6 +69,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     orbitSpeed: 0.024
   },
   JUPITER: {
+    texture: getPlanetTexture('jupiter'),
     radius: 6.99e7,
     sceneRadius: 11.2,
     orbitRadius: 400, // Scaled down for visibility
@@ -71,6 +79,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     orbitSpeed: 0.013
   },
   SATURN: {
+    texture: getPlanetTexture('saturn'),
     radius: 5.83e7,
     sceneRadius: 9.4,
     orbitRadius: 500, // Scaled down for visibility
@@ -81,6 +90,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     hasRings: true
   },
   URANUS: {
+    texture: getPlanetTexture('uranus'),
     radius: 2.54e7,
     sceneRadius: 4.0,
     orbitRadius: 600, // Scaled down for visibility
@@ -90,6 +100,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     orbitSpeed: 0.0068
   },
   NEPTUNE: {
+    texture: getPlanetTexture('neptune'),
     radius: 2.46e7,
     sceneRadius: 3.9,
     orbitRadius: 700, // Scaled down for visibility
@@ -99,6 +110,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     orbitSpeed: 0.0054
   },
   MOON: {
+    texture: getPlanetTexture('moon'),
     radius: 1.74e6,
     sceneRadius: 0.27,
     orbitRadius: 38.4,
@@ -118,9 +130,10 @@ interface PlanetProps {
 }
 
 export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 0, 0] }: PlanetProps) {
+  const data = SOLAR_SYSTEM_DATA[name]
+  const texture = useSafeTexture(data.texture)
   const meshRef = useRef<THREE.Mesh>(null)
   const groupRef = useRef<THREE.Group>(null)
-  const data = SOLAR_SYSTEM_DATA[name]
 
   // Calculate orbital position based on mission time
   const getOrbitalPosition = (): [number, number, number] => {
@@ -173,7 +186,8 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
         <mesh ref={meshRef}>
           <sphereGeometry args={[data.sceneRadius, 32, 32]} />
           <meshStandardMaterial
-            color={data.color}
+            map={texture}
+            color={texture ? undefined : data.color}
             roughness={name === 'SUN' ? 0 : 0.8}
             metalness={0.1}
             emissive={name === 'SUN' ? data.color : '#000000'}
