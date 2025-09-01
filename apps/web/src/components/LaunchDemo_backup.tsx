@@ -161,13 +161,22 @@ export function LaunchDemo({
       const nextState = integrateLaunchTrajectory(stateRef.current, LAUNCH_VEHICLES.FALCON_9, guidance, dt);
 
       if (
+      if (
         !nextState ||
         !isFiniteArray(nextState.r) ||
         !isFiniteArray(nextState.v) ||
         nextState.altitude < -1000 ||
         nextState.altitude > 1e6
       ) {
-
+        invalidStateCount.current++;
+        if (invalidStateCount.current > 10) {
+          resetLaunch();
+          invalidStateCount.current = 0;
+        }
+        return;
+      }
+      ) {
+        ');
         invalidStateCount.current++;
         if (invalidStateCount.current > 10) {
           resetLaunch();

@@ -49,7 +49,6 @@ export const useLaunchControl = create<LaunchControlState>((set) => ({
   },
   setCurrentState: (state) => set({ currentState: state }),
   initiateLaunch: () => {
-    console.log('Launch initiated from store'); // Debug log
     const launchState: LaunchState = {
       ...initialState,
       phase: LaunchPhase.PRELAUNCH, // Start with prelaunch, not liftoff
@@ -62,7 +61,7 @@ export const useLaunchControl = create<LaunchControlState>((set) => ({
     })
   },
   resetLaunch: () => {
-    console.log('Launch reset from store'); // Debug log
+
     set({
       isLaunched: false,
       launchTime: -10,

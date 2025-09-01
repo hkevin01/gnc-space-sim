@@ -125,6 +125,23 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
   }
 }
 
+// Helper function to get texture for a planet
+// Helper function to get texture for a planet
+export function getPlanetTexture(planetName: string): TextureSpec | null {
+  const upperName = planetName.toUpperCase()
+  
+  // Use alternative sources for Earth and Moon if available
+  if (upperName === "EARTH" && ALTERNATIVE_TEXTURES.EARTH) {
+    return ALTERNATIVE_TEXTURES.EARTH
+  }
+  if (upperName === "MOON" && ALTERNATIVE_TEXTURES.MOON) {
+    return ALTERNATIVE_TEXTURES.MOON
+  }
+  
+  return PLANETARY_TEXTURES[upperName] || null
+}
+
+// Alternative texture sources (uncomment to use different sources)
 // Alternative texture sources (uncomment to use different sources)
 export const ALTERNATIVE_TEXTURES = {
   EARTH: {
@@ -148,18 +165,119 @@ export const ALTERNATIVE_TEXTURES = {
     }
   }
 }
-
-// Helper function to get texture for a planet
-export function getPlanetTexture(planetName: string): TextureSpec | null {
-  const upperName = planetName.toUpperCase()
-  
-  // Use alternative sources for Earth and Moon if available
-  if (upperName === 'EARTH' && ALTERNATIVE_TEXTURES.EARTH) {
-    return ALTERNATIVE_TEXTURES.EARTH
+// Alternative texture sources (uncomment to use different sources)
+export const ALTERNATIVE_TEXTURES = {
+  EARTH: {
+    url: 'https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg',
+    anisotropy: 16,
+    isColor: true,
+    fallbackPattern: {
+      type: 'earth',
+      colors: ['#6B93D6', '#228B22', '#8B4513'],
+      size: 1024
+    }
+  },
+  MOON: {
+    url: 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg',
+    anisotropy: 16,
+    isColor: true,
+    fallbackPattern: {
+      type: 'checker',
+      colors: ['#C0C0C0', '#808080'],
+      size: 512
+    }
   }
-  if (upperName === 'MOON' && ALTERNATIVE_TEXTURES.MOON) {
-    return ALTERNATIVE_TEXTURES.MOON
+// Alternative texture sources (uncomment to use different sources)
+export const ALTERNATIVE_TEXTURES = {
+  EARTH: {
+    url: 'https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg',
+    anisotropy: 16,
+    isColor: true,
+    fallbackPattern: {
+      type: 'earth',
+      colors: ['#6B93D6', '#228B22', '#8B4513'],
+      size: 1024
+    }
+  },
+  MOON: {
+    url: 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg',
+    anisotropy: 16,
+    isColor: true,
+    fallbackPattern: {
+      type: 'checker',
+      colors: ['#C0C0C0', '#808080'],
+      size: 512
+    }
   }
-  
-  return PLANETARY_TEXTURES[upperName] || null
-}
+// Alternative texture sources (uncomment to use different sources)
+export const ALTERNATIVE_TEXTURES = {
+  EARTH: {
+    url: 'https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg',
+    anisotropy: 16,
+    isColor: true,
+    fallbackPattern: {
+      type: 'earth',
+      colors: ['#6B93D6', '#228B22', '#8B4513'],
+      size: 1024
+    }
+  },
+  MOON: {
+    url: 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg',
+    anisotropy: 16,
+    isColor: true,
+    fallbackPattern: {
+      type: 'checker',
+      colors: ['#C0C0C0', '#808080'],
+      size: 512
+    }
+  }
+// Alternative texture sources (uncomment to use different sources)
+export const ALTERNATIVE_TEXTURES = {
+  EARTH: {
+    url: 'https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg',
+    anisotropy: 16,
+    isColor: true,
+    fallbackPattern: {
+      type: 'earth',
+      colors: ['#6B93D6', '#228B22', '#8B4513'],
+      size: 1024
+    }
+  },
+  MOON: {
+    url: 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg',
+    anisotropy: 16,
+    isColor: true,
+    fallbackPattern: {
+      type: 'checker',
+      colors: ['#C0C0C0', '#808080'],
+      size: 512
+    }
+  }
+// Alternative texture sources (uncomment to use different sources)
+export const ALTERNATIVE_TEXTURES = {
+  EARTH: {
+    url: 'https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg',
+    anisotropy: 16,
+    isColor: true,
+    fallbackPattern: {
+      type: 'earth',
+      colors: ['#6B93D6', '#228B22', '#8B4513'],
+      size: 1024
+    }
+  },
+  MOON: {
+    url: 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg',
+    anisotropy: 16,
+    isColor: true,
+    fallbackPattern: {
+      type: 'checker',
+      colors: ['#C0C0C0', '#808080'],
+      size: 512
+    }
+  }
+  MOON: {
+//     url: 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg',
+//     anisotropy: 16,
+//     isColor: true
+  }
+// }
