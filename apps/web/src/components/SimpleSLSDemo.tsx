@@ -5,6 +5,7 @@
  */
 
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
+import { StarField } from './StarField'
 import { Canvas } from '@react-three/fiber'
 import React, { useState } from 'react'
 import { MissionSelector, type MissionConfig } from './MissionSelector'
@@ -133,6 +134,7 @@ export const SimpleSLSDemo: React.FC<SimpleSLSDemoProps> = ({ className = '' }) 
             <CardContent className="p-0">
               <div className="h-96 bg-gradient-to-b from-blue-900 via-blue-700 to-blue-500 rounded-b-lg overflow-hidden">
                 <Canvas>
+                  <StarField count={1000} radius={200} />
                   <PerspectiveCamera makeDefault position={[150, 100, 150]} />
                   <OrbitControls enablePan enableZoom enableRotate />
 

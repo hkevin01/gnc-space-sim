@@ -126,7 +126,7 @@ export function LaunchDemo({
       camera.position.lerp(target, 0.05);
       // Also update controls target
       if (controlsRef.current) {
-        controlsRef.current.target.lerp(rocketPos, 0.1);
+        // controlsRef.current.target.lerp(rocketPos, 0.1); // Disabled to keep Earth-centered view
         controlsRef.current.update();
       }
     }
@@ -295,41 +295,7 @@ export function LaunchDemo({
 
       {trajectoryRef.current && <primitive object={trajectoryRef.current} />}
 
-      {currentState && isFiniteArray(currentState.r) && (
-        <Html
-          position={[currentState.r[0] / 1e6 + 0.5, currentState.r[1] / 1e6 + 0.5, currentState.r[2] / 1e6]}
-          distanceFactor={8}
-        >
-          <div className="bg-black/90 text-white px-3 py-2 rounded-lg text-sm pointer-events-none border border-orange-400 min-w-48">
-            <PhaseVisualIndicator phase={currentState.phase} missionTime={launchTime > 0 ? launchTime : 0} />
-            <div className="mt-2 space-y-1 text-xs">
-              <div className="flex justify-between">
-                <span>Altitude:</span>
-                <span className="text-green-400">{(currentState.altitude / 1000).toFixed(1)} km</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Velocity:</span>
-                <span className="text-blue-400">{(currentState.velocity_magnitude / 1000).toFixed(2)} km/s</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Flight Path:</span>
-                <span className="text-yellow-400">{(currentState.flight_path_angle * (180 / Math.PI)).toFixed(1)}°</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Mass:</span>
-                <span className="text-purple-400">{(currentState.mass / 1000).toFixed(1)} t</span>
-              </div>
-              <div className="flex justify-between">
-                <span>KF Pos.X:</span>
-                <span className="text-cyan-400">{(kfRef.current?.x[0] ?? 0).toFixed(0)} m</span>
-              </div>
-            </div>
-          </div>
-        </Html>
-      )}
 
-      {/* OrbitControls for user pan/zoom/rotate, with ref for snap-back logic */}
-      <OrbitControls ref={controlsRef} enablePan enableZoom enableRotate />
     </group>
   );
 }

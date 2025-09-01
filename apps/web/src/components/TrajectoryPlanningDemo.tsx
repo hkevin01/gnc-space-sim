@@ -1,5 +1,5 @@
 // apps/web/src/components/TrajectoryPlanningDemo.tsx
-import { Html } from '@react-three/drei'
+
 import { useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { TrajectoryControlPanel } from './TrajectoryControlPanel'

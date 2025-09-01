@@ -7,13 +7,9 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
   // Earth textures from NASA Blue Marble
   EARTH: {
     url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/earthmap1k.jpg',
-    
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'earth',
-      colors: ['#8C7853', '#696969', '#D2B48C', '#A0522D'],
-      size: 512
       type: 'earth',
       colors: ['#6B93D6', '#228B22', '#8B4513'],
       size: 1024
@@ -26,9 +22,6 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'earth',
-      colors: ['#8C7853', '#696969', '#D2B48C', '#A0522D'],
-      size: 512
       type: 'checker',
       colors: ['#C0C0C0', '#808080'],
       size: 512
@@ -41,9 +34,6 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'earth',
-      colors: ['#8C7853', '#696969', '#D2B48C', '#A0522D'],
-      size: 512
       type: 'checker',
       colors: ['#CD5C5C', '#8B4513', '#A0522D'],
       size: 512
@@ -52,13 +42,10 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
 
   // Jupiter from Juno mission
   JUPITER: {
-    url: 'https://photojournal.jpl.nasa.gov/jpeg/PIA21775.jpg',
+    url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/jupitermap.jpg',
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'earth',
-      colors: ['#8C7853', '#696969', '#D2B48C', '#A0522D'],
-      size: 512
       type: 'stripes',
       colors: ['#D8CA9D', '#B8860B', '#8B7355', '#DAA520'],
       size: 1024
@@ -67,13 +54,10 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
 
   // Saturn from Cassini mission
   SATURN: {
-    url: 'https://photojournal.jpl.nasa.gov/jpeg/PIA17172.jpg',
+    url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/saturnmap.jpg',
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'earth',
-      colors: ['#8C7853', '#696969', '#D2B48C', '#A0522D'],
-      size: 512
       type: 'stripes',
       colors: ['#FAD5A5', '#DAA520', '#B8860B'],
       size: 1024
@@ -82,13 +66,10 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
 
   // Sun texture (solar surface)
   SUN: {
-    url: 'https://sdo.gsfc.nasa.gov/assets/img/latest/latest_512_0304.jpg',
+    url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/sunmap.jpg',
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'earth',
-      colors: ['#8C7853', '#696969', '#D2B48C', '#A0522D'],
-      size: 512
       type: 'checker',
       colors: ['#FDB813', '#FF6B35', '#FFA500'],
       size: 512
@@ -102,9 +83,6 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
     isColor: true,
     fallbackPattern: {
       type: 'earth',
-      colors: ['#8C7853', '#696969', '#D2B48C', '#A0522D'],
-      size: 512
-      type: 'earth',
       colors: ['#FFC649', '#FFD700', '#FFA500'],
       size: 512
     }
@@ -116,9 +94,6 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'earth',
-      colors: ['#8C7853', '#696969', '#D2B48C', '#A0522D'],
-      size: 512
       type: 'checker',
       colors: ['#8C7853', '#A0522D', '#696969'],
       size: 512
@@ -134,9 +109,6 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
       type: 'earth',
       colors: ['#8C7853', '#696969', '#D2B48C', '#A0522D'],
       size: 512
-      type: 'checker',
-      colors: ['#4FD0E7', '#00CED1', '#87CEEB'],
-      size: 512
     }
   },
 
@@ -146,9 +118,6 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'earth',
-      colors: ['#8C7853', '#696969', '#D2B48C', '#A0522D'],
-      size: 512
       type: 'checker',
       colors: ['#4B70DD', '#000080', '#191970'],
       size: 512

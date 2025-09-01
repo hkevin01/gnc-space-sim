@@ -7,6 +7,8 @@ import { LaunchSimulation } from './components/LaunchSimulation'
 import { OrbitDemo } from './components/OrbitDemo'
 import { SimpleSLSDemo } from './components/SimpleSLSDemo'
 import { TrajectoryPlanningDemo } from './components/TrajectoryPlanningDemo'
+import { TrajectoryPanel } from './components/TrajectoryPanel'
+import { StarField } from './components/StarField'
 import { useLaunchControl } from './state/launchControlStore'
 import { useMissionStore, type MissionState } from './state/missionStore'
 
