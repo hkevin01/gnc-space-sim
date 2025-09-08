@@ -7,8 +7,8 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "echo 'TS build placeholder'",
-    "lint": "echo 'ESLint placeholder'",
+    "build": "tsc",
+    "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
     "test": "echo 'UI tests require React runtime - skipped'"
   },
