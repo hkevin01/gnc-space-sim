@@ -1,5 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
+import { useSafeTexture } from '../utils/textures'
+import { getPlanetTexture } from '../utils/planetaryTextures'
 import * as THREE from 'three'
 
 /**
@@ -21,12 +23,22 @@ export const CONSTANTS = {
   SECONDS_PER_DAY: 86400        // Seconds in a day
 }
 
-// Scale factors for visualization
+// Scale factors for visualization (consistent with SolarSystem):
+// 1 scene unit = 1 million km for distances. Radii converted from km → units with visibility multipliers.
 export const SCALE_FACTORS = {
-  DISTANCE: 1 / 10000,          // Scale down distances for visual clarity
-  RADIUS: 1 / 1000,             // Scale down radii
+  DISTANCE: 1 / 1_000_000,      // 1 AU ≈ 149.6 units (matches classic SolarSystem view)
   TIME: 3600                    // 1 second = 1 hour for time acceleration
 }
+
+// Radius conversion and visibility multipliers
+const KM_PER_SCENE_UNIT = 1_000_000 // 1e6 km per scene unit (same base as distances)
+const RADIUS_SCENE_CONVERSION = 1 / KM_PER_SCENE_UNIT
+const SIZE_MULT = {
+  SUN: 12,
+  INNER: 40, // Mercury, Venus, Earth, Mars
+  MOON: 40,
+  GAS: 60    // Jupiter, Saturn, Uranus, Neptune
+} as const
 
 /**
  * Celestial Body Data with real orbital parameters
@@ -47,6 +59,8 @@ export interface CelestialBodyData {
   color: string
   texture?: string
   type: 'star' | 'planet' | 'moon' | 'asteroid'
+  axialTiltDeg?: number // Axial tilt in degrees
+  rotationDirection?: number // 1 for normal, -1 for retrograde
 }
 
 export const CELESTIAL_BODIES: CelestialBodyData[] = [
@@ -65,7 +79,9 @@ export const CELESTIAL_BODIES: CelestialBodyData[] = [
     meanAnomalyDeg: 0,
     color: '#FFD700',
     texture: 'sun.jpg',
-    type: 'star'
+    type: 'star',
+    axialTiltDeg: 7.25, // Sun's axial tilt
+    rotationDirection: 1
   },
   {
     id: 'earth',
@@ -82,7 +98,9 @@ export const CELESTIAL_BODIES: CelestialBodyData[] = [
     meanAnomalyDeg: 357.5,
     color: '#6B93D6',
     texture: 'earth_atmos_2048.jpg',
-    type: 'planet'
+    type: 'planet',
+    axialTiltDeg: 23.44, // Earth's axial tilt (causes seasons)
+    rotationDirection: 1
   },
   {
     id: 'moon',
@@ -99,7 +117,9 @@ export const CELESTIAL_BODIES: CelestialBodyData[] = [
     meanAnomalyDeg: 135.3,
     color: '#C0C0C0',
     texture: 'moon_1024.jpg',
-    type: 'moon'
+    type: 'moon',
+    axialTiltDeg: 6.68, // Moon's axial tilt
+    rotationDirection: 1
   },
   {
     id: 'mars',
@@ -116,7 +136,123 @@ export const CELESTIAL_BODIES: CelestialBodyData[] = [
     meanAnomalyDeg: 19.4,
     color: '#CD5C5C',
     texture: 'mars_1k_color.jpg',
-    type: 'planet'
+    type: 'planet',
+    axialTiltDeg: 25.19, // Mars axial tilt (similar to Earth)
+    rotationDirection: 1
+  },
+  {
+    id: 'venus',
+    name: 'Venus',
+    radiusKm: 6052,
+    massKg: 4.867e24,
+    semiMajorAxisKm: 108208000, // 0.72 AU
+    orbitalPeriodDays: 224.7,
+    rotationPeriodHours: -5832.5, // Retrograde rotation (negative)
+    eccentricity: 0.0067,
+    inclinationDeg: 3.39,
+    longitudeOfAscendingNodeDeg: 76.7,
+    argumentOfPeriapsisDeg: 131.6,
+    meanAnomalyDeg: 50.1,
+    color: '#FFC649',
+    texture: 'venus_surface.jpg',
+    type: 'planet',
+    axialTiltDeg: 177.36, // Venus is almost upside down
+    rotationDirection: -1 // Retrograde rotation
+  },
+  {
+    id: 'mercury',
+    name: 'Mercury',
+    radiusKm: 2440,
+    massKg: 3.301e23,
+    semiMajorAxisKm: 57909100, // 0.39 AU
+    orbitalPeriodDays: 87.97,
+    rotationPeriodHours: 1407.6, // 58.65 Earth days
+    eccentricity: 0.2056,
+    inclinationDeg: 7.00,
+    longitudeOfAscendingNodeDeg: 48.3,
+    argumentOfPeriapsisDeg: 29.1,
+    meanAnomalyDeg: 174.8,
+    color: '#8C7853',
+    texture: 'mercury.jpg',
+    type: 'planet',
+    axialTiltDeg: 0.034, // Mercury's tiny axial tilt
+    rotationDirection: 1
+  },
+  {
+    id: 'jupiter',
+    name: 'Jupiter',
+    radiusKm: 69911,
+    massKg: 1.898e27,
+    semiMajorAxisKm: 778299000, // 5.20 AU
+    orbitalPeriodDays: 4332.59,
+    rotationPeriodHours: 9.842, // Fastest planetary rotation
+    eccentricity: 0.0489,
+    inclinationDeg: 1.304,
+    longitudeOfAscendingNodeDeg: 100.5,
+    argumentOfPeriapsisDeg: 273.9,
+    meanAnomalyDeg: 20.0,
+    color: '#D8CA9D',
+    texture: 'jupiter.jpg',
+    type: 'planet',
+    axialTiltDeg: 3.13, // Very small tilt
+    rotationDirection: 1
+  },
+  {
+    id: 'saturn',
+    name: 'Saturn',
+    radiusKm: 58232,
+    massKg: 5.683e26,
+    semiMajorAxisKm: 1432041000, // 9.57 AU
+    orbitalPeriodDays: 10755.7,
+    rotationPeriodHours: 10.656,
+    eccentricity: 0.0565,
+    inclinationDeg: 2.485,
+    longitudeOfAscendingNodeDeg: 113.7,
+    argumentOfPeriapsisDeg: 339.4,
+    meanAnomalyDeg: 317.0,
+    color: '#FAD5A5',
+    texture: 'saturn.jpg',
+    type: 'planet',
+    axialTiltDeg: 26.73, // Saturn's tilt
+    rotationDirection: 1
+  },
+  {
+    id: 'uranus',
+    name: 'Uranus',
+    radiusKm: 25362,
+    massKg: 8.681e25,
+    semiMajorAxisKm: 2867043000, // 19.16 AU
+    orbitalPeriodDays: 30688.5,
+    rotationPeriodHours: -17.24, // Retrograde rotation
+    eccentricity: 0.0457,
+    inclinationDeg: 0.772,
+    longitudeOfAscendingNodeDeg: 74.0,
+    argumentOfPeriapsisDeg: 96.5,
+    meanAnomalyDeg: 142.2,
+    color: '#4FD0E7',
+    texture: 'uranus.jpg',
+    type: 'planet',
+    axialTiltDeg: 97.77, // Uranus is tilted on its side!
+    rotationDirection: -1 // Retrograde rotation
+  },
+  {
+    id: 'neptune',
+    name: 'Neptune',
+    radiusKm: 24622,
+    massKg: 1.024e26,
+    semiMajorAxisKm: 4515000000, // 30.18 AU
+    orbitalPeriodDays: 60182,
+    rotationPeriodHours: 16.11,
+    eccentricity: 0.0113,
+    inclinationDeg: 1.767,
+    longitudeOfAscendingNodeDeg: 131.8,
+    argumentOfPeriapsisDeg: 276.3,
+    meanAnomalyDeg: 256.2,
+    color: '#4B70DD',
+    texture: 'neptune.jpg',
+    type: 'planet',
+    axialTiltDeg: 28.32, // Neptune's axial tilt
+    rotationDirection: 1
   }
 ]
 
@@ -176,7 +312,9 @@ export class OrbitalPhysics {
 
   static calculateRotation(body: CelestialBodyData, timeElapsed: number): number {
     const timeInHours = timeElapsed * SCALE_FACTORS.TIME / 3600
-    return (timeInHours / body.rotationPeriodHours) * 2 * Math.PI
+    const rotationDirection = body.rotationDirection || 1
+    const rotationAngle = (timeInHours / Math.abs(body.rotationPeriodHours)) * 2 * Math.PI * rotationDirection
+    return rotationAngle
   }
 
   static calculateOrbitalVelocity(body: CelestialBodyData, parentMass: number): number {
@@ -212,27 +350,31 @@ export function OrbitalSystem({
     // Sun at origin
     positions.set('sun', new THREE.Vector3(0, 0, 0))
 
-    // Earth around Sun
-    const earthPos = OrbitalPhysics.calculateOrbitalPosition(
-      CELESTIAL_BODIES.find(b => b.id === 'earth')!,
-      simulationTime
-    )
-    positions.set('earth', earthPos)
+    // Calculate positions for all planets
+    CELESTIAL_BODIES.forEach(body => {
+      if (body.type === 'star') return // Skip sun, already set
 
-    // Moon around Earth
-    const moonPos = OrbitalPhysics.calculateOrbitalPosition(
-      CELESTIAL_BODIES.find(b => b.id === 'moon')!,
-      simulationTime,
-      earthPos
-    )
-    positions.set('moon', moonPos)
-
-    // Mars around Sun
-    const marsPos = OrbitalPhysics.calculateOrbitalPosition(
-      CELESTIAL_BODIES.find(b => b.id === 'mars')!,
-      simulationTime
-    )
-    positions.set('mars', marsPos)
+      if (body.id === 'moon') {
+        // Moon orbits Earth
+        const earthPos = positions.get('earth') || OrbitalPhysics.calculateOrbitalPosition(
+          CELESTIAL_BODIES.find(b => b.id === 'earth')!,
+          simulationTime
+        )
+        const moonPos = OrbitalPhysics.calculateOrbitalPosition(
+          body,
+          simulationTime,
+          earthPos
+        )
+        positions.set('moon', moonPos)
+      } else {
+        // All other bodies orbit the Sun
+        const bodyPos = OrbitalPhysics.calculateOrbitalPosition(
+          body,
+          simulationTime
+        )
+        positions.set(body.id, bodyPos)
+      }
+    })
 
     return positions
   }, [simulationTime])
@@ -271,35 +413,58 @@ export function OrbitalSystem({
  * Orbit Path Visualization
  */
 function OrbitPath({ body }: { body: CelestialBodyData }) {
+  const { semiMajorAxisKm: aKm, eccentricity: e, inclinationDeg: iDeg, longitudeOfAscendingNodeDeg: omegaDeg, argumentOfPeriapsisDeg: wDeg } = body
   const points = useMemo(() => {
     const orbitPoints: THREE.Vector3[] = []
-    const segments = 128
+    const segments = 256
 
-    for (let i = 0; i <= segments; i++) {
-      const angle = (i / segments) * 2 * Math.PI
-      const distance = body.semiMajorAxisKm * SCALE_FACTORS.DISTANCE
+    const a = aKm * SCALE_FACTORS.DISTANCE // semi-major axis in scene units
+    const b = a * Math.sqrt(1 - e * e)      // semi-minor axis
 
-      // Simple circular orbit for visualization
-      const x = distance * Math.cos(angle)
-      const z = distance * Math.sin(angle)
+    const i = iDeg * Math.PI / 180
+    const omega = omegaDeg * Math.PI / 180
+    const w = wDeg * Math.PI / 180
 
-      orbitPoints.push(new THREE.Vector3(x, 0, z))
+    const cosI = Math.cos(i), sinI = Math.sin(i)
+    const cosO = Math.cos(omega), sinO = Math.sin(omega)
+    const cosW = Math.cos(w), sinW = Math.sin(w)
+
+    for (let k = 0; k <= segments; k++) {
+      const theta = (k / segments) * 2 * Math.PI
+      // Parametric ellipse in orbital plane with periapsis alignment
+      const xOrb = a * Math.cos(theta) - a * e // center offset to focus
+      const yOrb = b * Math.sin(theta)
+
+      // Rotate by argument of periapsis, then apply inclination and node
+      const x1 = xOrb * cosW - yOrb * sinW
+      const y1 = xOrb * sinW + yOrb * cosW
+
+      const xEC = x1
+      const yEC = y1 * cosI
+      const zEC = y1 * sinI
+
+      const x = xEC * cosO - yEC * sinO
+      const y = xEC * sinO + yEC * cosO
+      const z = zEC
+
+      orbitPoints.push(new THREE.Vector3(x, z, y))
     }
 
     return orbitPoints
-  }, [body])
+  }, [aKm, e, iDeg, omegaDeg, wDeg])
 
-  const geometry = useMemo(() => {
-    const geom = new THREE.BufferGeometry().setFromPoints(points)
-    return geom
-  }, [points])
+  const geometry = useMemo(() => new THREE.BufferGeometry().setFromPoints(points), [points])
 
   return (
     <primitive object={new THREE.Line(geometry)}>
       <lineBasicMaterial
         color={body.color}
         transparent
-        opacity={0.3}
+        opacity={0.35}
+        depthWrite={false}
+        polygonOffset
+        polygonOffsetFactor={1}
+        polygonOffsetUnits={1}
       />
     </primitive>
   )
@@ -323,22 +488,41 @@ function CelestialBodyMesh({
 }: CelestialBodyMeshProps) {
   const meshRef = useRef<THREE.Mesh>(null)
 
+  // Load planet texture (fallbacks included)
+  const planetTexture = useSafeTexture(
+    useMemo(() => getPlanetTexture(body.name.toUpperCase()), [body.name])
+  )
+
   useFrame(() => {
     if (meshRef.current) {
       meshRef.current.position.copy(position)
       meshRef.current.rotation.y = rotation
+
+      // Apply axial tilt for realistic planetary orientation
+      const axialTiltRad = ((body.axialTiltDeg || 0) * Math.PI) / 180
+      meshRef.current.rotation.z = axialTiltRad
     }
   })
 
-  const scaledRadius = body.radiusKm * SCALE_FACTORS.RADIUS
+  // Choose a size multiplier based on body type/id
+  const sizeMult = body.type === 'star'
+    ? SIZE_MULT.SUN
+    : body.id === 'moon'
+      ? SIZE_MULT.MOON
+      : (body.id === 'mercury' || body.id === 'venus' || body.id === 'earth' || body.id === 'mars')
+        ? SIZE_MULT.INNER
+        : SIZE_MULT.GAS
+
+  const scaledRadius = Math.max(body.radiusKm * RADIUS_SCENE_CONVERSION * sizeMult, body.type === 'star' ? 1 : 0.1)
 
   return (
     <group>
-      <mesh ref={meshRef}>
+    <mesh ref={meshRef} castShadow receiveShadow>
         <sphereGeometry args={[scaledRadius, 32, 16]} />
         <meshStandardMaterial
-          color={body.color}
-          roughness={body.type === 'star' ? 0 : 0.9}
+      map={planetTexture || undefined}
+      color={planetTexture ? undefined : body.color}
+          roughness={body.type === 'star' ? 0 : 0.6}
           metalness={body.type === 'star' ? 0 : 0.1}
           emissive={body.type === 'star' ? body.color : '#000000'}
           emissiveIntensity={body.type === 'star' ? 0.5 : 0}
@@ -399,6 +583,42 @@ export function getCelestialBodyPositions(simulationTime: number) {
     simulationTime
   )
   positions.set('mars', marsPos)
+
+  const venusPos = OrbitalPhysics.calculateOrbitalPosition(
+    CELESTIAL_BODIES.find(b => b.id === 'venus')!,
+    simulationTime
+  )
+  positions.set('venus', venusPos)
+
+  const mercuryPos = OrbitalPhysics.calculateOrbitalPosition(
+    CELESTIAL_BODIES.find(b => b.id === 'mercury')!,
+    simulationTime
+  )
+  positions.set('mercury', mercuryPos)
+
+  const jupiterPos = OrbitalPhysics.calculateOrbitalPosition(
+    CELESTIAL_BODIES.find(b => b.id === 'jupiter')!,
+    simulationTime
+  )
+  positions.set('jupiter', jupiterPos)
+
+  const saturnPos = OrbitalPhysics.calculateOrbitalPosition(
+    CELESTIAL_BODIES.find(b => b.id === 'saturn')!,
+    simulationTime
+  )
+  positions.set('saturn', saturnPos)
+
+  const uranusPos = OrbitalPhysics.calculateOrbitalPosition(
+    CELESTIAL_BODIES.find(b => b.id === 'uranus')!,
+    simulationTime
+  )
+  positions.set('uranus', uranusPos)
+
+  const neptunePos = OrbitalPhysics.calculateOrbitalPosition(
+    CELESTIAL_BODIES.find(b => b.id === 'neptune')!,
+    simulationTime
+  )
+  positions.set('neptune', neptunePos)
 
   return positions
 }

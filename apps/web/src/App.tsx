@@ -1,21 +1,67 @@
 import { MissionPanel } from '@gnc/ui'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { LaunchSimulation } from './components/LaunchSimulation'
 import { MISSION_SCENARIOS } from './components/MissionTypes'
 import { useLaunchControl } from './state/launchControlStore'
 import { useMissionStore, type MissionState } from './state/missionStore'
+import { EnhancedOrbitalDemo } from './components/EnhancedOrbitalDemo'
+import { NasaDemo } from './components/NasaDemo'
 
 export default function App() {
   const phase = useMissionStore((s: MissionState) => s.phase)
   const setPhase = useMissionStore((s: MissionState) => s.setPhase)
   const [selectedMission, setSelectedMission] = useState<string>('earthOrbit')
+  const [demoMode, setDemoMode] = useState<'main' | 'orbital' | 'nasa'>('main')
 
   // Launch control state
   const { launchTime, initiateLaunch, resetLaunch, isLaunched } = useLaunchControl()
 
   const currentMission = MISSION_SCENARIOS[selectedMission]
-  const missionPhases = currentMission?.phases || []
+  const missionPhases = useMemo(() => currentMission?.phases || [], [currentMission])
+  const phaseItems = useMemo(() => missionPhases.map(p => ({ key: p.name, label: p.name })), [missionPhases])
+
+  // Keep sidebar selected phase relevant to selected mission
+  useEffect(() => {
+    if (phaseItems.length === 0) return
+    if (!phaseItems.some(i => i.key === phase)) {
+      setPhase(phaseItems[0].key)
+    }
+  }, [selectedMission, phaseItems, phase, setPhase])
+
+
+  // Demo mode selector
+  if (demoMode === 'orbital') {
+    return (
+      <ErrorBoundary>
+        <div className="relative">
+          <button
+            onClick={() => setDemoMode('main')}
+            className="absolute top-4 left-4 z-50 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium"
+          >
+            ← Back to Main App
+          </button>
+          <EnhancedOrbitalDemo />
+        </div>
+      </ErrorBoundary>
+    )
+  }
+
+  if (demoMode === 'nasa') {
+    return (
+      <ErrorBoundary>
+        <div className="relative">
+          <button
+            onClick={() => setDemoMode('main')}
+            className="absolute top-4 left-4 z-50 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium"
+          >
+            ← Back to Main App
+          </button>
+          <NasaDemo />
+        </div>
+      </ErrorBoundary>
+    )
+  }
 
   // Calculate current mission phase based on launch time
   const getCurrentMissionPhase = () => {
@@ -72,6 +118,31 @@ export default function App() {
                   </div>
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Demo Modes */}
+          <div className="mb-4 p-3 bg-purple-900/30 rounded border border-purple-700">
+            <h3 className="text-sm font-semibold mb-2 text-purple-400">🌌 Planetary Demos</h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => setDemoMode('orbital')}
+                className="w-full p-2 text-xs rounded text-left transition-colors bg-purple-700 text-white hover:bg-purple-600 border border-purple-400"
+              >
+                <div className="font-semibold">🪐 Enhanced Orbital Mechanics</div>
+                <div className="text-purple-200 text-xs mt-1">
+                  View planets with realistic rotation, axial tilts, and retrograde motion
+                </div>
+              </button>
+              <button
+                onClick={() => setDemoMode('nasa')}
+                className="w-full p-2 text-xs rounded text-left transition-colors bg-blue-700 text-white hover:bg-blue-600 border border-blue-400"
+              >
+                <div className="font-semibold">🛰️ NASA Solar System</div>
+                <div className="text-blue-200 text-xs mt-1">
+                  Real-time planetary positions using NASA data
+                </div>
+              </button>
             </div>
           </div>
 
@@ -187,7 +258,7 @@ export default function App() {
             </div>
           )}
 
-          <MissionPanel phase={phase} onChange={setPhase} />
+          <MissionPanel phase={phase} onChange={setPhase} items={phaseItems} />
 
           {/* Mission Information Panel */}
           <div className="mt-4 p-3 bg-zinc-900 rounded">

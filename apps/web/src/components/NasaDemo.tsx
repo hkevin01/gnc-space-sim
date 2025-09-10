@@ -39,7 +39,7 @@ export function NasaDemo({ className }: NasaDemoProps) {
   return (
     <div className={`relative w-full h-screen ${className || ''}`}>
       {/* Controls Panel */}
-      <div className="absolute top-4 left-4 z-10 bg-black/70 text-white p-4 rounded-lg space-y-3">
+  <div className="absolute top-4 left-4 z-10 bg-black/70 text-white p-4 rounded-lg space-y-3">
         <h3 className="text-lg font-bold">🌍 NASA Solar System Demo</h3>
 
         <div className="space-y-2">
@@ -94,6 +94,7 @@ export function NasaDemo({ className }: NasaDemoProps) {
           <p>• NASA data updates hourly</p>
           <p>• Fallback to calculated positions if NASA unavailable</p>
           <p>• Real astronomical positions and orbital mechanics</p>
+          <p>• Scale: 1 unit ≈ 1e6 km (1 AU ≈ 149.6 units)</p>
         </div>
       </div>
 
@@ -101,15 +102,18 @@ export function NasaDemo({ className }: NasaDemoProps) {
       <Canvas
         camera={{
           position: [50, 30, 50],
-          fov: 60
+          fov: 60,
+          near: 0.1,
+          far: 20000
         }}
         gl={{ antialias: true }}
+        shadows
       >
         <color attach="background" args={['#000011']} />
 
         {/* Lighting */}
-        <ambientLight intensity={0.2} />
-        <pointLight position={[0, 0, 0]} intensity={2} color="#ffffff" />
+  <ambientLight intensity={0.15} />
+  <pointLight position={[0, 0, 0]} intensity={12} decay={2} color="#ffffff" castShadow shadow-mapSize={[2048,2048]} />
 
         {/* Solar System */}
         {useNasaData ? (
@@ -132,7 +136,7 @@ export function NasaDemo({ className }: NasaDemoProps) {
           enableZoom={true}
           enableRotate={true}
           minDistance={cameraConfig.minDistance}
-          maxDistance={cameraConfig.maxDistance}
+          maxDistance={centerOn === 'SUN' ? 12000 : cameraConfig.maxDistance}
           target={cameraConfig.target}
         />
 

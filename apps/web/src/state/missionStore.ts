@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type Phase = 'leo' | 'escape' | 'cruise' | 'rendezvous' | 'proximity' | 'tag' | 'mars-transfer' | 'mars-arrival'
+export type Phase = string
 
 export interface MissionState {
   phase: Phase

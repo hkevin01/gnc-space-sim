@@ -1,17 +1,18 @@
 
-export type Phase = 'leo' | 'escape' | 'cruise' | 'rendezvous' | 'proximity' | 'tag' | 'mars-transfer' | 'mars-arrival'
+export type Phase = string
 
 export type MissionPanelProps = {
   phase: Phase
   onChange?: (phase: Phase) => void
+  items?: Array<{ key: string; label: string }>
 }
 
 type PhaseItem = {
-  key: Phase
+  key: string
   label: string
 }
 
-const phases: PhaseItem[] = [
+const defaultPhases: PhaseItem[] = [
   { key: 'leo', label: 'LEO' },
   { key: 'escape', label: 'Escape' },
   { key: 'cruise', label: 'Cruise' },
@@ -22,7 +23,8 @@ const phases: PhaseItem[] = [
   { key: 'mars-arrival', label: 'Mars Arrival' },
 ]
 
-export function MissionPanel({ phase, onChange }: MissionPanelProps) {
+export function MissionPanel({ phase, onChange, items }: MissionPanelProps) {
+  const phases = (items && items.length > 0 ? items : defaultPhases)
   return (
     <div className="space-y-2">
       <div className="text-sm text-zinc-300">Mission Phases</div>

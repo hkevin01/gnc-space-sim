@@ -198,17 +198,18 @@ export class PlanetaryPositionService {
     const timeInDays = currentTime * 0.01; // Scale factor for visualization
 
     // Orbital parameters (simplified but realistic)
+    // Distances in scene units assuming 1 AU ≈ 149.6 units (1 unit = 1e6 km)
     const orbitalData: Record<PlanetName, { distance: number; period: number; inclination: number; initialPhase: number }> = {
       SUN: { distance: 0, period: 0, inclination: 0, initialPhase: 0 },
-      MERCURY: { distance: 7.7, period: 88, inclination: 7.0, initialPhase: 0.5 },
-      VENUS: { distance: 14.4, period: 225, inclination: 3.4, initialPhase: 1.8 },
-      EARTH: { distance: 20, period: 365, inclination: 0.0, initialPhase: 0.0 },
-      MOON: { distance: 2.57, period: 27, inclination: 5.1, initialPhase: 2.1 },
-      MARS: { distance: 30.4, period: 687, inclination: 1.8, initialPhase: 3.8 },
-      JUPITER: { distance: 104, period: 4333, inclination: 1.3, initialPhase: 2.3 },
-      SATURN: { distance: 190, period: 10759, inclination: 2.5, initialPhase: 4.7 },
-      URANUS: { distance: 384, period: 30687, inclination: 0.8, initialPhase: 1.2 },
-      NEPTUNE: { distance: 600, period: 60190, inclination: 1.8, initialPhase: 5.5 },
+      MERCURY: { distance: 0.387 * 149.6, period: 88, inclination: 7.0, initialPhase: 0.5 },
+      VENUS: { distance: 0.723 * 149.6, period: 225, inclination: 3.4, initialPhase: 1.8 },
+      EARTH: { distance: 1.0 * 149.6, period: 365, inclination: 0.0, initialPhase: 0.0 },
+      MOON: { distance: (384400 / 1_000_000), period: 27, inclination: 5.1, initialPhase: 2.1 }, // 0.3844 units around Earth
+      MARS: { distance: 1.524 * 149.6, period: 687, inclination: 1.8, initialPhase: 3.8 },
+      JUPITER: { distance: 5.204 * 149.6, period: 4333, inclination: 1.3, initialPhase: 2.3 },
+      SATURN: { distance: 9.582 * 149.6, period: 10759, inclination: 2.5, initialPhase: 4.7 },
+      URANUS: { distance: 19.201 * 149.6, period: 30687, inclination: 0.8, initialPhase: 1.2 },
+      NEPTUNE: { distance: 30.047 * 149.6, period: 60190, inclination: 1.8, initialPhase: 5.5 },
     };
 
     const planetOrbit = orbitalData[planetName];
