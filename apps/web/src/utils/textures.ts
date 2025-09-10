@@ -196,13 +196,7 @@ export function useSafeTexture(spec: TextureSpec | null): Texture | null {
                 const img = new Image()
                 img.crossOrigin = 'anonymous'
                 const textureFromImage = () => {
-                  // If image is too small (placeholder), fall back to procedural earth if requested
-                  const tooSmall = (img.width * img.height) < (128 * 128)
-                  if (tooSmall && spec?.fallbackPattern?.type) {
-                    const procedural = createPattern()
-                    if (!cancelled) setTex(procedural)
-                    return
-                  }
+                  // Always use the loaded image, don't fall back for small images
                   const t = new Texture(img)
                   t.needsUpdate = true
                   if (!cancelled) setTex(t)
@@ -232,7 +226,7 @@ export function useSafeTexture(spec: TextureSpec | null): Texture | null {
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(urls), spec?.fallbackPattern?.type, spec?.fallbackPattern?.size, spec?.fallbackPattern?.squares, JSON.stringify(spec?.fallbackPattern?.colors)])
+  }, [JSON.stringify(urls), spec?.fallbackPattern?.type, spec?.fallbackPattern?.size, repeatX, repeatY, anisotropy, isColor])
 
   return useMemo(() => configureTexture(tex, [repeatX, repeatY], anisotropy, isColor), [tex, repeatX, repeatY, anisotropy, isColor])
 }

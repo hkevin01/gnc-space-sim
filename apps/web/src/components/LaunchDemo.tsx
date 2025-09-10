@@ -6,16 +6,15 @@ import {
     LaunchPhase,
     LaunchState,
 } from '@gnc/core';
-import { Html, OrbitControls } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useLaunchControl } from '../state/launchControlStore';
-import { PhaseVisualIndicator } from './MissionEnvironment';
-import { SolarSystem } from './SolarSystem';
+import { NasaSolarSystem } from './SolarSystem';
 
 export function LaunchDemo({
-  timeMultiplier = 1,
+  timeMultiplier = 50, // Increased default for better visual pacing
   showTrajectory = true,
 }: {
   timeMultiplier?: number;
@@ -26,7 +25,6 @@ export function LaunchDemo({
   const controlsRef = useRef<React.ElementRef<typeof OrbitControls> | null>(null);
   const lastUserInteraction = useRef(Date.now());
   const snapBackTimeout = useRef<number | null>(null);
-  const [snapBackActive, setSnapBackActive] = useState(false);
 
   // Use global launch control store instead of local state
   const launchTime = useLaunchControl((state) => state.launchTime);
@@ -98,36 +96,55 @@ export function LaunchDemo({
   useEffect(() => {
     if (!controlsRef.current) return;
     const controls = controlsRef.current;
+    const timeoutRef = snapBackTimeout;
+
     const onStart = () => {
       lastUserInteraction.current = Date.now();
-      setSnapBackActive(false);
-      if (snapBackTimeout.current) clearTimeout(snapBackTimeout.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
     const onEnd = () => {
       lastUserInteraction.current = Date.now();
-      if (snapBackTimeout.current) clearTimeout(snapBackTimeout.current);
-      snapBackTimeout.current = window.setTimeout(() => setSnapBackActive(true), 2000);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
     controls.addEventListener('start', onStart);
     controls.addEventListener('end', onEnd);
     return () => {
       controls.removeEventListener('start', onStart);
       controls.removeEventListener('end', onEnd);
-      if (snapBackTimeout.current) clearTimeout(snapBackTimeout.current);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
   }, [controlsRef]);
 
   // Camera follow logic
   useFrame(() => {
-    if (snapBackActive && vehicleRef.current) {
+    if (vehicleRef.current) {
       const rocketPos = getRocketPosition();
-      // Smoothly interpolate camera position toward rocket
-      const target = rocketPos.clone().add(new THREE.Vector3(0, 5, 20));
-      camera.position.lerp(target, 0.05);
-      // Also update controls target
-      if (controlsRef.current) {
-        // controlsRef.current.target.lerp(rocketPos, 0.1); // Disabled to keep Earth-centered view
-        controlsRef.current.update();
+
+      // Always follow the rocket during launch
+      if (isLaunched) {
+        // Calculate dynamic camera position based on altitude
+        const altitude = stateRef.current.altitude / 1000; // km
+        let cameraDistance = Math.max(20, altitude * 0.1 + 20); // Scale with altitude
+
+        // Closer view during launch, further during orbit
+        if (altitude < 100) {
+          cameraDistance = 20; // Close for launch
+        } else if (altitude < 400) {
+          cameraDistance = 50; // Medium for ascent
+        } else {
+          cameraDistance = 100; // Far for orbit
+        }
+
+        const target = rocketPos.clone().add(new THREE.Vector3(0, 5, cameraDistance));
+        camera.position.lerp(target, 0.02); // Smooth following
+
+        // Look at rocket
+        camera.lookAt(rocketPos);
+
+        if (controlsRef.current) {
+          controlsRef.current.target.lerp(rocketPos, 0.05);
+          controlsRef.current.update();
+        }
       }
     }
   });
@@ -154,7 +171,22 @@ export function LaunchDemo({
   useFrame((state, deltaTime) => {
     if (!isLaunched) return;
 
-    const dt = Math.min(deltaTime * timeMultiplier, 0.1);
+    // Adaptive time scaling based on mission phase for visual appeal
+    let adaptiveMultiplier = timeMultiplier;
+    const altitude = stateRef.current.altitude / 1000; // km
+
+    // Dynamic time scaling for better visual experience
+    if (altitude < 50) {
+      adaptiveMultiplier = timeMultiplier * 0.3; // Slow during launch (exciting part)
+    } else if (altitude < 200) {
+      adaptiveMultiplier = timeMultiplier * 0.5; // Medium during ascent
+    } else if (altitude < 400) {
+      adaptiveMultiplier = timeMultiplier * 2; // Faster during boring orbital insertion
+    } else {
+      adaptiveMultiplier = timeMultiplier * 5; // Very fast during orbital operations
+    }
+
+    const dt = Math.min(deltaTime * adaptiveMultiplier, 0.1);
     const nextTime = launchTime + dt;
 
     try {
@@ -167,9 +199,9 @@ export function LaunchDemo({
         nextState.altitude < -1000 ||
         nextState.altitude > 1e6
       ) {
-
         invalidStateCount.current++;
         if (invalidStateCount.current > 10) {
+          console.warn('Launch simulation failed, resetting...');
           resetLaunch();
           invalidStateCount.current = 0;
         }
@@ -182,29 +214,39 @@ export function LaunchDemo({
       setLaunchTime(nextTime);
 
       // KF predict/update with current simulated state as measurement
-      const kf = kfRef.current!;
-      kf.predict(dt);
-      kf.update([
-        nextState.r[0], nextState.r[1], nextState.r[2],
-        nextState.v[0], nextState.v[1], nextState.v[2]
-      ]);
+      try {
+        const kf = kfRef.current!;
+        kf.predict(dt);
+        kf.update([
+          nextState.r[0], nextState.r[1], nextState.r[2],
+          nextState.v[0], nextState.v[1], nextState.v[2]
+        ]);
+      } catch (kfError) {
+        console.warn('Kalman filter error:', kfError);
+        // Continue without KF if it fails
+      }
 
       if (vehicleRef.current && isFiniteArray(nextState.r)) {
         const scale = 1e-6;
-        vehicleRef.current.position.set(
+        const newPos = new THREE.Vector3(
           nextState.r[0] * scale,
           nextState.r[1] * scale,
           nextState.r[2] * scale
         );
 
-        if (isFiniteArray(nextState.v)) {
-          const vel = new THREE.Vector3(nextState.v[0], nextState.v[1], nextState.v[2]);
-          if (vel.length() > 0) {
-            vehicleRef.current.lookAt(
-              vehicleRef.current.position.x + vel.x,
-              vehicleRef.current.position.y + vel.y,
-              vehicleRef.current.position.z + vel.z
-            );
+        // Validate position before setting
+        if (newPos.length() < 1000) { // Reasonable bounds check
+          vehicleRef.current.position.copy(newPos);
+
+            if (isFiniteArray(nextState.v)) {
+            const vel = new THREE.Vector3(nextState.v[0], nextState.v[1], nextState.v[2]);
+            if (vel.length() > 0) {
+              vehicleRef.current.lookAt(
+                vehicleRef.current.position.x + vel.x,
+                vehicleRef.current.position.y + vel.y,
+                vehicleRef.current.position.z + vel.z
+              );
+            }
           }
         }
       }
@@ -227,6 +269,7 @@ export function LaunchDemo({
       console.error('Error in launch simulation:', error);
       invalidStateCount.current++;
       if (invalidStateCount.current > 5) {
+        console.warn('Too many simulation errors, resetting launch...');
         resetLaunch();
         invalidStateCount.current = 0;
       }
@@ -245,10 +288,10 @@ export function LaunchDemo({
 
   return (
     <group ref={groupRef}>
-      <SolarSystem
+      <NasaSolarSystem
         centerOn="EARTH"
-        showOrbits={false}
-        missionTime={launchTime}
+        showOrbits={true}
+        useNasaData={true}
       />
 
       <group ref={vehicleRef}>
@@ -260,7 +303,20 @@ export function LaunchDemo({
                 ? '#FF6B35'
                 : '#FFFFFF'
             }
+            metalness={0.8}
+            roughness={0.2}
           />
+        </mesh>
+
+        {/* Add details to make spacecraft more realistic */}
+        <mesh position={[0, 35e-6, 0]}>
+          <cylinderGeometry args={[2e-6, 2e-6, 10e-6, 8]} />
+          <meshStandardMaterial color="#FF0000" metalness={0.9} roughness={0.1} />
+        </mesh>
+
+        <mesh position={[0, 25e-6, 0]}>
+          <cylinderGeometry args={[1.5e-6, 1.5e-6, 8e-6, 8]} />
+          <meshStandardMaterial color="#0066CC" metalness={0.7} roughness={0.3} />
         </mesh>
 
         {(currentState?.phase === LaunchPhase.STAGE1_BURN || currentState?.phase === LaunchPhase.STAGE2_BURN) && (
@@ -274,7 +330,7 @@ export function LaunchDemo({
           <group position={[0, -60e-6, 0]}>
             <mesh>
               <cylinderGeometry args={[1.5e-6, 1.5e-6, 30e-6, 8]} />
-              <meshStandardMaterial color="#808080" />
+              <meshStandardMaterial color="#808080" metalness={0.6} roughness={0.4} />
             </mesh>
           </group>
         )}
@@ -283,11 +339,11 @@ export function LaunchDemo({
           <>
             <mesh position={[15e-6, 25e-6, 0]} rotation={[0, 0, Math.PI / 4]}>
               <boxGeometry args={[8e-6, 20e-6, 3e-6]} />
-              <meshStandardMaterial color="#CCCCCC" />
+              <meshStandardMaterial color="#CCCCCC" metalness={0.5} roughness={0.5} />
             </mesh>
             <mesh position={[-15e-6, 25e-6, 0]} rotation={[0, 0, -Math.PI / 4]}>
               <boxGeometry args={[8e-6, 20e-6, 3e-6]} />
-              <meshStandardMaterial color="#CCCCCC" />
+              <meshStandardMaterial color="#CCCCCC" metalness={0.5} roughness={0.5} />
             </mesh>
           </>
         )}

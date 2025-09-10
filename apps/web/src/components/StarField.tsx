@@ -17,7 +17,7 @@ export function StarField({ count = 2000, radius = 100 }: StarFieldProps) {
       // Random spherical distribution
       const theta = Math.random() * Math.PI * 2
       const phi = Math.acos(2 * Math.random() - 1)
-      
+
       const x = radius * Math.sin(phi) * Math.cos(theta)
       const y = radius * Math.sin(phi) * Math.sin(theta)
       const z = radius * Math.cos(phi)
@@ -66,11 +66,11 @@ export function StarField({ count = 2000, radius = 100 }: StarFieldProps) {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.8}
+        size={2.0}
         sizeAttenuation={false}
         vertexColors
         transparent
-        opacity={0.8}
+        opacity={1.0}
         blending={THREE.AdditiveBlending}
       />
     </points>

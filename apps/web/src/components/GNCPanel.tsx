@@ -1,16 +1,28 @@
 import React, { useState } from 'react'
 import { LaunchState } from '@gnc/core'
+import { MissionEvent } from './MissionTypes'
 
 interface GNCPanelProps {
   launchState: LaunchState
-  currentState?: any
+  currentState?: Record<string, unknown>
   missionTime?: number
+  selectedMission?: string
+  currentPhase?: {
+    progress: number
+    timeInPhase: number
+    name: string
+    description: string
+    duration: number
+    requirements: string[]
+    events: MissionEvent[]
+  } | null
 }
 
-export function GNCPanel({ launchState, currentState, missionTime }: GNCPanelProps) {
-  const [activeTab, setActiveTab] = useState<'guidance' | 'navigation' | 'control'>('guidance')
+export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPanelProps) {
+  const [activeTab, setActiveTab] = useState<'guidance' | 'navigation' | 'control' | 'mission'>('mission')
 
   const tabs = [
+    { id: 'mission' as const, label: '🚀 MISSION', color: 'text-orange-400' },
     { id: 'guidance' as const, label: '🎯 GUIDANCE', color: 'text-cyan-400' },
     { id: 'navigation' as const, label: '🧭 NAVIGATION', color: 'text-green-400' },
     { id: 'control' as const, label: '⚡ CONTROL', color: 'text-yellow-400' }
@@ -37,6 +49,61 @@ export function GNCPanel({ launchState, currentState, missionTime }: GNCPanelPro
 
       {/* Tab Content */}
       <div className="flex-1 overflow-y-auto p-4">
+        {activeTab === 'mission' && (
+          <div className="space-y-4">
+            <div className="text-orange-400 font-bold text-sm mb-3">MISSION STATUS</div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Mission:</span>
+                <span className="text-orange-400">{selectedMission || 'Not Selected'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Current Phase:</span>
+                <span className="text-orange-400">{currentPhase?.name || 'Pre-Launch'}</span>
+              </div>
+              {currentPhase && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Phase Progress:</span>
+                    <span className="text-orange-400">{(currentPhase.progress * 100).toFixed(1)}%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-zinc-400">Time in Phase:</span>
+                    <span className="text-orange-400">{Math.round(currentPhase.timeInPhase)}s</span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="text-orange-400 font-bold text-sm mb-3 mt-6">MISSION EVENTS</div>
+            <div className="space-y-2 text-sm max-h-32 overflow-y-auto">
+              {currentPhase?.events?.map((event, index) => (
+                <div key={index} className="p-2 bg-zinc-800/50 rounded border border-zinc-700">
+                  <div className="text-orange-300 font-semibold text-xs">
+                    T+{event.time}s: {event.type}
+                  </div>
+                  <div className="text-zinc-400 text-xs mt-1">
+                    {event.description}
+                  </div>
+                </div>
+              )) || (
+                <div className="text-zinc-400 text-xs">No events scheduled for this phase</div>
+              )}
+            </div>
+
+            <div className="text-orange-400 font-bold text-sm mb-3 mt-6">PHASE REQUIREMENTS</div>
+            <div className="space-y-1 text-sm">
+              {currentPhase?.requirements?.map((req, index) => (
+                <div key={index} className="text-zinc-400 text-xs">
+                  • {req}
+                </div>
+              )) || (
+                <div className="text-zinc-400 text-xs">No specific requirements</div>
+              )}
+            </div>
+          </div>
+        )}
+
         {activeTab === 'guidance' && (
           <div className="space-y-4">
             <div className="text-cyan-400 font-bold text-sm mb-3">TARGET PARAMETERS</div>

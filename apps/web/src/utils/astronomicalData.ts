@@ -316,9 +316,9 @@ export function generateAsteroidBelt(): Array<{
 
     asteroids.push({
       position: new THREE.Vector3(
-        x * AU_TO_KM * SCALE_FACTOR,
-        (y + verticalOffset) * AU_TO_KM * SCALE_FACTOR,
-        z * AU_TO_KM * SCALE_FACTOR
+        x * 149.6, // Convert AU to our distance scale (1 AU = 149.6 million km = 149.6 scene units)
+        (y + verticalOffset) * 149.6,
+        z * 149.6
       ),
       size,
       rotationSpeed

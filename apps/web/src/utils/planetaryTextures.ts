@@ -4,81 +4,99 @@ import { TextureSpec } from './textures'
 // These are hosted on reliable CDNs and are free to use
 
 export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
-  // Earth textures from NASA Blue Marble
+  // Earth textures - test with reliable CDN sources
   EARTH: {
-    url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/earthmap1k.jpg',
+    url: [
+      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_atmos_2048.jpg',
+      'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg'
+    ],
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
       type: 'earth' as const,
-      colors: ['#6B93D6', '#228B22', '#8B4513'],
+      colors: ['#0066cc', '#228B22', '#8B4513', '#F4A460', '#FFFFFF', '#32CD32'],
       size: 1024
     }
   },
 
-  // Moon texture from Lunar Reconnaissance Orbiter
+  // Moon texture - test with reliable CDN sources
   MOON: {
-    url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/moonmap1k.jpg',
+    url: [
+      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/moon_1024.jpg',
+      'https://threejs.org/examples/textures/planets/moon_1024.jpg'
+    ],
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'checker' as const,
-      colors: ['#C0C0C0', '#808080'],
+      type: 'earth' as const, // Changed from 'checker' to 'earth' for more natural look
+      colors: ['#D3D3D3', '#A0A0A0', '#808080', '#696969', '#C0C0C0', '#DCDCDC'],
       size: 512
     }
   },
 
-  // Mars from Mars Reconnaissance Orbiter
+  // Mars - reliable CDN sources
   MARS: {
-    url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/marsmap1k.jpg',
+    url: [
+      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/mars_1k_color.jpg',
+      'https://threejs.org/examples/textures/planets/mars_1k_color.jpg',
+      'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/mars_1k_color.jpg'
+    ],
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'checker' as const,
-      colors: ['#CD5C5C', '#8B4513', '#A0522D'],
+      type: 'earth' as const, // Changed from 'checker' to 'earth' for more natural look
+      colors: ['#CD5C5C', '#8B4513', '#A0522D', '#D2691E', '#BC8F8F', '#F4A460'],
       size: 512
     }
   },
 
-  // Jupiter from Juno mission
+  // Jupiter - reliable CDN sources
   JUPITER: {
-    url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/jupitermap.jpg',
+    url: [
+      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/jupiter_2k.jpg',
+      'https://threejs.org/examples/textures/planets/jupiter_2k.jpg',
+      'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/jupiter_2k.jpg'
+    ],
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
       type: 'stripes' as const,
-      colors: ['#D8CA9D', '#B8860B', '#8B7355', '#DAA520'],
+      colors: ['#D8CA9D', '#B8860B', '#8B7355', '#DAA520', '#CD853F', '#DEB887'],
       size: 1024
     }
   },
 
-  // Saturn from Cassini mission
+  // Saturn - reliable CDN sources
   SATURN: {
-    url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/saturnmap.jpg',
+    url: [
+      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/saturn_1k.jpg',
+      'https://threejs.org/examples/textures/planets/saturn_1k.jpg',
+      'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/saturn_1k.jpg'
+    ],
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
       type: 'stripes' as const,
-      colors: ['#FAD5A5', '#DAA520', '#B8860B'],
+      colors: ['#FAD5A5', '#DAA520', '#B8860B', '#F4E99B', '#E6D690', '#DEB887'],
       size: 1024
     }
   },
 
-  // Sun texture (solar surface)
+  // Sun texture - using enhanced fallback pattern
   SUN: {
-    url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/sunmap.jpg',
+    url: [],
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'checker' as const,
-      colors: ['#FDB813', '#FF6B35', '#FFA500'],
-      size: 512
+      type: 'stripes' as const,
+      colors: ['#FDB813', '#FF8C00', '#FF6B35', '#FFD700', '#FFA500'],
+      size: 1024
     }
   },
 
-  // Venus from Magellan mission
+  // Venus - using fallback only to avoid CORS
   VENUS: {
-    url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/venusmap.jpg',
+    url: [],
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
@@ -88,21 +106,21 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
     }
   },
 
-  // Mercury from MESSENGER mission
+  // Mercury - using fallback only to avoid CORS
   MERCURY: {
-    url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/mercurymap.jpg',
+    url: [],
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'checker' as const,
+      type: 'earth' as const, // Changed from 'checker' to 'earth' for more natural look
       colors: ['#8C7853', '#A0522D', '#696969'],
       size: 512
     }
   },
 
-  // Uranus from Voyager 2
+  // Uranus - using fallback only to avoid CORS
   URANUS: {
-    url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/uranusmap.jpg',
+    url: [],
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
@@ -112,13 +130,13 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
     }
   },
 
-  // Neptune from Voyager 2
+  // Neptune - using fallback only to avoid CORS
   NEPTUNE: {
-    url: 'https://raw.githubusercontent.com/jeromeetienne/threex.planets/master/images/neptunemap.jpg',
+    url: [],
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'checker' as const,
+      type: 'earth' as const, // Changed from 'checker' to 'earth' for more natural look
       colors: ['#4B70DD', '#000080', '#191970'],
       size: 512
     }
@@ -152,14 +170,7 @@ export const ALTERNATIVE_TEXTURES = {
 // Helper function to get texture for a planet
 export function getPlanetTexture(planetName: string): TextureSpec | null {
   const upperName = planetName.toUpperCase()
-  
-  // Use alternative sources for Earth and Moon if available
-  if (upperName === 'EARTH' && ALTERNATIVE_TEXTURES.EARTH) {
-    return ALTERNATIVE_TEXTURES.EARTH
-  }
-  if (upperName === 'MOON' && ALTERNATIVE_TEXTURES.MOON) {
-    return ALTERNATIVE_TEXTURES.MOON
-  }
-  
+
+  // Always use primary textures with fallback patterns to avoid CORS
   return PLANETARY_TEXTURES[upperName] || null
 }

@@ -1,224 +1,255 @@
 import { MissionPanel } from '@gnc/ui'
-import { OrbitControls, StatsGl } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
-import { Suspense, useState } from 'react'
+import { useState } from 'react'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { LaunchSimulation } from './components/LaunchSimulation'
-import { OrbitDemo } from './components/OrbitDemo'
-import { SimpleSLSDemo } from './components/SimpleSLSDemo'
-import { TrajectoryPlanningDemo } from './components/TrajectoryPlanningDemo'
-import { TrajectoryPanel } from './components/TrajectoryPanel'
-import { StarField } from './components/StarField'
+import { MISSION_SCENARIOS } from './components/MissionTypes'
 import { useLaunchControl } from './state/launchControlStore'
 import { useMissionStore, type MissionState } from './state/missionStore'
 
 export default function App() {
   const phase = useMissionStore((s: MissionState) => s.phase)
   const setPhase = useMissionStore((s: MissionState) => s.setPhase)
-  const [simMode, setSimMode] = useState<'launch' | 'orbit' | 'trajectory' | 'sls'>('sls')
+  const [selectedMission, setSelectedMission] = useState<string>('earthOrbit')
 
   // Launch control state
-  const { launchTime, initiateLaunch, resetLaunch } = useLaunchControl()
+  const { launchTime, initiateLaunch, resetLaunch, isLaunched } = useLaunchControl()
+
+  const currentMission = MISSION_SCENARIOS[selectedMission]
+  const missionPhases = currentMission?.phases || []
+
+  // Calculate current mission phase based on launch time
+  const getCurrentMissionPhase = () => {
+    if (!isLaunched || launchTime < 0 || missionPhases.length === 0) return null
+
+    let accumulatedTime = 0
+    for (const phase of missionPhases) {
+      if (launchTime <= accumulatedTime + phase.duration) {
+        return {
+          ...phase,
+          progress: Math.min((launchTime - accumulatedTime) / phase.duration, 1),
+          timeInPhase: launchTime - accumulatedTime
+        }
+      }
+      accumulatedTime += phase.duration
+    }
+
+    // Mission completed - return final phase with completed status
+    const finalPhase = missionPhases[missionPhases.length - 1]
+    return {
+      ...finalPhase,
+      progress: 1,
+      timeInPhase: finalPhase.duration,
+      completed: true
+    }
+  }
+
+  const currentPhase = getCurrentMissionPhase()
 
   return (
     <ErrorBoundary>
-      <div className="grid grid-cols-[320px_1fr] grid-rows-[1fr] h-screen">
+      <div className="grid grid-cols-[350px_1fr] grid-rows-[1fr] h-screen">
         <aside className="border-r border-zinc-700 p-3 overflow-auto bg-zinc-950">
-          <h1 className="text-lg font-semibold mb-3">GNC Space Sim</h1>
+          <h1 className="text-lg font-semibold mb-3">GNC Space Simulation</h1>
 
-          {/* Simulation Mode Selector */}
+          {/* Mission Selection */}
           <div className="mb-4 p-3 bg-zinc-800 rounded">
-            <h3 className="text-sm font-semibold mb-2 text-zinc-300">Simulation Mode</h3>
-            <div className="flex gap-2 flex-wrap">
-              <button
-                onClick={() => setSimMode('launch')}
-                className={`px-3 py-1 text-xs rounded ${
-                  simMode === 'launch'
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
-                }`}
-              >
-                🚀 Launch
-              </button>
-              <button
-                onClick={() => setSimMode('orbit')}
-                className={`px-3 py-1 text-xs rounded ${
-                  simMode === 'orbit'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
-                }`}
-              >
-                🛰️ Orbit
-              </button>
-              <button
-                onClick={() => setSimMode('trajectory')}
-                className={`px-3 py-1 text-xs rounded ${
-                  simMode === 'trajectory'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
-                }`}
-              >
-                🎯 Trajectory
-              </button>
-              <button
-                onClick={() => setSimMode('sls')}
-                className={`px-3 py-1 text-xs rounded ${
-                  simMode === 'sls'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600'
-                }`}
-              >
-                🌙 SLS Artemis
-              </button>
+            <h3 className="text-sm font-semibold mb-2 text-zinc-300">Mission Selection</h3>
+            <div className="space-y-2">
+              {Object.entries(MISSION_SCENARIOS).map(([id, mission]) => (
+                <button
+                  key={id}
+                  onClick={() => setSelectedMission(id)}
+                  className={`w-full p-2 text-xs rounded text-left transition-colors ${
+                    selectedMission === id
+                      ? 'bg-blue-600 text-white border border-blue-400'
+                      : 'bg-zinc-700 text-zinc-300 hover:bg-zinc-600 border border-zinc-600'
+                  }`}
+                >
+                  <div className="font-semibold">{mission.name}</div>
+                  <div className="text-zinc-400 text-xs mt-1">{mission.description}</div>
+                  <div className="text-zinc-500 text-xs mt-1">
+                    Target: {mission.target} | Duration: {Math.round(mission.duration/3600)}h
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Launch Control Panel */}
-          {simMode === 'launch' && (
-            <div className="mb-4 p-3 bg-red-900/30 rounded border border-red-700">
-              <h3 className="text-sm font-semibold mb-2 text-red-400">🚀 Launch Control</h3>
+          <div className="mb-4 p-3 bg-red-900/30 rounded border border-red-700">
+            <h3 className="text-sm font-semibold mb-2 text-red-400">🚀 Launch Control</h3>
+            <div className="space-y-2">
+              <div className="text-xs text-zinc-300">
+                Mission: {currentMission.name}
+              </div>
+              <div className="text-xs text-zinc-300">
+                Mission Time: T{launchTime < 0 ? `${launchTime.toFixed(1)}s` : `+${launchTime.toFixed(1)}s`}
+              </div>
+              {launchTime < 0 && launchTime > -10 && (
+                <div className="text-xs text-red-400 font-bold animate-pulse">
+                  🔥 COUNTDOWN ACTIVE: {Math.abs(launchTime).toFixed(0)}
+                </div>
+              )}
+              {launchTime >= 0 && launchTime < 60 && (
+                <div className="text-xs text-orange-400 font-bold animate-pulse">
+                  🚀 LIFTOFF! Rocket ascending...
+                </div>
+              )}
+              {launchTime >= 60 && (
+                <div className="text-xs text-blue-400">
+                  🛰️ In flight - Mission phase active
+                </div>
+              )}
+              {currentPhase && (
+                <div className="text-xs text-cyan-300">
+                  Phase: {currentPhase.name} {('completed' in currentPhase && currentPhase.completed) ? '(COMPLETE)' : `(${(currentPhase.progress * 100).toFixed(1)}%)`}
+                </div>
+              )}
+              <div className="flex gap-2">
+                {launchTime < 0 ? (
+                  <button
+                    onClick={initiateLaunch}
+                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm shadow-lg transition-colors flex-1"
+                  >
+                    🚀 INITIATE LAUNCH
+                  </button>
+                ) : (
+                  <button
+                    onClick={resetLaunch}
+                    className="bg-zinc-600 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded text-sm transition-colors flex-1"
+                  >
+                    🔄 RESET MISSION
+                  </button>
+                )}
+              </div>
+              <div className="text-xs text-zinc-400 mt-2">
+                {launchTime < -5
+                  ? 'All systems nominal. Ready for launch.'
+                  : launchTime < 0
+                    ? '🔥 Final countdown sequence initiated! Hold position.'
+                    : launchTime < 60
+                      ? '🚀 ENGINES IGNITED! Vehicle ascending through atmosphere.'
+                      : currentPhase
+                        ? ('completed' in currentPhase && currentPhase.completed)
+                          ? '🎉 Mission Complete! All objectives achieved.'
+                          : currentPhase.description
+                        : '🛰️ Mission in progress. Monitoring all systems.'
+                }
+              </div>
+            </div>
+          </div>
+
+          {/* Mission Phase Timeline */}
+          {isLaunched && currentMission && (
+            <div className="mb-4 p-3 bg-blue-900/30 rounded border border-blue-700">
+              <h3 className="text-sm font-semibold mb-2 text-blue-400">📋 Mission Phases</h3>
               <div className="space-y-2">
-                <div className="text-xs text-zinc-300">
-                  Mission Time: T{launchTime < 0 ? `${launchTime.toFixed(1)}s` : `+${launchTime.toFixed(1)}s`}
-                </div>
-                <div className="flex gap-2">
-                  {launchTime < 0 ? (
-                    <button
-                      onClick={initiateLaunch}
-                      className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm shadow-lg transition-colors flex-1"
-                    >
-                      🚀 INITIATE LAUNCH
-                    </button>
-                  ) : (
-                    <button
-                      onClick={resetLaunch}
-                      className="bg-zinc-600 hover:bg-zinc-700 text-white font-bold py-2 px-4 rounded text-sm transition-colors flex-1"
-                    >
-                      🔄 RESET MISSION
-                    </button>
-                  )}
-                </div>
-                <div className="text-xs text-zinc-400 mt-2">
-                  {launchTime < 0
-                    ? 'All systems nominal. Ready for launch.'
-                    : 'Mission in progress. Monitor telemetry on the right.'
+                {missionPhases.map((missionPhase, index) => {
+                  let accumulatedTime = 0
+                  for (let i = 0; i < index; i++) {
+                    accumulatedTime += missionPhases[i].duration
                   }
-                </div>
+                  const isActive = currentPhase?.name === missionPhase.name
+                  const isCompleted = launchTime > accumulatedTime + missionPhase.duration
+
+                  return (
+                    <div
+                      key={index}
+                      className={`text-xs p-2 rounded border ${
+                        isActive
+                          ? 'border-blue-400 bg-blue-900/50 text-blue-200'
+                          : isCompleted
+                            ? 'border-green-600 bg-green-900/30 text-green-300'
+                            : 'border-zinc-600 bg-zinc-800/50 text-zinc-400'
+                      }`}
+                    >
+                      <div className="font-semibold">
+                        {isCompleted ? '✅' : isActive ? '🔄' : '⏳'} {missionPhase.name}
+                      </div>
+                      <div className="text-xs mt-1">{missionPhase.description}</div>
+                      {isActive && currentPhase && (
+                        <div className="mt-1">
+                          <div className="bg-zinc-700 rounded-full h-1">
+                            <div
+                              className="bg-blue-400 h-1 rounded-full transition-all duration-1000"
+                              style={{ width: `${currentPhase.progress * 100}%` }}
+                            />
+                          </div>
+                          <div className="text-xs mt-1">
+                            {Math.round(currentPhase.timeInPhase)}s / {missionPhase.duration}s
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
 
-          {/* Trajectory Control Panel */}
-          {simMode === 'trajectory' && (
-            <div className="mb-4 p-3 bg-green-900/30 rounded border border-green-700">
-              <h3 className="text-sm font-semibold mb-2 text-green-400">🎯 Trajectory Planning</h3>
-              <div className="space-y-2">
-                <div className="text-xs text-zinc-300">
-                  Enhanced SSSP Algorithm for spacecraft trajectory optimization
-                  
-                  🌌 Solar System: Real astronomical positions (August 2025)
-                  Planets positioned according to current Keplerian orbits
-                </div>
-                <div className="text-xs text-zinc-400">
-                  Real-time pathfinding with O(m + n log n) performance
-                  
-                  📅 Current Date: August 31, 2025
-                  🌍 Planets: Real Keplerian orbits with accurate inclinations
-                  ☄️ Asteroid Belt: 300+ asteroids between Mars and Jupiter
-                </div>
-              </div>
-            </div>
-          )}
           <MissionPanel phase={phase} onChange={setPhase} />
 
-          {/* GNC Information Panel */}
+          {/* Mission Information Panel */}
           <div className="mt-4 p-3 bg-zinc-900 rounded">
-            <h3 className="text-sm font-semibold mb-2 text-yellow-400">GNC Systems</h3>
+            <h3 className="text-sm font-semibold mb-2 text-yellow-400">Mission Details</h3>
             <div className="text-xs space-y-2 text-zinc-300">
-              {simMode === 'sls' ? (
-                <>
-                  <div><strong>🚀 Vehicle:</strong> SLS Block 1</div>
-                  <div><strong>🎯 Mission:</strong> Artemis II Lunar Flyby</div>
-                  <div><strong>🌙 Destination:</strong> 10,000 km Lunar Flyby</div>
-                  <div className="mt-2 text-zinc-400">
-                    NASA's most powerful rocket with twin SRBs and RS-25 engines.
-                    First crewed mission beyond Earth orbit since Apollo 17.
-                  </div>
-                </>
-              ) : simMode === 'launch' ? (
-                <>
-                  <div><strong>🎯 Guidance:</strong> Gravity Turn Algorithm</div>
-                  <div><strong>🧭 Navigation:</strong> IMU + GPS Fusion</div>
-                  <div><strong>🎮 Control:</strong> TVC + RCS Systems</div>
-                  <div className="mt-2 text-zinc-400">
-                    Launch from Earth surface through orbital insertion with
-                    real-time atmospheric modeling and multi-stage guidance.
-                  </div>
-                </>
-              ) : simMode === 'orbit' ? (
-                <>
-                  <div><strong>🎯 Guidance:</strong> Hohmann Transfers</div>
-                  <div><strong>🧭 Navigation:</strong> Keplerian Elements</div>
-                  <div><strong>🎮 Control:</strong> Orbital Maneuvers</div>
-                  <div className="mt-2 text-zinc-400">
-                    Two-body orbital mechanics with real-time propagation
-                    and mission trajectory planning.
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div><strong>🎯 Guidance:</strong> Enhanced SSSP Algorithm</div>
-                  <div><strong>🧭 Navigation:</strong> Graph-Based Planning</div>
-                  <div><strong>🎮 Control:</strong> Real-Time Optimization</div>
-                  <div className="mt-2 text-zinc-400">
-                    Breakthrough SSSP algorithm beating Dijkstra's O(m + n log n)
-                    bound for spacecraft trajectory optimization.
-                  </div>
-                </>
+              <div><strong>🚀 Spacecraft:</strong> {currentMission.spacecraft}</div>
+              <div><strong>🎯 Target:</strong> {currentMission.target}</div>
+              <div><strong>⏱️ Duration:</strong> {Math.round(currentMission.duration/3600)}h</div>
+              <div><strong>🛸 ΔV Required:</strong> {currentMission.trajectory.deltaV.toLocaleString()} m/s</div>
+              <div className="mt-2 text-zinc-400">
+                {currentMission.description}
+              </div>
+
+              {currentMission.objectives.length > 0 && (
+                <div className="mt-3">
+                  <div className="font-semibold text-yellow-400 mb-1">Mission Objectives:</div>
+                  {currentMission.objectives.map((obj, i) => (
+                    <div key={i} className="text-xs text-zinc-400">• {obj}</div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
 
-          {/* Enhanced Trajectory Algorithm Details */}
-          {simMode === 'trajectory' && (
-            <div className="mt-4 p-3 bg-green-900/30 rounded border border-green-700">
-              <h3 className="text-sm font-semibold mb-2 text-green-400">Enhanced SSSP Algorithm</h3>
-              <div className="text-xs space-y-2 text-zinc-300">
-                <div><strong>🔬 Research:</strong> Stanford, Tsinghua, Max Planck</div>
-                <div><strong>⚡ Performance:</strong> 2-4x faster than Dijkstra</div>
-                <div><strong>🏗️ Method:</strong> Hierarchical decomposition</div>
-                <div><strong>📊 Complexity:</strong> Near-linear time bounds</div>
-                <div><strong>🎯 Application:</strong> Real-time trajectory planning</div>
-                <div className="mt-2 text-xs text-green-300 bg-green-900/20 p-2 rounded">
-                  First deterministic SSSP algorithm to break the O(m + n log n)
-                  barrier for sparse directed graphs. Enables real-time replanning
-                  for spacecraft trajectory optimization.
-                </div>
+          {/* GNC Systems Information */}
+          <div className="mt-4 p-3 bg-zinc-900 rounded">
+            <h3 className="text-sm font-semibold mb-2 text-purple-400">GNC Systems Active</h3>
+            <div className="text-xs space-y-2 text-zinc-300">
+              <div><strong>🎯 Guidance:</strong> Gravity Turn + Trajectory Optimization</div>
+              <div><strong>🧭 Navigation:</strong> IMU + GPS + Deep Space Network</div>
+              <div><strong>� Control:</strong> TVC + RCS + Reaction Wheels</div>
+              <div className="mt-2 text-zinc-400">
+                Integrated guidance, navigation, and control systems providing
+                autonomous mission execution from launch through all mission phases.
               </div>
             </div>
-          )}
+          </div>
 
-          {/* Scientific Formulas */}
+          {/* Physics Formulas */}
           <div className="mt-4 p-3 bg-zinc-900 rounded">
-            <h3 className="text-sm font-semibold mb-2 text-cyan-400">Physics Formulas</h3>
+            <h3 className="text-sm font-semibold mb-2 text-cyan-400">Active Formulas</h3>
             <div className="text-xs space-y-1 text-zinc-300 font-mono">
-              {simMode === 'trajectory' ? (
-                <>
-                  <div>O(m + n log n) → O(m + n) (Enhanced SSSP)</div>
-                  <div>d[v] = min(d[u] + w(u,v)) (Relaxation)</div>
-                  <div>H = {'{'}h₁, h₂, ..., hₖ{'}'} (Hop Sets)</div>
-                  <div>deg(G) ≤ β (Bounded Degree)</div>
-                  <div>T(n) = O(m + n √log log n) (Query Time)</div>
-                  <div>S(n) = O(n √log log n) (Space)</div>
-                </>
-              ) : (
+              {currentPhase?.name === 'Launch' || currentPhase?.name === 'Earth Departure' ? (
                 <>
                   <div>F = ma (Newton's 2nd Law)</div>
                   <div>F_g = GMm/r² (Gravity)</div>
-                  <div>v_orbit = √(μ/r) (Orbital Velocity)</div>
                   <div>Δv = I_sp × g₀ × ln(m₀/m_f) (Rocket Equation)</div>
+                  <div>a = F_thrust/m - g × sin(γ) (Launch Dynamics)</div>
+                </>
+              ) : currentPhase?.name.includes('Cruise') || currentPhase?.name.includes('Transit') ? (
+                <>
+                  <div>v_orbit = √(μ/r) (Orbital Velocity)</div>
                   <div>e = (r_a - r_p)/(r_a + r_p) (Eccentricity)</div>
                   <div>T = 2π√(a³/μ) (Orbital Period)</div>
+                  <div>Δv = √(μ/r₁) × |√(2r₂/(r₁+r₂)) - 1| (Hohmann)</div>
+                </>
+              ) : (
+                <>
+                  <div>r⃗(t) = r⃗₀ + v⃗₀t + ½a⃗t² (Position)</div>
+                  <div>v_esc = √(2μ/r) (Escape Velocity)</div>
+                  <div>C₃ = v²∞ (Characteristic Energy)</div>
+                  <div>TOF = π√(a³/μ) (Transfer Time)</div>
                 </>
               )}
             </div>
@@ -226,45 +257,30 @@ export default function App() {
         </aside>
 
         <main className="relative">
-          {simMode === 'launch' ? (
-            <LaunchSimulation />
-          ) : simMode === 'sls' ? (
-            <SimpleSLSDemo />
-          ) : simMode === 'orbit' ? (
-            <Canvas shadows camera={{ position: [12, 8, 12], fov: 50 }}>
-              <ambientLight intensity={0.3} />
-              <directionalLight castShadow position={[10, 10, 5]} intensity={1.2} />
-              <Suspense fallback={null}>
-                <OrbitDemo />
-              </Suspense>
-              <OrbitControls makeDefault />
-              <StatsGl />
-            </Canvas>
-          ) : (
-            <Canvas shadows camera={{ position: [0, 0, 15], fov: 60 }}>
-              <ambientLight intensity={0.4} />
-              <directionalLight position={[10, 10, 5]} intensity={1.0} />
-              <pointLight position={[-10, -10, -5]} intensity={0.5} color="#4a90e2" />
-              <Suspense fallback={null}>
-                <TrajectoryPlanningDemo />
-              </Suspense>
-              <OrbitControls
-                makeDefault
-                enableDamping
-                dampingFactor={0.05}
-                enablePan={true}
-                enableZoom={true}
-                enableRotate={true}
-                minDistance={5}
-                maxDistance={50}
-              />
-              <StatsGl />
-            </Canvas>
-          )}
+          <LaunchSimulation
+            selectedMission={selectedMission}
+            currentPhase={currentPhase}
+          />
 
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-zinc-900/70 px-3 py-1 rounded text-xs">
-            Mode: {simMode === 'launch' ? '🚀 Launch Simulation' : simMode === 'orbit' ? '🛰️ Orbital Mechanics' : '🎯 Trajectory Planning'} | Phase: {phase}
+            Mission: {currentMission.name} | Phase: {currentPhase?.name || 'Pre-Launch'} | Status: {phase}
           </div>
+
+          {/* Real-time Flight Status */}
+          {isLaunched && (
+            <div className="absolute top-4 right-4 bg-zinc-900/90 p-3 rounded border border-zinc-600 text-xs">
+              <h3 className="text-green-400 font-bold mb-2">🛰️ FLIGHT STATUS</h3>
+              <div className="space-y-1 text-zinc-300">
+                <div>T{launchTime < 0 ? launchTime.toFixed(1) : `+${launchTime.toFixed(1)}`}s</div>
+                <div>Mission: {currentMission.name}</div>
+                {currentPhase && (
+                  <div className="text-cyan-300">
+                    {currentPhase.name} ({(currentPhase.progress * 100).toFixed(1)}%)
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </ErrorBoundary>

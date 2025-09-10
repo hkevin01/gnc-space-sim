@@ -2,15 +2,30 @@ import { LaunchPhase, LaunchState } from '@gnc/core'
 import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { useState } from 'react'
+import * as THREE from 'three'
 import { LaunchDemo } from './LaunchDemo'
 import { GNCPanel } from './GNCPanel'
+import { MissionEvent } from './MissionTypes'
+
+interface LaunchSimulationProps {
+  selectedMission: string
+  currentPhase: {
+    progress: number
+    timeInPhase: number
+    name: string
+    description: string
+    duration: number
+    requirements: string[]
+    events: MissionEvent[]
+  } | null
+}
 
 /**
  * Main Launch Simulation Container
  *
  * Combines the 3D visualization with comprehensive scientific displays
  */
-export function LaunchSimulation() {
+export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimulationProps) {
   // Demo state for scientific display
   const [demoState] = useState<LaunchState>({
     r: [6371000, 0, 50000], // 50km altitude
@@ -48,12 +63,31 @@ export function LaunchSimulation() {
             far: 1000000
           }}
           style={{ background: "#000011", maxHeight: "100vh", maxWidth: "100vw" }}
+          onCreated={({ gl }) => {
+            // Configure WebGL context for better stability
+            gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            gl.shadowMap.enabled = true;
+            gl.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            // Add context loss handling
+            gl.domElement.addEventListener('webglcontextlost', (event) => {
+              console.warn('WebGL context lost, preventing default behavior');
+              event.preventDefault();
+            });
+
+            gl.domElement.addEventListener('webglcontextrestored', () => {
+              console.log('WebGL context restored');
+            });
+          }}
         >
           <ambientLight intensity={0.2} />
           <pointLight position={[10, 10, 10]} intensity={1} />
           <pointLight position={[-10, -10, -10]} intensity={0.5} />
 
-          <LaunchDemo />
+          <LaunchDemo
+            timeMultiplier={100}
+            showTrajectory={true}
+          />
 
           <OrbitControls
             enablePan={true}
@@ -68,7 +102,11 @@ export function LaunchSimulation() {
 
       {/* GNC Panel */}
       <div className="w-96 h-full border-l border-zinc-600">
-        <GNCPanel launchState={demoState} />
+        <GNCPanel
+          launchState={demoState}
+          selectedMission={selectedMission}
+          currentPhase={currentPhase}
+        />
       </div>
     </div>
   )

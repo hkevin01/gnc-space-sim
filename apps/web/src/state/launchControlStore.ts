@@ -51,7 +51,7 @@ export const useLaunchControl = create<LaunchControlState>((set) => ({
   initiateLaunch: () => {
     const launchState: LaunchState = {
       ...initialState,
-      phase: LaunchPhase.PRELAUNCH, // Start with prelaunch, not liftoff
+      phase: LaunchPhase.PRELAUNCH,
       mission_time: -10 // Start with -10 second countdown
     }
     set({
@@ -59,6 +59,33 @@ export const useLaunchControl = create<LaunchControlState>((set) => ({
       launchTime: -10, // Start countdown at -10 seconds
       currentState: launchState
     })
+
+    // Auto-progress through countdown to actual launch
+    const countdownInterval = setInterval(() => {
+      set((state) => {
+        const newTime = state.launchTime + 1
+        if (newTime >= 0) {
+          clearInterval(countdownInterval)
+          return {
+            ...state,
+            launchTime: 0,
+            currentState: {
+              ...state.currentState!,
+              phase: LaunchPhase.STAGE1_BURN,
+              mission_time: 0
+            }
+          }
+        }
+        return {
+          ...state,
+          launchTime: newTime,
+          currentState: {
+            ...state.currentState!,
+            mission_time: newTime
+          }
+        }
+      })
+    }, 100) // Update every 100ms for smooth countdown
   },
   resetLaunch: () => {
 

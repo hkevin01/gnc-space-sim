@@ -201,7 +201,7 @@ export function TrajectoryPlanningDemo() {
 
             edge.relaxed = true
             edgesRelaxed++
-            
+
             // Update visualization
             setSearchState(prev => prev ? {
               ...prev,
@@ -331,18 +331,26 @@ export function TrajectoryPlanningDemo() {
         </group>
       )}
 
-      {/* Control Panel */}
-      <TrajectoryControlPanel
-        onAlgorithmChange={setCurrentAlgorithm}
-        onGraphSizeChange={setGraphSize}
-        onMissionChange={setCurrentMission}
-        onRunDemo={runEnhancedSSSpDemo}
-        onRunComparison={runComparison}
-        isRunning={isRunning}
-        currentAlgorithm={currentAlgorithm}
-        graphSize={graphSize}
-        currentMission={currentMission}
-      />
+      {/* Control Panel - positioned on right side */}
+      <Html
+        position={[12, 0, 0]}
+        transform={false}
+        occlude={false}
+        style={{ pointerEvents: 'auto' }}
+        distanceFactor={1}
+      >
+        <TrajectoryControlPanel
+          onAlgorithmChange={setCurrentAlgorithm}
+          onGraphSizeChange={setGraphSize}
+          onMissionChange={setCurrentMission}
+          onRunDemo={runEnhancedSSSpDemo}
+          onRunComparison={runComparison}
+          isRunning={isRunning}
+          currentAlgorithm={currentAlgorithm}
+          graphSize={graphSize}
+          currentMission={currentMission}
+        />
+      </Html>
 
       {/* Performance metrics display */}
       {searchState && searchState.searchComplete && (
@@ -391,20 +399,20 @@ export function TrajectoryPlanningDemo() {
                 <div></div>
                 <div className="font-bold">Enhanced</div>
                 <div className="font-bold">Dijkstra</div>
-                
+
                 <div>Time (ms):</div>
                 <div className="text-green-400">{benchmarkResults.enhanced.timeMs}</div>
                 <div className="text-red-400">{benchmarkResults.dijkstra.timeMs}</div>
-                
+
                 <div>Nodes:</div>
                 <div className="text-green-400">{benchmarkResults.enhanced.nodesVisited}</div>
                 <div className="text-red-400">{benchmarkResults.dijkstra.nodesVisited}</div>
-                
+
                 <div>Edges:</div>
                 <div className="text-green-400">{benchmarkResults.enhanced.edgesRelaxed}</div>
                 <div className="text-red-400">{benchmarkResults.dijkstra.edgesRelaxed}</div>
               </div>
-              
+
               <div className="pt-2 border-t border-gray-600">
                 <div className="text-center">
                   <span className="text-xl font-bold text-yellow-400">

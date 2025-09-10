@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Texture Test</title>
+</head>
+<body>
+    <h1>Canvas Texture Test</h1>
+    <div>
+        <h2>Earth Texture</h2>
+        <canvas id="earthCanvas" width="512" height="256" style="border: 1px solid black;"></canvas>
+    </div>
+    <div>
+        <h2>Moon Texture</h2>
+        <canvas id="moonCanvas" width="512" height="512" style="border: 1px solid black;"></canvas>
+    </div>
+
+    <script>
+        // Test Earth texture creation
+        const earthCanvas = document.getElementById('earthCanvas');
+        const earthCtx = earthCanvas.getContext('2d');
+        if (earthCtx) {
+            // Simple Earth-like texture
+            const grad = earthCtx.createLinearGradient(0, 0, 0, 256);
+            grad.addColorStop(0, '#4169E1');  // Royal blue
+            grad.addColorStop(1, '#0000CD');  // Medium blue
+            earthCtx.fillStyle = grad;
+            earthCtx.fillRect(0, 0, 512, 256);
+
+            // Add some green "continents"
+            earthCtx.fillStyle = '#228B22';
+            earthCtx.fillRect(50, 80, 100, 60);
+            earthCtx.fillRect(200, 120, 80, 40);
+            earthCtx.fillRect(350, 90, 120, 80);
+            earthCtx.fillRect(150, 180, 90, 50);
+        }
+
+        // Test Moon texture creation
+        const moonCanvas = document.getElementById('moonCanvas');
+        const moonCtx = moonCanvas.getContext('2d');
+        if (moonCtx) {
+            // Simple Moon-like texture
+            moonCtx.fillStyle = '#C0C0C0';
+            moonCtx.fillRect(0, 0, 512, 512);
+
+            // Add darker "craters"
+            moonCtx.fillStyle = '#A0A0A0';
+            for (let i = 0; i < 20; i++) {
+                const x = Math.random() * 512;
+                const y = Math.random() * 512;
+                const r = 10 + Math.random() * 30;
+                moonCtx.beginPath();
+                moonCtx.arc(x, y, r, 0, Math.PI * 2);
+                moonCtx.fill();
+            }
+        }
+    </script>
+</body>
+</html>
