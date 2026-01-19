@@ -38,7 +38,7 @@ The **GNC Space Simulation** was created to bridge the gap between theoretical a
 
 ```bash
 # Run GNC simulation with Docker
-./run.sh
+./tools/scripts/run.sh
 ```
 
 Access at: <http://localhost:5173>
@@ -47,7 +47,7 @@ Access at: <http://localhost:5173>
 
 ```bash
 # Detailed Docker workflow
-./scripts/docker-dev.sh dev:start
+./tools/scripts/docker-dev.sh dev:start
 ```
 
 ### Local Development
@@ -282,9 +282,14 @@ gnc-space-sim/
 │       ├── Purpose: Performance-critical algorithms
 │       └── Tech: Rust, wasm-pack
 └── infrastructure/
-    ├── docker/             # Container configurations
-    ├── scripts/           # Development utilities  
-    └── docs/              # Technical documentation
+    ├── tools/             # Development and deployment tools
+    │   ├── scripts/       # Automation scripts
+    │   ├── docker/        # Container configurations
+    │   ├── development/   # Development utilities
+    │   └── testing/       # Testing utilities
+    ├── tests/             # Integration and performance tests
+    ├── build-tools/       # Build and linting configurations
+    └── documentation/     # Technical documentation
 ```
 
 ---
@@ -414,11 +419,11 @@ pnpm lint             # ESLint code quality checks
 pnpm typecheck        # TypeScript compilation verification
 
 # Docker operations (recommended)
-./scripts/docker-dev.sh dev:start     # Start containerized development
-./scripts/docker-dev.sh stack:start   # Start full stack (web + db + cache)
-./scripts/docker-dev.sh test:run      # Run tests in clean environment
-./scripts/docker-dev.sh qa:run        # Quality assurance pipeline
-./scripts/docker-dev.sh build:prod    # Production build
+./tools/scripts/docker-dev.sh dev:start     # Start containerized development
+./tools/scripts/docker-dev.sh stack:start   # Start full stack (web + db + cache)
+./tools/scripts/docker-dev.sh test:run      # Run tests in clean environment
+./tools/scripts/docker-dev.sh qa:run        # Quality assurance pipeline
+./tools/scripts/docker-dev.sh build:prod    # Production build
 ```
 
 ### Package-Specific Commands
@@ -512,9 +517,9 @@ graph LR
 
 ### Technical Documentation
 
-- **[Docker Strategy](docs/DOCKER_STRATEGY.md)**: Comprehensive containerization guide
-- **[Orbital Mechanics Implementation](docs/orbital-mechanics-implementation.md)**: Physics engine details
-- **[MPC Design](docs/MPC_DESIGN.md)**: Model Predictive Control algorithms
+- **[Docker Strategy](documentation/DOCKER_STRATEGY.md)**: Comprehensive containerization guide
+- **[Orbital Mechanics Implementation](documentation/orbital-mechanics-implementation.md)**: Physics engine details
+- **[MPC Design](documentation/MPC_DESIGN.md)**: Model Predictive Control algorithms
 - **[Testing Implementation](documentation/guides/TESTING_IMPLEMENTATION.md)**: QA methodology
 
 ### Educational Resources
@@ -539,7 +544,7 @@ We welcome contributions from aerospace professionals, educators, and developers
 1. **Prerequisites**: Node.js 18+, pnpm 9+, Docker (optional)
 2. **Clone Repository**: `git clone https://github.com/your-org/gnc-space-sim.git`
 3. **Install Dependencies**: `pnpm install`
-4. **Start Development**: `pnpm dev` or `./run.sh`
+4. **Start Development**: `pnpm dev` or `./tools/scripts/run.sh`
 
 ---
 

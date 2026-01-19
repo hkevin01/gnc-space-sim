@@ -1,1 +1,1 @@
-configuration/linting/eslint.config.mjs
+export { default } from './build-tools/eslint.config.mjs';

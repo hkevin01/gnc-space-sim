@@ -20,17 +20,17 @@
     "lighthouse": "pnpm -C apps/web lighthouse",
     "lighthouse:ci": "lhci autorun",
     "ci:full": "pnpm lint && pnpm typecheck && pnpm -C apps/web build && pnpm -C apps/web test:playwright && pnpm -C apps/web test:cypress:headless && pnpm lighthouse:ci",
-    "docker:dev": "./scripts/docker-dev.sh dev:start",
-    "docker:stop": "./scripts/docker-dev.sh dev:stop",
-    "docker:test": "./scripts/docker-dev.sh test:run",
-    "docker:qa": "./scripts/docker-dev.sh qa:run",
-    "docker:build": "./scripts/docker-dev.sh build:prod",
-    "docker:clean": "./scripts/docker-dev.sh clean",
-    "docker:stack": "./scripts/docker-dev.sh stack:start",
-    "docker:monitoring": "./scripts/docker-dev.sh monitoring:start"
+    "docker:dev": "./tools/scripts/docker-dev.sh dev:start",
+    "docker:stop": "./tools/scripts/docker-dev.sh dev:stop",
+    "docker:test": "./tools/scripts/docker-dev.sh test:run",
+    "docker:qa": "./tools/scripts/docker-dev.sh qa:run",
+    "docker:build": "./tools/scripts/docker-dev.sh build:prod",
+    "docker:clean": "./tools/scripts/docker-dev.sh clean",
+    "docker:stack": "./tools/scripts/docker-dev.sh stack:start",
+    "docker:monitoring": "./tools/scripts/docker-dev.sh monitoring:start"
   },
   "scriptsExtra": {
-    "scripts:make-exec": "bash scripts/make-executable.sh"
+    "scripts:make-exec": "bash tools/scripts/make-executable.sh"
   },
   "devDependencies": {
     "@lhci/cli": "^0.13.0",
