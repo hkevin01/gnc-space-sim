@@ -1,8 +1,7 @@
-import { useFrame, useLoader } from '@react-three/fiber'
-import { useMemo, useRef, Suspense } from 'react'
-import { Billboard, Text } from '@react-three/drei'
+import { useFrame } from '@react-three/fiber'
+import { useMemo, useRef, Suspense, useState, useEffect } from 'react'
+import { Billboard, Text, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
-import { TextureLoader } from 'three'
 
 export const CONSTANTS = {
   AU_KM: 149597870.7,
@@ -19,11 +18,12 @@ const SIZE_MULT = {
   GAS: 30
 } as const
 
-// Texture URLs - using Solar System Scope textures (CC license)
+// Texture URLs - using LOCAL 2K assets from public folder (Solar System Scope)
 const TEXTURE_URLS: Record<string, string> = {
-  sun: 'https://www.solarsystemscope.com/textures/download/2k_sun.jpg',
-  earth: 'https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg',
-  moon: 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg',
+  sun: '/assets/sun/sun_2k.jpg',
+  earth: '/assets/earth/earth_2k.jpg',
+  moon: '/assets/moon/moon_2k.jpg',
+  mars: '/assets/mars/mars_color.jpg',
 }
 
 export interface CelestialBodyData {
@@ -110,14 +110,29 @@ function calculatePlanetPosition(body: CelestialBodyData, timeSeconds: number): 
   return new THREE.Vector3(x, y, z)
 }
 
-function TexturedPlanet({ body, position, scaledRadius }: {
-  body: CelestialBodyData
-  position: THREE.Vector3
-  scaledRadius: number
-}) {
+// Individual texture components for each planet with textures
+function SunMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRadius: number }) {
   const meshRef = useRef<THREE.Mesh>(null)
-  const textureUrl = TEXTURE_URLS[body.id]
-  const texture = textureUrl ? useLoader(TextureLoader, textureUrl) : null
+  const texture = useTexture('/assets/sun/sun_2k.jpg')
+
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.position.copy(position)
+      meshRef.current.rotation.y += 0.001
+    }
+  })
+
+  return (
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[scaledRadius, 64, 64]} />
+      <meshStandardMaterial map={texture} emissive="#FFD700" emissiveIntensity={0.8} />
+    </mesh>
+  )
+}
+
+function EarthMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRadius: number }) {
+  const meshRef = useRef<THREE.Mesh>(null)
+  const texture = useTexture('/assets/earth/earth_2k.jpg')
 
   useFrame(() => {
     if (meshRef.current) {
@@ -129,14 +144,70 @@ function TexturedPlanet({ body, position, scaledRadius }: {
   return (
     <mesh ref={meshRef}>
       <sphereGeometry args={[scaledRadius, 64, 64]} />
-      <meshStandardMaterial
-        map={texture}
-        color={texture ? undefined : body.color}
-        emissive={body.type === 'star' ? body.color : '#000000'}
-        emissiveIntensity={body.type === 'star' ? 0.8 : 0}
-      />
+      <meshStandardMaterial map={texture} />
     </mesh>
   )
+}
+
+function MoonMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRadius: number }) {
+  const meshRef = useRef<THREE.Mesh>(null)
+  const texture = useTexture('/assets/moon/moon_2k.jpg')
+
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.position.copy(position)
+      meshRef.current.rotation.y += 0.001
+    }
+  })
+
+  return (
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[scaledRadius, 32, 32]} />
+      <meshStandardMaterial map={texture} />
+    </mesh>
+  )
+}
+
+function MarsMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRadius: number }) {
+  const meshRef = useRef<THREE.Mesh>(null)
+  const texture = useTexture('/assets/mars/mars_color.jpg')
+
+  useFrame(() => {
+    if (meshRef.current) {
+      meshRef.current.position.copy(position)
+      meshRef.current.rotation.y += 0.002
+    }
+  })
+
+  return (
+    <mesh ref={meshRef}>
+      <sphereGeometry args={[scaledRadius, 64, 64]} />
+      <meshStandardMaterial map={texture} />
+    </mesh>
+  )
+}
+
+function TexturedPlanet({ body, position, scaledRadius }: {
+  body: CelestialBodyData
+  position: THREE.Vector3
+  scaledRadius: number
+}) {
+  // Use specific textured components for planets with textures
+  if (body.id === 'sun') {
+    return <SunMesh position={position} scaledRadius={scaledRadius} />
+  }
+  if (body.id === 'earth') {
+    return <EarthMesh position={position} scaledRadius={scaledRadius} />
+  }
+  if (body.id === 'moon') {
+    return <MoonMesh position={position} scaledRadius={scaledRadius} />
+  }
+  if (body.id === 'mars') {
+    return <MarsMesh position={position} scaledRadius={scaledRadius} />
+  }
+
+  // Fallback for planets without textures
+  return <ColoredPlanet body={body} position={position} scaledRadius={scaledRadius} />
 }
 
 function ColoredPlanet({ body, position, scaledRadius }: {
@@ -176,8 +247,8 @@ function CelestialBodyMesh({
 }) {
   const sizeMult = body.type === 'star' ? SIZE_MULT.SUN
     : body.type === 'moon' ? SIZE_MULT.MOON
-    : ['mercury', 'venus', 'earth', 'mars'].includes(body.id) ? SIZE_MULT.INNER
-    : SIZE_MULT.GAS
+      : ['mercury', 'venus', 'earth', 'mars'].includes(body.id) ? SIZE_MULT.INNER
+        : SIZE_MULT.GAS
 
   const scaledRadius = Math.max(body.radiusKm * RADIUS_SCALE * sizeMult, body.type === 'star' ? 5 : 0.5)
   const hasTexture = body.id in TEXTURE_URLS
@@ -223,7 +294,7 @@ export function OrbitalSystem({
 }: OrbitalSystemProps) {
   const bodyPositions = useMemo(() => {
     const positions = new Map<string, THREE.Vector3>()
-    
+
     // Sun at center
     positions.set('sun', new THREE.Vector3(0, 0, 0))
 

@@ -12,7 +12,7 @@ export type TextureSpec = {
    */
   isColor?: boolean
   fallbackPattern?: {
-  type?: 'checker' | 'stripes' | 'earth'
+    type?: 'checker' | 'stripes' | 'earth'
     colors?: string[]
     size?: number // canvas size in px
     squares?: number // for checker
@@ -43,7 +43,7 @@ export function useSafeTexture(spec: TextureSpec | null): Texture | null {
   useEffect(() => {
     let cancelled = false
 
-  const createPattern = (): Texture | null => {
+    const createPattern = (): Texture | null => {
       if (!spec?.fallbackPattern) return null
       const type = spec.fallbackPattern.type ?? 'checker'
       const size = spec.fallbackPattern.size ?? 512
@@ -161,21 +161,35 @@ export function useSafeTexture(spec: TextureSpec | null): Texture | null {
         }
       }
 
-  const texture = new CanvasTexture(canvas)
+      const texture = new CanvasTexture(canvas)
       return texture
     }
 
     const tryLoad = async () => {
+      console.log('[useSafeTexture] tryLoad called with urls:', urls)
       if (urls.length === 0) {
+        console.log('[useSafeTexture] No URLs provided, using fallback pattern')
         setTex(createPattern())
         return
       }
-  const loader = new TextureLoader()
+      const loader = new TextureLoader()
       loader.setCrossOrigin('anonymous')
 
-  const loadOne = (u: string) =>
+      const loadOne = (u: string) =>
         new Promise<Texture>((resolve, reject) => {
-          loader.load(u, (loaded) => resolve(loaded), undefined, (err) => reject(err))
+          console.log('[useSafeTexture] Attempting to load:', u)
+          loader.load(
+            u,
+            (loaded) => {
+              console.log('[useSafeTexture] Successfully loaded:', u)
+              resolve(loaded)
+            },
+            undefined,
+            (err) => {
+              console.error('[useSafeTexture] Failed to load:', u, err)
+              reject(err)
+            }
+          )
         })
 
       for (const u of urls) {
@@ -218,7 +232,10 @@ export function useSafeTexture(spec: TextureSpec | null): Texture | null {
           // continue to next url
         }
       }
-      if (!cancelled) setTex(createPattern())
+      if (!cancelled) {
+        console.warn('[useSafeTexture] All URLs failed, using fallback pattern for:', urls)
+        setTex(createPattern())
+      }
     }
 
     tryLoad()

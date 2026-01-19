@@ -554,30 +554,8 @@ function NasaPlanet({ planetPosition, showOrbit = false, offset }: NasaPlanetPro
         />
       </mesh>
 
-      {/* Data source indicator for development */}
-      {process.env.NODE_ENV === 'development' && (
-        <Html position={[0, planetData.sceneRadius + 2, 0]}>
-          <div style={{
-            background: 'rgba(0,0,0,0.6)',
-            color: 'white',
-            padding: '2px 4px',
-            borderRadius: '2px',
-            fontSize: '10px',
-            fontFamily: 'monospace',
-            textAlign: 'center'
-          }}>
-            {name}<br />
-            {dataSource === 'nasa' ? '🛰️' : '🧮'}
-          </div>
-        </Html>
-      )}
-
-      {/* Orbit visualization - Thin line around the Sun */}
-      {showOrbit && planetData.orbitRadius && name !== 'SUN' && name !== 'MOON' && (
-        <group position={[-offset[0], -offset[1], -offset[2]]}>
-          <OrbitLine radius={planetData.orbitRadius} color="#ffffff" opacity={0.6} />
-        </group>
-      )}
+      {/* Orbit visualization disabled - rendered centrally in NasaSolarSystem */}
+      {/* Individual planet orbit removed to prevent double-rendering */}
 
       {/* Special handling for Saturn's rings */}
       {planetData.hasRings && (

@@ -2,12 +2,13 @@ import { TextureSpec } from './textures'
 
 // Planetary textures - using LOCAL assets in public/assets/
 // These are served directly by Vite from the public folder
+// Textures downloaded from Solar System Scope (CC license)
 
 export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
-  // Sun texture - LOCAL ASSET
+  // Sun texture - LOCAL ASSET (2K from Solar System Scope)
   SUN: {
     url: [
-      '/assets/sun/sun_color.jpg'
+      '/assets/sun/sun_2k.jpg'
     ],
     anisotropy: 16,
     isColor: true,
@@ -18,10 +19,10 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
     }
   },
 
-  // Earth texture - LOCAL ASSET
+  // Earth texture - LOCAL ASSET (2K from Solar System Scope)
   EARTH: {
     url: [
-      '/assets/earth/earth_day.jpg'
+      '/assets/earth/earth_2k.jpg'
     ],
     anisotropy: 16,
     isColor: true,
@@ -32,10 +33,10 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
     }
   },
 
-  // Moon texture - LOCAL ASSET (displacement map, but can work as color)
+  // Moon texture - LOCAL ASSET (2K from Solar System Scope)
   MOON: {
     url: [
-      '/assets/moon/moon_displacement.jpg'
+      '/assets/moon/moon_2k.jpg'
     ],
     anisotropy: 16,
     isColor: true,
