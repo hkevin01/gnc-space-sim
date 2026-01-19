@@ -1,15 +1,77 @@
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useLoader } from '@react-three/fiber'
 import {
   generateAsteroidBelt
 } from '../utils/astronomicalData'
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, Suspense } from 'react'
 import * as THREE from 'three'
-import { useSafeTexture, assetUrl } from '../utils/textures'
-import { getPlanetTexture } from '../utils/planetaryTextures'
+import { TextureLoader } from 'three/src/loaders/TextureLoader.js'
 import { StarField } from './StarField'
 import { useNasaPositions } from '../hooks/useNasaPositions'
 import { Html, Environment, Line } from '@react-three/drei'
 import { PlanetPosition } from '../services/planetaryPositionService'
+
+// Texture URL map for planets
+const TEXTURE_URLS: Record<string, string> = {
+  SUN: '/assets/sun/sun_2k.jpg',
+  EARTH: '/assets/earth/earth_2k.jpg',
+  MOON: '/assets/moon/moon_2k.jpg',
+  MARS: '/assets/mars/mars_color.jpg',
+}
+
+// Dedicated textured mesh component using useLoader for reliable texture loading
+function TexturedSphere({
+  textureUrl,
+  radius,
+  color,
+  emissive,
+  emissiveIntensity = 0
+}: {
+  textureUrl: string;
+  radius: number;
+  color: string;
+  emissive?: string;
+  emissiveIntensity?: number;
+}) {
+  const texture = useLoader(TextureLoader, textureUrl)
+  return (
+    <mesh>
+      <sphereGeometry args={[radius, 32, 32]} />
+      <meshStandardMaterial
+        map={texture}
+        emissive={emissive || '#000000'}
+        emissiveIntensity={emissiveIntensity}
+        roughness={0.8}
+        metalness={0.1}
+      />
+    </mesh>
+  )
+}
+
+// Fallback colored sphere for planets without textures
+function ColoredSphere({
+  radius,
+  color,
+  emissive,
+  emissiveIntensity = 0
+}: {
+  radius: number;
+  color: string;
+  emissive?: string;
+  emissiveIntensity?: number;
+}) {
+  return (
+    <mesh>
+      <sphereGeometry args={[radius, 32, 32]} />
+      <meshStandardMaterial
+        color={color}
+        emissive={emissive || '#000000'}
+        emissiveIntensity={emissiveIntensity}
+        roughness={0.8}
+        metalness={0.1}
+      />
+    </mesh>
+  )
+}
 
 // Helper to create thin circular orbit path points
 function createOrbitPoints(radius: number, segments: number = 128): [number, number, number][] {
@@ -97,7 +159,6 @@ const SIZE_MULT = {
 
 const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   SUN: {
-    texture: getPlanetTexture('SUN'),
     radius: 695700, // km - NASA accurate
     sceneRadius: 695700 * RADIUS_SCENE_CONVERSION * SIZE_MULT.SUN, // ~8.35 units; << Mercury orbit (57.9)
     color: '#FFD700',
@@ -111,7 +172,6 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     eccentricity: 0
   },
   MERCURY: {
-    texture: getPlanetTexture('MERCURY'),
     radius: 2439.7, // km - NASA accurate
     sceneRadius: 2439.7 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER,
     orbitRadius: 57.91 / DISTANCE_SCALE, // 57.91 million km / scale = 57.91 scene units
@@ -127,7 +187,6 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     initialMeanAnomaly: 0.2 // Start Mercury at 0.2 radians position
   },
   VENUS: {
-    texture: getPlanetTexture('VENUS'),
     radius: 6051.8, // km - NASA accurate
     sceneRadius: 6051.8 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER,
     orbitRadius: 108.21 / DISTANCE_SCALE, // 108.21 million km / scale = 108.21 scene units
@@ -143,7 +202,6 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     initialMeanAnomaly: 1.2 // Start Venus at 1.2 radians position
   },
   EARTH: {
-    texture: getPlanetTexture('EARTH'),
     radius: 6371.0, // km - NASA accurate mean radius
     sceneRadius: 6371.0 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER, // ~0.255 units; Moon orbit 0.3844 units stays clear
     orbitRadius: 149.60 / DISTANCE_SCALE, // 149.60 million km (1 AU) / scale = 149.6 scene units
@@ -159,7 +217,6 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     initialMeanAnomaly: 0.0 // Start Earth at reference position (0 radians)
   },
   MARS: {
-    texture: getPlanetTexture('MARS'),
     radius: 3389.5, // km - NASA accurate mean radius
     sceneRadius: 3389.5 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER,
     orbitRadius: 227.92 / DISTANCE_SCALE, // 227.92 million km / scale = 227.92 scene units
@@ -175,7 +232,6 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     initialMeanAnomaly: 2.8 // Start Mars at 2.8 radians position
   },
   JUPITER: {
-    texture: getPlanetTexture('JUPITER'),
     radius: 69911, // km - NASA accurate mean radius
     sceneRadius: 69911 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
     orbitRadius: 778.57 / DISTANCE_SCALE, // 778.57 million km / scale = 778.57 scene units
@@ -191,7 +247,6 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     initialMeanAnomaly: 4.1 // Start Jupiter at 4.1 radians position
   },
   SATURN: {
-    texture: getPlanetTexture('SATURN'),
     radius: 58232, // km - NASA accurate mean radius
     sceneRadius: 58232 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
     orbitRadius: 1433.53 / DISTANCE_SCALE, // 1433.53 million km / scale = 1433.53 scene units
@@ -208,7 +263,6 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     initialMeanAnomaly: 5.7 // Start Saturn at 5.7 radians position
   },
   URANUS: {
-    texture: getPlanetTexture('URANUS'),
     radius: 25362, // km - NASA accurate mean radius
     sceneRadius: 25362 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
     orbitRadius: 2872.46 / DISTANCE_SCALE, // 2872.46 million km / scale = 2872.46 scene units
@@ -224,7 +278,6 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     initialMeanAnomaly: 1.5 // Start Uranus at 1.5 radians position
   },
   NEPTUNE: {
-    texture: getPlanetTexture('NEPTUNE'),
     radius: 24622, // km - NASA accurate mean radius
     sceneRadius: 24622 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
     orbitRadius: 4495.06 / DISTANCE_SCALE, // 4495.06 million km / scale = 4495.06 scene units
@@ -240,7 +293,6 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
     initialMeanAnomaly: 3.9 // Start Neptune at 3.9 radians position
   },
   MOON: {
-    texture: getPlanetTexture('MOON'),
     radius: 1737.4, // km - NASA accurate mean radius
     sceneRadius: 1737.4 * RADIUS_SCENE_CONVERSION * SIZE_MULT.MOON,
     // 384,400 km = 0.3844 million km → 0.3844 scene units at DISTANCE_SCALE=1
@@ -268,8 +320,8 @@ interface PlanetProps {
 export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 0, 0] }: PlanetProps) {
   const data = SOLAR_SYSTEM_DATA[name]
 
-  // Use memoized texture loading for better performance and fallback colors
-  const planetTexture = useSafeTexture(useMemo(() => getPlanetTexture(name), [name])) || null
+  // Check if this planet has a texture URL
+  const hasTexture = name in TEXTURE_URLS
 
   const meshRef = useRef<THREE.Mesh>(null)
   const groupRef = useRef<THREE.Group>(null)
@@ -371,17 +423,38 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
       )}
 
       <group ref={groupRef}>
-        <mesh ref={meshRef} castShadow receiveShadow>
-          <sphereGeometry args={[data.sceneRadius, 32, 32]} />
-          <meshStandardMaterial
-            map={planetTexture}
-            color={planetTexture ? undefined : data.color}
-            roughness={name === 'SUN' ? 0 : 0.6}
-            metalness={0.1}
-            emissive={name === 'SUN' ? data.color : '#000000'}
-            emissiveIntensity={name === 'SUN' ? 0.3 : 0}
-          />
-        </mesh>
+        {/* Use Suspense with textured sphere for planets with textures */}
+        {hasTexture ? (
+          <Suspense fallback={
+            <ColoredSphere
+              radius={data.sceneRadius}
+              color={data.color}
+              emissive={name === 'SUN' ? data.color : undefined}
+              emissiveIntensity={name === 'SUN' ? 0.3 : 0}
+            />
+          }>
+            <group ref={meshRef as React.RefObject<THREE.Group>}>
+              <TexturedSphere
+                textureUrl={TEXTURE_URLS[name]}
+                radius={data.sceneRadius}
+                color={data.color}
+                emissive={name === 'SUN' ? data.color : undefined}
+                emissiveIntensity={name === 'SUN' ? 0.3 : 0}
+              />
+            </group>
+          </Suspense>
+        ) : (
+          <mesh ref={meshRef} castShadow receiveShadow>
+            <sphereGeometry args={[data.sceneRadius, 32, 32]} />
+            <meshStandardMaterial
+              color={data.color}
+              roughness={name === 'SUN' ? 0 : 0.6}
+              metalness={0.1}
+              emissive={name === 'SUN' ? data.color : '#000000'}
+              emissiveIntensity={name === 'SUN' ? 0.3 : 0}
+            />
+          </mesh>
+        )}
 
         {/* Saturn's rings */}
         {name === 'SATURN' && data.hasRings && (
@@ -513,10 +586,8 @@ function NasaPlanet({ planetPosition, showOrbit = false, offset }: NasaPlanetPro
   // Get planet data for rendering properties
   const planetData = SOLAR_SYSTEM_DATA[name as keyof typeof SOLAR_SYSTEM_DATA];
 
-  // Memoize texture to prevent re-loading on every render
-  const planetTexture = useSafeTexture(
-    useMemo(() => getPlanetTexture(name), [name])
-  );
+  // Check if this planet has a texture URL
+  const hasTexture = name in TEXTURE_URLS
 
   // Use frame for rotation animation (always call hook)
   useFrame((state, delta) => {
@@ -541,18 +612,38 @@ function NasaPlanet({ planetPosition, showOrbit = false, offset }: NasaPlanetPro
 
   return (
     <group position={adjustedPosition}>
-      {/* Planet mesh */}
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[planetData.sceneRadius, 32, 32]} />
-        <meshStandardMaterial
-          map={planetTexture}
-          color={planetTexture ? undefined : planetData.color}
-          roughness={name === 'SUN' ? 0 : 0.8}
-          metalness={0.1}
-          emissive={name === 'SUN' ? planetData.color : '#000000'}
-          emissiveIntensity={name === 'SUN' ? 0.3 : 0}
-        />
-      </mesh>
+      {/* Planet mesh with texture loading */}
+      {hasTexture ? (
+        <Suspense fallback={
+          <ColoredSphere
+            radius={planetData.sceneRadius}
+            color={planetData.color}
+            emissive={name === 'SUN' ? planetData.color : undefined}
+            emissiveIntensity={name === 'SUN' ? 0.3 : 0}
+          />
+        }>
+          <group ref={meshRef as React.RefObject<THREE.Group>}>
+            <TexturedSphere
+              textureUrl={TEXTURE_URLS[name]}
+              radius={planetData.sceneRadius}
+              color={planetData.color}
+              emissive={name === 'SUN' ? planetData.color : undefined}
+              emissiveIntensity={name === 'SUN' ? 0.3 : 0}
+            />
+          </group>
+        </Suspense>
+      ) : (
+        <mesh ref={meshRef}>
+          <sphereGeometry args={[planetData.sceneRadius, 32, 32]} />
+          <meshStandardMaterial
+            color={planetData.color}
+            roughness={name === 'SUN' ? 0 : 0.8}
+            metalness={0.1}
+            emissive={name === 'SUN' ? planetData.color : '#000000'}
+            emissiveIntensity={name === 'SUN' ? 0.3 : 0}
+          />
+        </mesh>
+      )}
 
       {/* Orbit visualization disabled - rendered centrally in NasaSolarSystem */}
       {/* Individual planet orbit removed to prevent double-rendering */}
@@ -699,18 +790,8 @@ export function EnhancedEarthVisual() {
   const cloudsRef = useRef<THREE.Mesh>(null)
   const atmosphereRef = useRef<THREE.Mesh>(null)
 
-  const dayMap = useSafeTexture({
-    url: [
-      assetUrl('assets/earth/earth_day.jpg'),
-      assetUrl('textures/earth/earth_day.jpg'),
-    ],
-    anisotropy: 8,
-    fallbackPattern: {
-      type: 'earth',
-      size: 1024,
-      squares: 64
-    }
-  })
+  // Use direct texture loading with useLoader
+  const dayMap = useLoader(TextureLoader, '/assets/earth/earth_2k.jpg')
 
   useFrame(() => {
     if (ref.current) {
@@ -731,11 +812,8 @@ export function EnhancedEarthVisual() {
         <sphereGeometry args={[SOLAR_SYSTEM_DATA.EARTH.sceneRadius, 64, 64]} />
         <meshStandardMaterial
           map={dayMap}
-          color={dayMap ? undefined : "#4A90E2"}
           roughness={0.6}
           metalness={0.1}
-          emissive={dayMap ? undefined : "#1a3f6b"}
-          emissiveIntensity={dayMap ? 0 : 0.1}
         />
       </mesh>
 
@@ -746,7 +824,6 @@ export function EnhancedEarthVisual() {
           color="#ffffff"
           transparent
           opacity={0.3}
-          alphaMap={dayMap}
         />
       </mesh>
 
@@ -767,14 +844,8 @@ export function EnhancedEarthVisual() {
 export function EnhancedMarsVisual() {
   const ref = useRef<THREE.Mesh>(null)
 
-  const marsColor = useSafeTexture({
-    url: [
-      assetUrl('assets/mars/mars_color.jpg'),
-      assetUrl('textures/mars/mars_color.jpg')
-    ],
-    anisotropy: 8,
-    fallbackPattern: { type: 'checker', colors: ['#cd5c5c', '#8b3a3a'], size: 512, squares: 12 }
-  })
+  // Use direct texture loading with useLoader
+  const marsColor = useLoader(TextureLoader, '/assets/mars/mars_color.jpg')
 
   useFrame(() => {
     if (ref.current) {
@@ -785,11 +856,7 @@ export function EnhancedMarsVisual() {
   return (
     <mesh ref={ref}>
       <sphereGeometry args={[SOLAR_SYSTEM_DATA.MARS.sceneRadius, 32, 32]} />
-      {marsColor ? (
-        <meshStandardMaterial map={marsColor} />
-      ) : (
-        <meshStandardMaterial color={SOLAR_SYSTEM_DATA.MARS.color} />
-      )}
+      <meshStandardMaterial map={marsColor} />
     </mesh>
   )
 }

@@ -1,5 +1,4 @@
 import { LaunchPhase, LaunchState } from '@gnc/core'
-import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { useState } from 'react'
 import * as THREE from 'three'
@@ -89,14 +88,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
             showTrajectory={true}
           />
 
-          <OrbitControls
-            enablePan={true}
-            enableZoom={true}
-            enableRotate={true}
-            zoomSpeed={2}
-            panSpeed={1}
-            rotateSpeed={0.5}
-          />
+          {/* OrbitControls is managed inside LaunchDemo for camera follow */}
         </Canvas>
       </div>
 

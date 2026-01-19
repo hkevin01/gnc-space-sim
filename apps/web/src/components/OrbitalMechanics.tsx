@@ -1,7 +1,8 @@
-import { useFrame } from '@react-three/fiber'
+import { useFrame, useLoader } from '@react-three/fiber'
 import { useMemo, useRef, Suspense, useState, useEffect } from 'react'
-import { Billboard, Text, useTexture } from '@react-three/drei'
+import { Billboard, Text } from '@react-three/drei'
 import * as THREE from 'three'
+import { TextureLoader } from 'three/src/loaders/TextureLoader.js'
 
 export const CONSTANTS = {
   AU_KM: 149597870.7,
@@ -113,7 +114,7 @@ function calculatePlanetPosition(body: CelestialBodyData, timeSeconds: number): 
 // Individual texture components for each planet with textures
 function SunMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRadius: number }) {
   const meshRef = useRef<THREE.Mesh>(null)
-  const texture = useTexture('/assets/sun/sun_2k.jpg')
+  const texture = useLoader(TextureLoader, '/assets/sun/sun_2k.jpg')
 
   useFrame(() => {
     if (meshRef.current) {
@@ -132,7 +133,7 @@ function SunMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRa
 
 function EarthMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRadius: number }) {
   const meshRef = useRef<THREE.Mesh>(null)
-  const texture = useTexture('/assets/earth/earth_2k.jpg')
+  const texture = useLoader(TextureLoader, '/assets/earth/earth_2k.jpg')
 
   useFrame(() => {
     if (meshRef.current) {
@@ -151,7 +152,7 @@ function EarthMesh({ position, scaledRadius }: { position: THREE.Vector3; scaled
 
 function MoonMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRadius: number }) {
   const meshRef = useRef<THREE.Mesh>(null)
-  const texture = useTexture('/assets/moon/moon_2k.jpg')
+  const texture = useLoader(TextureLoader, '/assets/moon/moon_2k.jpg')
 
   useFrame(() => {
     if (meshRef.current) {
@@ -170,7 +171,7 @@ function MoonMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledR
 
 function MarsMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRadius: number }) {
   const meshRef = useRef<THREE.Mesh>(null)
-  const texture = useTexture('/assets/mars/mars_color.jpg')
+  const texture = useLoader(TextureLoader, '/assets/mars/mars_color.jpg')
 
   useFrame(() => {
     if (meshRef.current) {
