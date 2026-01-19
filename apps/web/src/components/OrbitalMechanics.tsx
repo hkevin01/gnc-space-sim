@@ -1,6 +1,6 @@
 import { useFrame, useLoader } from '@react-three/fiber'
 import { useMemo, useRef, Suspense } from 'react'
-import { Billboard, Text } from '@react-three/drei'
+import { Billboard, Text, Line } from '@react-three/drei'
 import * as THREE from 'three'
 import { TextureLoader } from 'three'
 
@@ -159,9 +159,9 @@ function calculateOrbitalPosition(
 }
 
 function OrbitPath({ body }: { body: CelestialBodyData }) {
-  const line = useMemo(() => {
-    const points: THREE.Vector3[] = []
-    const segments = 256
+  const points = useMemo(() => {
+    const pts: [number, number, number][] = []
+    const segments = 128
 
     const a = body.semiMajorAxisKm * DISTANCE_SCALE
     const b = a * Math.sqrt(1 - body.eccentricity * body.eccentricity)
@@ -194,20 +194,22 @@ function OrbitPath({ body }: { body: CelestialBodyData }) {
       const y = x1 * sinOmega + y1 * cosInc * cosOmega
       const z = y1 * sinInc  // Proper 3D - orbit tilts out of plane
 
-      points.push(new THREE.Vector3(x, z, y))
+      pts.push([x, z, y])
     }
 
-    const geometry = new THREE.BufferGeometry().setFromPoints(points)
-    const material = new THREE.LineBasicMaterial({
-      color: body.color,
-      transparent: true,
-      opacity: 0.6,
-      depthWrite: false
-    })
-    return new THREE.Line(geometry, material)
+    return pts
   }, [body])
 
-  return <primitive object={line} />
+  return (
+    <Line
+      points={points}
+      color="#ffffff"
+      lineWidth={0.5}
+      transparent
+      opacity={0.3}
+      depthWrite={false}
+    />
+  )
 }
 
 // Textured planet component
