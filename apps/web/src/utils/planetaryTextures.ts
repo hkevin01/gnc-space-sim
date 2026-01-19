@@ -1,14 +1,27 @@
 import { TextureSpec } from './textures'
 
-// High-quality planetary textures from open source sources
-// These are hosted on reliable CDNs and are free to use
+// Planetary textures - using LOCAL assets in public/assets/
+// These are served directly by Vite from the public folder
 
 export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
-  // Earth textures - test with reliable CDN sources
+  // Sun texture - LOCAL ASSET
+  SUN: {
+    url: [
+      '/assets/sun/sun_color.jpg'
+    ],
+    anisotropy: 16,
+    isColor: true,
+    fallbackPattern: {
+      type: 'stripes' as const,
+      colors: ['#FDB813', '#FF8C00', '#FF6B35', '#FFD700', '#FFA500'],
+      size: 1024
+    }
+  },
+
+  // Earth texture - LOCAL ASSET
   EARTH: {
     url: [
-      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/earth_atmos_2048.jpg',
-      'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg'
+      '/assets/earth/earth_day.jpg'
     ],
     anisotropy: 16,
     isColor: true,
@@ -19,43 +32,38 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
     }
   },
 
-  // Moon texture - test with reliable CDN sources
+  // Moon texture - LOCAL ASSET (displacement map, but can work as color)
   MOON: {
     url: [
-      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/moon_1024.jpg',
-      'https://threejs.org/examples/textures/planets/moon_1024.jpg'
+      '/assets/moon/moon_displacement.jpg'
     ],
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'earth' as const, // Changed from 'checker' to 'earth' for more natural look
+      type: 'earth' as const,
       colors: ['#D3D3D3', '#A0A0A0', '#808080', '#696969', '#C0C0C0', '#DCDCDC'],
       size: 512
     }
   },
 
-  // Mars - reliable CDN sources
+  // Mars texture - LOCAL ASSET
   MARS: {
     url: [
-      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/mars_1k_color.jpg',
-      'https://threejs.org/examples/textures/planets/mars_1k_color.jpg',
-      'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/mars_1k_color.jpg'
+      '/assets/mars/mars_color.jpg'
     ],
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {
-      type: 'earth' as const, // Changed from 'checker' to 'earth' for more natural look
+      type: 'earth' as const,
       colors: ['#CD5C5C', '#8B4513', '#A0522D', '#D2691E', '#BC8F8F', '#F4A460'],
       size: 512
     }
   },
 
-  // Jupiter - reliable CDN sources
+  // Jupiter - no local asset, use CDN fallback
   JUPITER: {
     url: [
-      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/jupiter_2k.jpg',
-      'https://threejs.org/examples/textures/planets/jupiter_2k.jpg',
-      'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/jupiter_2k.jpg'
+      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/jupiter_2k.jpg'
     ],
     anisotropy: 16,
     isColor: true,
@@ -66,12 +74,10 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
     }
   },
 
-  // Saturn - reliable CDN sources
+  // Saturn - no local asset, use CDN fallback
   SATURN: {
     url: [
-      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/saturn_1k.jpg',
-      'https://threejs.org/examples/textures/planets/saturn_1k.jpg',
-      'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/saturn_1k.jpg'
+      'https://cdn.jsdelivr.net/gh/mrdoob/three.js@master/examples/textures/planets/saturn_1k.jpg'
     ],
     anisotropy: 16,
     isColor: true,
@@ -82,19 +88,7 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
     }
   },
 
-  // Sun texture - using enhanced fallback pattern
-  SUN: {
-    url: [],
-    anisotropy: 16,
-    isColor: true,
-    fallbackPattern: {
-      type: 'stripes' as const,
-      colors: ['#FDB813', '#FF8C00', '#FF6B35', '#FFD700', '#FFA500'],
-      size: 1024
-    }
-  },
-
-  // Venus - using fallback only to avoid CORS
+  // Venus - no local asset, fallback pattern
   VENUS: {
     url: [],
     anisotropy: 16,

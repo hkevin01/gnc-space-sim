@@ -8,8 +8,32 @@ import { useSafeTexture, assetUrl } from '../utils/textures'
 import { getPlanetTexture } from '../utils/planetaryTextures'
 import { StarField } from './StarField'
 import { useNasaPositions } from '../hooks/useNasaPositions'
-import { Html, Environment } from '@react-three/drei'
+import { Html, Environment, Line } from '@react-three/drei'
 import { PlanetPosition } from '../services/planetaryPositionService'
+
+// Helper to create thin circular orbit path points
+function createOrbitPoints(radius: number, segments: number = 128): [number, number, number][] {
+  const points: [number, number, number][] = []
+  for (let i = 0; i <= segments; i++) {
+    const angle = (i / segments) * Math.PI * 2
+    points.push([Math.cos(angle) * radius, 0, Math.sin(angle) * radius])
+  }
+  return points
+}
+
+// Thin orbit line component using drei Line
+function OrbitLine({ radius, color = '#ffffff', opacity = 0.5 }: { radius: number; color?: string; opacity?: number }) {
+  const points = useMemo(() => createOrbitPoints(radius, 128), [radius])
+  return (
+    <Line
+      points={points}
+      color={color}
+      lineWidth={1}
+      opacity={opacity}
+      transparent
+    />
+  )
+}
 
 /**
  * ACCURATE SOLAR SYSTEM IMPLEMENTATION
@@ -339,21 +363,11 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
 
   return (
     <>
-      {/* Orbital path */}
+      {/* Orbital path - thin line */}
       {showOrbit && name !== 'SUN' && name !== 'MOON' && data.orbitRadius && (
-        <mesh position={[-offset[0], -offset[1], -offset[2]]}>
-          <ringGeometry args={[data.orbitRadius - 0.02, data.orbitRadius + 0.02, 128]} />
-          <meshBasicMaterial
-            color="#ffffff"
-            transparent
-            opacity={0.6}
-            side={THREE.DoubleSide}
-            depthWrite={false}
-            polygonOffset
-            polygonOffsetFactor={1}
-            polygonOffsetUnits={1}
-          />
-        </mesh>
+        <group position={[-offset[0], -offset[1], -offset[2]]}>
+          <OrbitLine radius={data.orbitRadius} color="#ffffff" opacity={0.6} />
+        </group>
       )}
 
       <group ref={groupRef}>
@@ -558,30 +572,10 @@ function NasaPlanet({ planetPosition, showOrbit = false, offset }: NasaPlanetPro
         </Html>
       )}
 
-      {/* Orbit visualization - Enhanced orbital ring around the Sun */}
+      {/* Orbit visualization - Thin line around the Sun */}
       {showOrbit && planetData.orbitRadius && name !== 'SUN' && name !== 'MOON' && (
         <group position={[-offset[0], -offset[1], -offset[2]]}>
-          {/* Main orbital line */}
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[planetData.orbitRadius - 0.2, planetData.orbitRadius + 0.2, 128]} />
-            <meshBasicMaterial
-              color="#ffffff"
-              opacity={0.8}
-              transparent
-              side={THREE.DoubleSide}
-            />
-          </mesh>
-
-          {/* Secondary thinner line for better visibility */}
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[planetData.orbitRadius - 0.05, planetData.orbitRadius + 0.05, 64]} />
-            <meshBasicMaterial
-              color="#ffffff"
-              opacity={1.0}
-              transparent
-              side={THREE.DoubleSide}
-            />
-          </mesh>
+          <OrbitLine radius={planetData.orbitRadius} color="#ffffff" opacity={0.6} />
         </group>
       )}
 
@@ -694,53 +688,15 @@ export function NasaSolarSystem({ showOrbits = false, centerOn = 'SUN', useNasaD
       {/* Central Orbital Ring System - Always visible orbital paths around the Sun with accurate distances */}
       {showOrbits && (
         <group position={[-offset[0], -offset[1], -offset[2]]}>
-          {/* Mercury Orbit - 57.91 million km = 57.91 scene units */}
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[57.91 - 0.2, 57.91 + 0.2, 128]} />
-            <meshBasicMaterial color="#ffffff" opacity={0.6} transparent side={THREE.DoubleSide} depthWrite={false} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
-          </mesh>
-
-          {/* Venus Orbit - 108.21 million km = 108.21 scene units */}
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[108.21 - 0.2, 108.21 + 0.2, 128]} />
-            <meshBasicMaterial color="#ffffff" opacity={0.6} transparent side={THREE.DoubleSide} depthWrite={false} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
-          </mesh>
-
-          {/* Earth Orbit - 149.60 million km = 149.6 scene units (1 AU) */}
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[149.60 - 0.2, 149.60 + 0.2, 128]} />
-            <meshBasicMaterial color="#ffffff" opacity={0.7} transparent side={THREE.DoubleSide} depthWrite={false} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
-          </mesh>
-
-          {/* Mars Orbit - 227.92 million km = 227.92 scene units */}
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[227.92 - 0.2, 227.92 + 0.2, 128]} />
-            <meshBasicMaterial color="#ffffff" opacity={0.6} transparent side={THREE.DoubleSide} depthWrite={false} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
-          </mesh>
-
-          {/* Jupiter Orbit - 778.57 million km = 778.57 scene units */}
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[778.57 - 0.5, 778.57 + 0.5, 128]} />
-            <meshBasicMaterial color="#ffffff" opacity={0.5} transparent side={THREE.DoubleSide} depthWrite={false} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
-          </mesh>
-
-          {/* Saturn Orbit - 1433.53 million km = 1433.53 scene units */}
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[1433.53 - 0.5, 1433.53 + 0.5, 128]} />
-            <meshBasicMaterial color="#ffffff" opacity={0.5} transparent side={THREE.DoubleSide} depthWrite={false} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
-          </mesh>
-
-          {/* Uranus Orbit - 2872.46 million km = 2872.46 scene units */}
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[2872.46 - 1.0, 2872.46 + 1.0, 128]} />
-            <meshBasicMaterial color="#ffffff" opacity={0.45} transparent side={THREE.DoubleSide} depthWrite={false} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
-          </mesh>
-
-          {/* Neptune Orbit - 4495.06 million km = 4495.06 scene units */}
-          <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[4495.06 - 1.0, 4495.06 + 1.0, 128]} />
-            <meshBasicMaterial color="#ffffff" opacity={0.45} transparent side={THREE.DoubleSide} depthWrite={false} polygonOffset polygonOffsetFactor={1} polygonOffsetUnits={1} />
-          </mesh>
+          {/* Thin orbital lines for all planets */}
+          <OrbitLine radius={57.91} color="#ffffff" opacity={0.6} />   {/* Mercury */}
+          <OrbitLine radius={108.21} color="#ffffff" opacity={0.6} />  {/* Venus */}
+          <OrbitLine radius={149.60} color="#ffffff" opacity={0.7} />  {/* Earth */}
+          <OrbitLine radius={227.92} color="#ffffff" opacity={0.6} />  {/* Mars */}
+          <OrbitLine radius={778.57} color="#ffffff" opacity={0.5} />  {/* Jupiter */}
+          <OrbitLine radius={1433.53} color="#ffffff" opacity={0.5} /> {/* Saturn */}
+          <OrbitLine radius={2872.46} color="#ffffff" opacity={0.45} />{/* Uranus */}
+          <OrbitLine radius={4495.06} color="#ffffff" opacity={0.45} />{/* Neptune */}
         </group>
       )}
 

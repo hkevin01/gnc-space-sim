@@ -182,8 +182,8 @@ export function EnhancedOrbitalDemo({ className }: EnhancedOrbitalDemoProps) {
           onTimeUpdate={setSimulationTime}
         />
 
-        {/* Asteroid Belt (visual only) */}
-        <AsteroidBeltVisual />
+        {/* Asteroid Belt (disabled for debugging) */}
+        {/* <AsteroidBeltVisual /> */}
 
         {/* Controls */}
         <OrbitControls
