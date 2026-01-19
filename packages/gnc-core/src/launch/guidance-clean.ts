@@ -1,11 +1,11 @@
 import {
-    FAIRING_JETTISON_ALT,
-    KARMAN_LINE,
-    LAUNCH_LAT,
-    MAX_Q_ALT,
-    SCALE_HEIGHT,
-    SEA_LEVEL_PRESSURE,
-    STAGE1_BURN_TIME
+  FAIRING_JETTISON_ALT,
+  KARMAN_LINE,
+  LAUNCH_LAT,
+  MAX_Q_ALT,
+  SCALE_HEIGHT,
+  SEA_LEVEL_PRESSURE,
+  STAGE1_BURN_TIME
 } from '../math/physics'
 import { State6, Vec3 } from '../orbits/twobody'
 
@@ -126,7 +126,7 @@ export class GravityTurnGuidance {
     } else if (velocity < this.pitch_end_velocity) {
       // Gradual pitch-over following gravity turn
       const progress = (velocity - this.pitch_start_velocity) /
-                      (this.pitch_end_velocity - this.pitch_start_velocity)
+        (this.pitch_end_velocity - this.pitch_start_velocity)
       pitch = Math.PI / 2 * (1 - progress * 0.7) // Pitch from 90° to ~27°
     } else {
       // Shallow ascent for orbital insertion
@@ -255,7 +255,7 @@ export class SLSGuidance extends GravityTurnGuidance {
       if (time >= t0 && time <= t1) {
         const alpha = (time - t0) / (t1 - t0)
         return this.pitchProgram[i].pitch + alpha *
-               (this.pitchProgram[i + 1].pitch - this.pitchProgram[i].pitch)
+          (this.pitchProgram[i + 1].pitch - this.pitchProgram[i].pitch)
       }
     }
 
@@ -277,7 +277,7 @@ export class SLSGuidance extends GravityTurnGuidance {
       if (time >= t0 && time <= t1) {
         const alpha = (time - t0) / (t1 - t0)
         return this.throttleProgram[i].throttle + alpha *
-               (this.throttleProgram[i + 1].throttle - this.throttleProgram[i].throttle)
+          (this.throttleProgram[i + 1].throttle - this.throttleProgram[i].throttle)
       }
     }
 
@@ -322,7 +322,7 @@ export function computeDrag(
   if (v_mag === 0) return [0, 0, 0]
 
   const drag_magnitude = 0.5 * atmosphere.density * v_mag * v_mag *
-                        drag_coefficient * reference_area
+    drag_coefficient * reference_area
 
   // Drag force opposes velocity
   const unit_velocity: Vec3 = [
@@ -345,7 +345,8 @@ export function determineLaunchPhase(
   mission_time: number,
   altitude: number,
   velocity_magnitude: number,
-  vehicle: LaunchVehicle
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _vehicle: LaunchVehicle
 ): LaunchPhase {
   if (mission_time < 0.1) return LaunchPhase.PRELAUNCH
   if (mission_time < 5) return LaunchPhase.LIFTOFF

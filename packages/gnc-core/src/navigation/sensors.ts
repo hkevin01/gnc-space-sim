@@ -82,10 +82,10 @@ export class CoordinateTransforms {
   static ecefToGeodetic(ecef: Vec3): { lat: number, lon: number, alt: number } {
     const [x, y, z] = ecef
     const a = 6378137.0 // WGS84 semi-major axis
-    const f = 1/298.257223563 // WGS84 flattening
-    const e2 = 2*f - f*f // First eccentricity squared
+    const f = 1 / 298.257223563 // WGS84 flattening
+    const e2 = 2 * f - f * f // First eccentricity squared
 
-    const p = Math.sqrt(x*x + y*y)
+    const p = Math.sqrt(x * x + y * y)
     const lon = Math.atan2(y, x)
 
     // Iterative solution for latitude
@@ -107,8 +107,8 @@ export class CoordinateTransforms {
    */
   static geodeticToEcef(lat: number, lon: number, alt: number): Vec3 {
     const a = 6378137.0 // WGS84 semi-major axis
-    const f = 1/298.257223563 // WGS84 flattening
-    const e2 = 2*f - f*f // First eccentricity squared
+    const f = 1 / 298.257223563 // WGS84 flattening
+    const e2 = 2 * f - f * f // First eccentricity squared
 
     const sinLat = Math.sin(lat)
     const cosLat = Math.cos(lat)
@@ -452,7 +452,8 @@ export class SensorSimulator {
   /**
    * Simulate IMU measurements with realistic noise and bias
    */
-  static simulateIMU(true_state: LaunchState, dt: number): IMUMeasurement {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  static simulateIMU(true_state: LaunchState, _dt: number): IMUMeasurement {
     // True specific force (acceleration - gravity)
     const r_mag = Math.hypot(true_state.r[0], true_state.r[1], true_state.r[2])
     const gravity_accel = MU_EARTH / (r_mag * r_mag * r_mag)

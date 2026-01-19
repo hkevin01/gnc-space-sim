@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Performance Benchmark Suite for Enhanced SSSP Algorithm
  *
@@ -202,7 +204,7 @@ export class TrajectoryPlanningBenchmark {
       // Estimate optimality gap (simplified)
       const theoreticalMinDeltaV = 9400 // m/s for LEO insertion
       const actualDeltaV = plan.maneuvers.reduce((sum, m) =>
-        sum + Math.sqrt(m.deltaV[0]**2 + m.deltaV[1]**2 + m.deltaV[2]**2), 0)
+        sum + Math.sqrt(m.deltaV[0] ** 2 + m.deltaV[1] ** 2 + m.deltaV[2] ** 2), 0)
       const optimalityGap = ((actualDeltaV - theoreticalMinDeltaV) / theoreticalMinDeltaV) * 100
 
       return {
@@ -254,7 +256,7 @@ export class TrajectoryPlanningBenchmark {
       // Calculate trajectory metrics
       const trajectoryLength = plan.maneuvers.length
       const totalDeltaV = plan.maneuvers.reduce((sum, m) =>
-        sum + Math.sqrt(m.deltaV[0]**2 + m.deltaV[1]**2 + m.deltaV[2]**2), 0)
+        sum + Math.sqrt(m.deltaV[0] ** 2 + m.deltaV[1] ** 2 + m.deltaV[2] ** 2), 0)
 
       // Estimate fuel efficiency vs naive approach
       const naiveDeltaV = 12000 // Typical inefficient ascent
@@ -303,7 +305,7 @@ export class TrajectoryPlanningBenchmark {
    */
   private generateBenchmarkReport(): void {
     console.log('\n📈 Comprehensive Benchmark Report')
-    console.log('=' .repeat(60))
+    console.log('='.repeat(60))
 
     let totalSpeedup = 0
     let validScenarios = 0
@@ -415,8 +417,8 @@ export async function validateAlgorithm(): Promise<boolean> {
     const result = await benchmark.runBenchmarkScenario(testScenario)
 
     const isValid = result.validation.correctness &&
-                   result.results.speedupFactor > 1.0 &&
-                   result.validation.optimalityGap < 50
+      result.results.speedupFactor > 1.0 &&
+      result.validation.optimalityGap < 50
 
     console.log(`${isValid ? '✅' : '❌'} Algorithm validation ${isValid ? 'passed' : 'failed'}`)
 

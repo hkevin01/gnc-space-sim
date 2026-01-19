@@ -6,20 +6,20 @@ class MinHeap {
   distances: number[]
   constructor(distances: number[]) { this.distances = distances }
   push(v: number) { this.data.push(v); this.bubbleUp(this.data.length - 1) }
-  pop(): number | undefined { 
+  pop(): number | undefined {
     if (this.data.length === 0) return undefined
     const top = this.data[0]
     const last = this.data.pop()!
-    if (this.data.length > 0) { 
+    if (this.data.length > 0) {
       this.data[0] = last
       this.bubbleDown(0)
     }
     return top
   }
   isEmpty() { return this.data.length === 0 }
-  private bubbleUp(i: number) { 
+  private bubbleUp(i: number) {
     const item = this.data[i]
-    while (i > 0) { 
+    while (i > 0) {
       const p = Math.floor((i - 1) / 2)
       if (this.distances[item] >= this.distances[this.data[p]]) break
       this.data[i] = this.data[p]
@@ -27,12 +27,12 @@ class MinHeap {
     }
     this.data[i] = item
   }
-  private bubbleDown(i: number) { 
+  private bubbleDown(i: number) {
     const n = this.data.length
     const item = this.data[i]
-    while (true) { 
-      let left = 2*i+1
-      let right = left+1
+    while (true) {
+      const left = 2 * i + 1
+      const right = left + 1
       let smallest = i
       if (left < n && this.distances[this.data[left]] < this.distances[this.data[smallest]]) smallest = left
       if (right < n && this.distances[this.data[right]] < this.distances[this.data[smallest]]) smallest = right
@@ -57,7 +57,7 @@ export function dijkstra(nodes: NodeSpec[], edges: Edge[], source: number) {
   const dist = new Array<number>(n).fill(Infinity)
   const prev = new Array<number>(n).fill(-1)
   dist[source] = 0
-  const heap = new MinHeap(dist as any)
+  const heap = new MinHeap(dist as number[])
   heap.push(source)
   const visited = new Uint8Array(n)
   while (!heap.isEmpty()) {

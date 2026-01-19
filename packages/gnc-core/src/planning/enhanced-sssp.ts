@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Enhanced Single-Source Shortest Path Algorithm
  *
@@ -470,12 +472,12 @@ class BinaryHeap<T> {
       let smallestIndex = index
 
       if (leftChildIndex < length &&
-          this.compare(this.items[leftChildIndex], this.items[smallestIndex]) < 0) {
+        this.compare(this.items[leftChildIndex], this.items[smallestIndex]) < 0) {
         smallestIndex = leftChildIndex
       }
 
       if (rightChildIndex < length &&
-          this.compare(this.items[rightChildIndex], this.items[smallestIndex]) < 0) {
+        this.compare(this.items[rightChildIndex], this.items[smallestIndex]) < 0) {
         smallestIndex = rightChildIndex
       }
 
@@ -512,7 +514,7 @@ export class TrajectoryGraphBuilder {
     const timeSteps = Math.floor(config.timeHorizon / config.timeStep)
 
     const nodeCount = positionSteps * positionSteps * positionSteps *
-                     velocitySteps * velocitySteps * velocitySteps * timeSteps
+      velocitySteps * velocitySteps * velocitySteps * timeSteps
 
     // Estimate edge count (sparse graph assumption)
     const avgOutDegree = 6 // Typical for 3D trajectory planning
@@ -548,7 +550,7 @@ export class TrajectoryGraphBuilder {
 
       for (const maneuver of maneuvers) {
         const targetNode = this.encodeNodeState(maneuver.targetState, config,
-                                               positionSteps, velocitySteps, timeSteps)
+          positionSteps, velocitySteps, timeSteps)
 
         if (targetNode < nodeCount && edgeIndex < edgeCount) {
           destinations[edgeIndex] = targetNode

@@ -11,7 +11,7 @@ describe('dijkstra', () => {
       { from: 2, to: 3, weight: 1 },
     ]
 
-    const { dist, prev } = dijkstra(nodes as any, edges as any, 0)
+    const { dist, prev } = dijkstra(nodes, edges, 0)
 
     expect(dist[0]).toBe(0)
     expect(dist[1]).toBe(1)

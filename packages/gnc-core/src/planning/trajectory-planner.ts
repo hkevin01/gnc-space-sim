@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * TypeScript wrapper for Enhanced SSSP WebAssembly module
  *
@@ -359,7 +361,7 @@ export class EnhancedTrajectoryPlanner {
 
     // Linear index (simplified)
     const nodeIndex = timeGrid * resolution.position * resolution.velocity +
-                     posGrid[0] * resolution.velocity + velGrid[0]
+      posGrid[0] * resolution.velocity + velGrid[0]
 
     // Cache state for reverse lookup
     this.nodeToStateCache.set(nodeIndex, state)
@@ -431,7 +433,7 @@ export class EnhancedTrajectoryPlanner {
       to.velocity[2] - from.velocity[2]
     ]
 
-    const deltaVMagnitude = Math.sqrt(deltaV[0]**2 + deltaV[1]**2 + deltaV[2]**2)
+    const deltaVMagnitude = Math.sqrt(deltaV[0] ** 2 + deltaV[1] ** 2 + deltaV[2] ** 2)
     const burnDuration = deltaVMagnitude / (this.config.maxThrust / from.fuelMass)
     const fuelUsed = this.config.maxThrust * burnDuration / (this.config.specificImpulse * 9.81)
 
@@ -441,7 +443,7 @@ export class EnhancedTrajectoryPlanner {
       burnDuration,
       fuelUsed,
       cost: deltaVMagnitude * this.config.costs.fuelWeight +
-            burnDuration * this.config.costs.timeWeight
+        burnDuration * this.config.costs.timeWeight
     }
   }
 }
