@@ -162,15 +162,15 @@ function OrbitPath({ body }: { body: CelestialBodyData }) {
   const line = useMemo(() => {
     const points: THREE.Vector3[] = []
     const segments = 256
-    
+
     const a = body.semiMajorAxisKm * DISTANCE_SCALE
     const b = a * Math.sqrt(1 - body.eccentricity * body.eccentricity)
-    
+
     // Orbital elements in radians
     const inc = body.inclinationDeg * Math.PI / 180
     const omega = body.longitudeOfAscendingNodeDeg * Math.PI / 180
     const w = body.argumentOfPeriapsisDeg * Math.PI / 180
-    
+
     const cosInc = Math.cos(inc)
     const sinInc = Math.sin(inc)
     const cosOmega = Math.cos(omega)
@@ -180,15 +180,15 @@ function OrbitPath({ body }: { body: CelestialBodyData }) {
 
     for (let k = 0; k <= segments; k++) {
       const theta = (k / segments) * 2 * Math.PI
-      
+
       // Ellipse in orbital plane (centered at focus)
       const xOrb = a * Math.cos(theta) - a * body.eccentricity
       const yOrb = b * Math.sin(theta)
-      
+
       // Rotate by argument of periapsis
       const x1 = xOrb * cosW - yOrb * sinW
       const y1 = xOrb * sinW + yOrb * cosW
-      
+
       // Apply inclination and longitude of ascending node
       const x = x1 * cosOmega - y1 * cosInc * sinOmega
       const y = x1 * sinOmega + y1 * cosInc * cosOmega
@@ -218,7 +218,7 @@ function TexturedPlanet({ body, position, scaledRadius }: {
 }) {
   const meshRef = useRef<THREE.Mesh>(null)
   const textureUrl = TEXTURE_URLS[body.id]
-  
+
   // Load texture if available
   const texture = textureUrl ? useLoader(TextureLoader, textureUrl) : null
 
@@ -284,8 +284,8 @@ function CelestialBodyMesh({
 }) {
   const sizeMult = body.type === 'star' ? SIZE_MULT.SUN
     : body.type === 'moon' ? SIZE_MULT.MOON
-    : ['mercury', 'venus', 'earth', 'mars'].includes(body.id) ? SIZE_MULT.INNER
-    : SIZE_MULT.GAS
+      : ['mercury', 'venus', 'earth', 'mars'].includes(body.id) ? SIZE_MULT.INNER
+        : SIZE_MULT.GAS
 
   const scaledRadius = Math.max(body.radiusKm * RADIUS_SCALE * sizeMult, body.type === 'star' ? 5 : 0.5)
   const hasTexture = body.id in TEXTURE_URLS
@@ -332,16 +332,16 @@ export function OrbitalSystem({
   const bodyPositions = useMemo(() => {
     const positions = new Map<string, THREE.Vector3>()
     positions.set('sun', new THREE.Vector3(0, 0, 0))
-    
+
     // First pass: calculate Earth position (needed for Moon)
     const earth = CELESTIAL_BODIES.find(b => b.id === 'earth')!
     const earthPos = calculateOrbitalPosition(earth, simulationTime)
     positions.set('earth', earthPos)
-    
+
     // Calculate all other positions
     CELESTIAL_BODIES.forEach(body => {
       if (body.type === 'star' || body.id === 'earth') return
-      
+
       if (body.id === 'moon') {
         // Moon orbits Earth with faster time multiplier
         positions.set('moon', calculateOrbitalPosition(body, simulationTime * 50, earthPos))
@@ -349,7 +349,7 @@ export function OrbitalSystem({
         positions.set(body.id, calculateOrbitalPosition(body, simulationTime))
       }
     })
-    
+
     return positions
   }, [simulationTime])
 
