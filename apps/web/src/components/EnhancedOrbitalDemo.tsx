@@ -5,12 +5,13 @@
  * and accurate orbital mechanics for all planets in our solar system.
  */
 
-import { OrbitControls, Stats } from '@react-three/drei'
+import { OrbitControls, Stats, Environment } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { useState, useRef, useMemo } from 'react'
 import * as THREE from 'three'
 import { OrbitalSystem } from './OrbitalMechanics'
 import { generateAsteroidBelt } from '../utils/astronomicalData'
+import { StarField } from './StarField'
 
 interface EnhancedOrbitalDemoProps {
   className?: string
@@ -28,9 +29,9 @@ function TimeDisplay({ simulationTime }: { simulationTime: number }) {
       <p>Earth Years: {earthYears.toFixed(2)}</p>
       <div className="mt-2 text-xs text-green-400">
         <p>🔧 SCALE DEBUG:</p>
-  <p>• Distance Scale: 1 AU ≈ 149.6 units (1 unit = 1e6 km)</p>
-  <p>• Camera at: [400, 200, 400]</p>
-  <p>• Max zoom: 5000 units</p>
+        <p>• Distance Scale: 1 AU ≈ 149.6 units (1 unit = 1e6 km)</p>
+        <p>• Camera at: [400, 200, 400]</p>
+        <p>• Max zoom: 5000 units</p>
       </div>
       <div className="mt-2 text-xs text-gray-300">
         <p>✨ Features Active:</p>
@@ -41,7 +42,7 @@ function TimeDisplay({ simulationTime }: { simulationTime: number }) {
       </div>
     </div>
   )
-}function ControlPanel({
+} function ControlPanel({
   showOrbits,
   setShowOrbits,
   showLabels,
@@ -114,7 +115,7 @@ function TimeDisplay({ simulationTime }: { simulationTime: number }) {
       </div>
     </div>
   )
-}function PlanetHighlights() {
+} function PlanetHighlights() {
   return (
     <div className="absolute bottom-4 left-4 z-10 bg-black/80 text-white p-4 rounded-lg text-sm">
       <h3 className="font-bold mb-2">🪐 Planet Distances</h3>
@@ -165,13 +166,13 @@ export function EnhancedOrbitalDemo({ className }: EnhancedOrbitalDemoProps) {
       >
         <color attach="background" args={['#000011']} />
 
-        {/* Lighting */}
-  <ambientLight intensity={0.15} />
-  <pointLight position={[0, 0, 0]} intensity={12} decay={2} color="#ffffff" castShadow shadow-mapSize={[2048,2048]} />
-  <directionalLight position={[50, 50, 50]} intensity={0.6} />
+        {/* StarField background */}
+        <StarField count={6000} radius={3000} />
 
-        {/* Reference Grid */}
-        <gridHelper args={[1000, 100, '#333333', '#333333']} />
+        {/* Lighting */}
+        <ambientLight intensity={0.15} />
+        <pointLight position={[0, 0, 0]} intensity={12} decay={2} color="#ffffff" castShadow shadow-mapSize={[2048, 2048]} />
+        <directionalLight position={[50, 50, 50]} intensity={0.6} />
 
         {/* Solar System with animated time */}
         <AnimatedTimeSystem
@@ -181,8 +182,8 @@ export function EnhancedOrbitalDemo({ className }: EnhancedOrbitalDemoProps) {
           onTimeUpdate={setSimulationTime}
         />
 
-  {/* Asteroid Belt (visual only) */}
-  <AsteroidBeltVisual />
+        {/* Asteroid Belt (visual only) */}
+        <AsteroidBeltVisual />
 
         {/* Controls */}
         <OrbitControls

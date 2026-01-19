@@ -8,7 +8,7 @@ import { useSafeTexture, assetUrl } from '../utils/textures'
 import { getPlanetTexture } from '../utils/planetaryTextures'
 import { StarField } from './StarField'
 import { useNasaPositions } from '../hooks/useNasaPositions'
-import { Html } from '@react-three/drei'
+import { Html, Environment } from '@react-three/drei'
 import { PlanetPosition } from '../services/planetaryPositionService'
 
 /**
@@ -65,17 +65,17 @@ const KM_PER_SCENE_UNIT = 1_000_000 * DISTANCE_SCALE; // 1e6 km per unit
 const RADIUS_SCENE_CONVERSION = 1 / KM_PER_SCENE_UNIT; // multiply by this to go from km → scene units
 // Visibility multipliers keep bodies visible without breaking distances; tuned to avoid overlap with orbits
 const SIZE_MULT = {
-  SUN: 12,
-  INNER: 40, // Mercury, Venus, Earth, Mars
-  MOON: 40,
-  GAS: 60 // Jupiter, Saturn, Uranus, Neptune
+  SUN: 80,
+  INNER: 25, // Mercury, Venus, Earth, Mars
+  MOON: 25,
+  GAS: 35 // Jupiter, Saturn, Uranus, Neptune
 } as const
 
 const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   SUN: {
     texture: getPlanetTexture('SUN'),
     radius: 695700, // km - NASA accurate
-  sceneRadius: 695700 * RADIUS_SCENE_CONVERSION * SIZE_MULT.SUN, // ~8.35 units; << Mercury orbit (57.9)
+    sceneRadius: 695700 * RADIUS_SCENE_CONVERSION * SIZE_MULT.SUN, // ~8.35 units; << Mercury orbit (57.9)
     color: '#FFD700',
     rotationSpeed: 0.01,
     orbitSpeed: 0,
@@ -89,7 +89,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   MERCURY: {
     texture: getPlanetTexture('MERCURY'),
     radius: 2439.7, // km - NASA accurate
-  sceneRadius: 2439.7 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER,
+    sceneRadius: 2439.7 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER,
     orbitRadius: 57.91 / DISTANCE_SCALE, // 57.91 million km / scale = 57.91 scene units
     color: '#8C7853',
     rotationSpeed: 0.004,
@@ -105,7 +105,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   VENUS: {
     texture: getPlanetTexture('VENUS'),
     radius: 6051.8, // km - NASA accurate
-  sceneRadius: 6051.8 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER,
+    sceneRadius: 6051.8 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER,
     orbitRadius: 108.21 / DISTANCE_SCALE, // 108.21 million km / scale = 108.21 scene units
     color: '#FFC649',
     rotationSpeed: -0.0018,
@@ -121,7 +121,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   EARTH: {
     texture: getPlanetTexture('EARTH'),
     radius: 6371.0, // km - NASA accurate mean radius
-  sceneRadius: 6371.0 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER, // ~0.255 units; Moon orbit 0.3844 units stays clear
+    sceneRadius: 6371.0 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER, // ~0.255 units; Moon orbit 0.3844 units stays clear
     orbitRadius: 149.60 / DISTANCE_SCALE, // 149.60 million km (1 AU) / scale = 149.6 scene units
     color: '#6B93D6',
     rotationSpeed: 0.01,
@@ -137,7 +137,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   MARS: {
     texture: getPlanetTexture('MARS'),
     radius: 3389.5, // km - NASA accurate mean radius
-  sceneRadius: 3389.5 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER,
+    sceneRadius: 3389.5 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER,
     orbitRadius: 227.92 / DISTANCE_SCALE, // 227.92 million km / scale = 227.92 scene units
     color: '#CD5C5C',
     rotationSpeed: 0.0097,
@@ -153,7 +153,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   JUPITER: {
     texture: getPlanetTexture('JUPITER'),
     radius: 69911, // km - NASA accurate mean radius
-  sceneRadius: 69911 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
+    sceneRadius: 69911 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
     orbitRadius: 778.57 / DISTANCE_SCALE, // 778.57 million km / scale = 778.57 scene units
     color: '#D8CA9D',
     rotationSpeed: 0.024,
@@ -169,7 +169,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   SATURN: {
     texture: getPlanetTexture('SATURN'),
     radius: 58232, // km - NASA accurate mean radius
-  sceneRadius: 58232 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
+    sceneRadius: 58232 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
     orbitRadius: 1433.53 / DISTANCE_SCALE, // 1433.53 million km / scale = 1433.53 scene units
     color: '#FAD5A5',
     rotationSpeed: 0.022,
@@ -186,7 +186,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   URANUS: {
     texture: getPlanetTexture('URANUS'),
     radius: 25362, // km - NASA accurate mean radius
-  sceneRadius: 25362 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
+    sceneRadius: 25362 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
     orbitRadius: 2872.46 / DISTANCE_SCALE, // 2872.46 million km / scale = 2872.46 scene units
     color: '#4FD0E3',
     rotationSpeed: -0.014,
@@ -202,7 +202,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   NEPTUNE: {
     texture: getPlanetTexture('NEPTUNE'),
     radius: 24622, // km - NASA accurate mean radius
-  sceneRadius: 24622 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
+    sceneRadius: 24622 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
     orbitRadius: 4495.06 / DISTANCE_SCALE, // 4495.06 million km / scale = 4495.06 scene units
     color: '#4B70DD',
     rotationSpeed: 0.016,
@@ -218,9 +218,9 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   MOON: {
     texture: getPlanetTexture('MOON'),
     radius: 1737.4, // km - NASA accurate mean radius
-  sceneRadius: 1737.4 * RADIUS_SCENE_CONVERSION * SIZE_MULT.MOON,
-  // 384,400 km = 0.3844 million km → 0.3844 scene units at DISTANCE_SCALE=1
-  orbitRadius: (384400 / 1_000_000) / DISTANCE_SCALE,
+    sceneRadius: 1737.4 * RADIUS_SCENE_CONVERSION * SIZE_MULT.MOON,
+    // 384,400 km = 0.3844 million km → 0.3844 scene units at DISTANCE_SCALE=1
+    orbitRadius: (384400 / 1_000_000) / DISTANCE_SCALE,
     parentOrbitRadius: 149.60 / DISTANCE_SCALE, // Earth's orbit
     color: '#C0C0C0',
     rotationSpeed: 0.0005,
@@ -452,7 +452,7 @@ export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'S
   return (
     <group>
       {/* Star field background */}
-  <StarField count={5000} radius={8000} />
+      <StarField count={5000} radius={8000} />
 
       {/* Light source from the Sun */}
       <pointLight
@@ -467,20 +467,20 @@ export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'S
       />
 
       {/* Ambient light for overall visibility */}
-  <ambientLight intensity={0.2} />
+      <ambientLight intensity={0.2} />
 
-  {/* All solar system bodies */}
-  <Planet name="SUN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-  <Planet name="MERCURY" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-  <Planet name="VENUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-  <Planet name="EARTH" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-  <Planet name="MOON" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-  <Planet name="MARS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-  <AsteroidBelt showAsteroids={true} asteroidCount={300} />
-  <Planet name="JUPITER" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-  <Planet name="SATURN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-  <Planet name="URANUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-  <Planet name="NEPTUNE" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+      {/* All solar system bodies */}
+      <Planet name="SUN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+      <Planet name="MERCURY" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+      <Planet name="VENUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+      <Planet name="EARTH" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+      <Planet name="MOON" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+      <Planet name="MARS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+      <AsteroidBelt showAsteroids={true} asteroidCount={300} />
+      <Planet name="JUPITER" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+      <Planet name="SATURN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+      <Planet name="URANUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+      <Planet name="NEPTUNE" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
     </group>
   )
 }
@@ -552,7 +552,7 @@ function NasaPlanet({ planetPosition, showOrbit = false, offset }: NasaPlanetPro
             fontFamily: 'monospace',
             textAlign: 'center'
           }}>
-            {name}<br/>
+            {name}<br />
             {dataSource === 'nasa' ? '🛰️' : '🧮'}
           </div>
         </Html>
@@ -618,8 +618,8 @@ export function NasaSolarSystem({ showOrbits = false, centerOn = 'SUN', useNasaD
     config: {
       useNasaData,
       fallbackToCalculated: true,
-  // Match the scene scale where 1 unit = 1e6 km → 1 AU ≈ 149.6 units
-  scaleFactorAU: 149.6,
+      // Match the scene scale where 1 unit = 1e6 km → 1 AU ≈ 149.6 units
+      scaleFactorAU: 149.6,
     },
     autoRefresh: true,
     refreshInterval: 60 * 60 * 1000, // Refresh every hour
@@ -795,11 +795,14 @@ export function EnhancedEarthVisual() {
       {/* Main Earth */}
       <mesh ref={ref}>
         <sphereGeometry args={[SOLAR_SYSTEM_DATA.EARTH.sceneRadius, 64, 64]} />
-        {dayMap ? (
-          <meshStandardMaterial map={dayMap} />
-        ) : (
-          <meshStandardMaterial color={SOLAR_SYSTEM_DATA.EARTH.color} />
-        )}
+        <meshStandardMaterial
+          map={dayMap}
+          color={dayMap ? undefined : "#4A90E2"}
+          roughness={0.6}
+          metalness={0.1}
+          emissive={dayMap ? undefined : "#1a3f6b"}
+          emissiveIntensity={dayMap ? 0 : 0.1}
+        />
       </mesh>
 
       {/* Cloud layer */}
@@ -885,11 +888,11 @@ export function AsteroidBelt({ showAsteroids = true, asteroidCount = 500, sizeSc
 
   return (
     <group ref={groupRef}>
-    {asteroids.map((asteroid, index) => (
+      {asteroids.map((asteroid, index) => (
         <Asteroid
           key={index}
           position={asteroid.position}
-      size={asteroid.size * sizeScale}
+          size={asteroid.size * sizeScale}
           rotationSpeed={asteroid.rotationSpeed}
         />
       ))}
