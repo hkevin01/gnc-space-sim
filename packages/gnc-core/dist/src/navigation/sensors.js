@@ -326,7 +326,8 @@ export class SensorSimulator {
     /**
      * Simulate IMU measurements with realistic noise and bias
      */
-    static simulateIMU(true_state, dt) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    static simulateIMU(true_state, _dt) {
         // True specific force (acceleration - gravity)
         const r_mag = Math.hypot(true_state.r[0], true_state.r[1], true_state.r[2]);
         const gravity_accel = MU_EARTH / (r_mag * r_mag * r_mag);

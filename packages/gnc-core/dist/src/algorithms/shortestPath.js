@@ -30,8 +30,8 @@ class MinHeap {
         const n = this.data.length;
         const item = this.data[i];
         while (true) {
-            let left = 2 * i + 1;
-            let right = left + 1;
+            const left = 2 * i + 1;
+            const right = left + 1;
             let smallest = i;
             if (left < n && this.distances[this.data[left]] < this.distances[this.data[smallest]])
                 smallest = left;

@@ -33,5 +33,7 @@ describe('bench: dijkstra vs enhancedSSSP', () => {
         // Basic performance check: enhanced should be comparable to dijkstra
         if (dt2 > dt1 * 10)
             throw new Error(`enhancedSSSP too slow (${dt2}ms vs ${dt1}ms)`);
+        if (dt3 > dt1 * 10)
+            throw new Error(`enhancedSSSP repeat too slow (${dt3}ms vs ${dt1}ms)`);
     }, 60000);
 });

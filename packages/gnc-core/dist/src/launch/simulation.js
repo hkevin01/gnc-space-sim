@@ -2,7 +2,6 @@ import { MU_EARTH } from '../math/constants';
 import { EARTH_RADIUS, STANDARD_GRAVITY } from '../math/physics';
 import { computeAtmosphere, computeDrag, determineLaunchPhase, LaunchPhase } from './guidance';
 function add(a, b) { return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]; }
-function sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
 function scale(v, s) { return [v[0] * s, v[1] * s, v[2] * s]; }
 function norm(v) { return Math.hypot(v[0], v[1], v[2]); }
 function unit(v) { const n = norm(v) || 1; return [v[0] / n, v[1] / n, v[2] / n]; }
@@ -32,7 +31,6 @@ export function integrateLaunchTrajectory(prev, vehicle, guidance, dt) {
     // Geometry and kinematics
     const rmag = norm(prev.r);
     const altitude = Math.max(0, rmag - EARTH_RADIUS);
-    const vmag = norm(prev.v);
     // Atmosphere and drag
     const atmosphere = computeAtmosphere(altitude);
     // Guidance

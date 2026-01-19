@@ -8,7 +8,7 @@ const CURRENT_DATE = new Date('2025-08-31T00:00:00Z')
 
 // Astronomical constants
 const AU_TO_KM = 149597870.7 // 1 AU in kilometers
-const EARTH_RADIUS_KM = 6371 // Earth radius in km
+// const EARTH_RADIUS_KM = 6371 // Earth radius in km (currently unused)
 const SCALE_FACTOR = 0.000001 // Scale factor for visualization (1 unit = 1000 km)
 
 // Planetary orbital data (J2000 epoch, real astronomical values)
@@ -144,9 +144,10 @@ function degToRad(degrees: number): number {
 /**
  * Convert radians to degrees
  */
-function radToDeg(radians: number): number {
-  return radians * 180 / Math.PI
-}
+// Currently unused - keeping for future use
+// function radToDeg(radians: number): number {
+//   return radians * 180 / Math.PI
+// }
 
 /**
  * Solve Kepler's equation using Newton-Raphson method
@@ -210,9 +211,9 @@ export function calculatePlanetPosition(planetName: string, time?: number): THRE
 
   // Rotation matrix for orbital elements
   const x = (cosOmega * cosW - sinOmega * sinW * cosI) * x_orb +
-            (-cosOmega * sinW - sinOmega * cosW * cosI) * y_orb
+    (-cosOmega * sinW - sinOmega * cosW * cosI) * y_orb
   const y = (sinOmega * cosW + cosOmega * sinW * cosI) * x_orb +
-            (-sinOmega * sinW + cosOmega * cosW * cosI) * y_orb
+    (-sinOmega * sinW + cosOmega * cosW * cosI) * y_orb
   const z = (sinW * sinI) * x_orb + (cosW * sinI) * y_orb
 
   // Convert to kilometers and scale for visualization
