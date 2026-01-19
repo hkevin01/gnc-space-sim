@@ -1,6 +1,8 @@
 {
-  "extends": "../../configs/tsconfig.base.json",
-  "include": ["src"],
+  "extends": "../../build-tools/tsconfig.base.json",
+  "include": [
+    "src"
+  ],
   "exclude": [
     // Exclude legacy/experimental files that cause duplicate declarations or are unfinished
     "src/launch/guidance-clean.ts",
