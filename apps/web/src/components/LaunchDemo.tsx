@@ -6,7 +6,7 @@ import {
   LaunchPhase,
   LaunchState,
 } from '@gnc/core';
-import { OrbitControls, Html } from '@react-three/drei';
+import { OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -15,7 +15,9 @@ import { NasaSolarSystem } from './SolarSystem';
 
 // Scale factor: 1 unit = 1000 km in solar system view
 // Earth radius = 6.371 units, so rocket needs to be visible at that scale
-const ROCKET_VISUAL_SCALE = 0.05; // Visible rocket size relative to Earth
+// Making rocket visually large enough to see (not to scale - would be invisible otherwise)
+const ROCKET_VISUAL_SCALE = 0.3; // 300km visual size - exaggerated for visibility
+const EARTH_RADIUS_UNITS = 6.371; // Earth radius in scene units
 
 export function LaunchDemo({
   timeMultiplier = 50, // Increased default for better visual pacing
@@ -32,6 +34,7 @@ export function LaunchDemo({
   const lastUserInteraction = useRef(Date.now());
   const snapBackTimeout = useRef<number | null>(null);
   const hasZoomedToRocket = useRef(false);
+  const isUserInteracting = useRef(false); // Track if user is actively zooming/rotating
 
   // Use global launch control store instead of local state
   const launchTime = useLaunchControl((state) => state.launchTime);
@@ -49,6 +52,13 @@ export function LaunchDemo({
   const groupRef = useRef<THREE.Group>(null);
 
   const invalidStateCount = useRef(0);
+
+  // Set initial rocket position at Earth's surface
+  useEffect(() => {
+    if (vehicleRef.current && !isLaunched) {
+      vehicleRef.current.position.set(EARTH_RADIUS_UNITS, 0, 0);
+    }
+  }, [isLaunched]);
 
   const [trajectory, setTrajectory] = useState<THREE.Vector3[]>(() => [
     new THREE.Vector3(6.371, 0, 0),
@@ -106,12 +116,16 @@ export function LaunchDemo({
     const timeoutRef = snapBackTimeout;
 
     const onStart = () => {
+      isUserInteracting.current = true;
       lastUserInteraction.current = Date.now();
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
     const onEnd = () => {
       lastUserInteraction.current = Date.now();
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      // Delay before resuming camera follow to let user finish adjusting
+      timeoutRef.current = window.setTimeout(() => {
+        isUserInteracting.current = false;
+      }, 2000) as unknown as number; // Resume follow after 2 seconds of no interaction
     };
     controls.addEventListener('start', onStart);
     controls.addEventListener('end', onEnd);
@@ -122,53 +136,69 @@ export function LaunchDemo({
     };
   }, [controlsRef]);
 
-  // Camera follow logic - zoom in when launch starts
+  // Camera follow logic - zoom in when launch starts (skip when user is interacting)
   useFrame(() => {
+    // Skip camera follow if user is actively using OrbitControls
+    if (isUserInteracting.current) return;
+
     if (vehicleRef.current) {
       const rocketPos = getRocketPosition();
 
+      // If rocket position is at origin, use Earth surface position
+      const actualRocketPos = rocketPos.length() < 0.1
+        ? new THREE.Vector3(EARTH_RADIUS_UNITS, 0, 0)
+        : rocketPos;
+
       // Always follow the rocket during launch
       if (isLaunched) {
-        // Initial zoom to rocket on launch start
+        // Initial zoom to rocket on launch start - SNAP immediately
         if (!hasZoomedToRocket.current && launchTime >= -10) {
           hasZoomedToRocket.current = true;
-          // Instantly position camera near rocket for launch
-          const earthRadius = 6.371; // units (1 unit = 1000km)
-          const launchOffset = new THREE.Vector3(0.5, 0.3, 1.0);
-          camera.position.set(
-            earthRadius + launchOffset.x,
-            launchOffset.y,
-            launchOffset.z
+
+          // SNAP camera directly to rocket position - no lerping
+          const cameraPos = new THREE.Vector3(
+            actualRocketPos.x + 0.5,   // Behind rocket (radially outward)
+            actualRocketPos.y + 0.3,   // Above
+            actualRocketPos.z + 0.8    // To the side
           );
+          camera.position.copy(cameraPos);
+          camera.lookAt(actualRocketPos);
+
           if (controlsRef.current) {
-            controlsRef.current.target.set(earthRadius, 0, 0);
+            controlsRef.current.target.copy(actualRocketPos);
             controlsRef.current.update();
           }
+
+          console.log('📍 Camera snapped to rocket at:', actualRocketPos.toArray());
         }
 
-        // Calculate dynamic camera position based on altitude
+        // Calculate dynamic camera distance based on altitude - keep camera close to rocket
         const altitude = stateRef.current.altitude / 1000; // km
         let cameraDistance: number;
 
-        // Closer view during launch, further during orbit
-        if (altitude < 100) {
-          cameraDistance = 0.3; // Very close for launch
-        } else if (altitude < 400) {
-          cameraDistance = 0.8; // Medium for ascent
-        } else if (altitude < 1000) {
-          cameraDistance = 2; // Further for high altitude
+        // Keep camera close to rocket at all times for Artemis mission viewing
+        if (altitude < 50) {
+          cameraDistance = 0.5; // Close for initial launch
+        } else if (altitude < 200) {
+          cameraDistance = 0.8; // Close for ascent
+        } else if (altitude < 500) {
+          cameraDistance = 1.2; // Medium for high altitude
+        } else if (altitude < 2000) {
+          cameraDistance = 2.0; // Orbital view
         } else {
-          cameraDistance = 5; // Far for orbital operations
+          cameraDistance = 3.0; // Lunar transit view
         }
 
-        const target = rocketPos.clone().add(new THREE.Vector3(0, cameraDistance * 0.2, cameraDistance));
-        camera.position.lerp(target, 0.03); // Smooth following
+        // Position camera offset from rocket - behind and slightly above
+        const cameraOffset = new THREE.Vector3(cameraDistance * 0.3, cameraDistance * 0.2, cameraDistance);
+        const targetCamPos = actualRocketPos.clone().add(cameraOffset);
+        camera.position.lerp(targetCamPos, 0.03); // Smooth following
 
         // Look at rocket
-        camera.lookAt(rocketPos);
+        camera.lookAt(actualRocketPos);
 
         if (controlsRef.current) {
-          controlsRef.current.target.lerp(rocketPos, 0.05);
+          controlsRef.current.target.lerp(actualRocketPos, 0.05);
           controlsRef.current.update();
         }
       }
@@ -292,11 +322,15 @@ export function LaunchDemo({
           nextState.r[2] * 1e-6
         );
 
+        // Throttle trajectory updates - only add point every 10 frames to reduce re-renders
         if (Number.isFinite(newPoint.x) && Number.isFinite(newPoint.y) && Number.isFinite(newPoint.z)) {
-          setTrajectory((prev) => {
-            const updated = [...prev, newPoint];
-            return updated.length > 1000 ? updated.slice(-1000) : updated;
-          });
+          const frameCount = Math.floor(nextTime * 10) % 10;
+          if (frameCount === 0) {
+            setTrajectory((prev) => {
+              const updated = [...prev, newPoint];
+              return updated.length > 500 ? updated.slice(-500) : updated; // Reduced from 1000
+            });
+          }
         }
       }
     } catch (error) {
@@ -418,22 +452,6 @@ export function LaunchDemo({
             </mesh>
           </>
         )}
-
-        {/* Mission status label */}
-        <Html position={[0, ROCKET_VISUAL_SCALE * 1.5, 0]} center distanceFactor={5}>
-          <div style={{
-            background: 'rgba(0, 0, 0, 0.8)',
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap',
-            border: '1px solid #444'
-          }}>
-            🚀 SLS / Orion
-          </div>
-        </Html>
       </group>
 
       {trajectoryRef.current && <primitive object={trajectoryRef.current} />}
@@ -444,11 +462,11 @@ export function LaunchDemo({
         enablePan={true}
         enableZoom={true}
         enableRotate={true}
-        zoomSpeed={2}
-        panSpeed={1}
+        zoomSpeed={1.5}
+        panSpeed={0.8}
         rotateSpeed={0.5}
-        minDistance={0.1}
-        maxDistance={500}
+        minDistance={0.02}
+        maxDistance={20}  // Limit max zoom out to keep Earth visible
       />
     </group>
   );

@@ -56,10 +56,12 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
       <div className="flex-1 relative">
         <Canvas
           camera={{
-            position: [0, 0, 20],
-            fov: 75,
-            near: 0.1,
-            far: 1000000
+            // Start camera looking at Earth's surface where rocket is
+            // Rocket starts at [6.371, 0, 0] (Earth radius in scene units)
+            position: [7.5, 0.5, 1.5],  // Slightly behind and above rocket
+            fov: 60,
+            near: 0.001,
+            far: 50000
           }}
           style={{ background: "#000011", maxHeight: "100vh", maxWidth: "100vw" }}
           onCreated={({ gl }) => {
