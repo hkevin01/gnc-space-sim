@@ -1,13 +1,35 @@
 /**
+ * ID: GNC-ENGINE-001
+ * Requirement: Provide piecewise-linear thrust interpolation for rocket engines
+ *   given a discrete time-thrust profile, and supply authoritative SLS SRB and
+ *   RS-25 thrust curve constants.
+ * Purpose: Decouple the propulsion physics (time-varying thrust shape) from the
+ *   mass-flow integrator (integration.ts) so each can be tested independently.
+ * Rationale: Real solid rocket thrust profiles are not flat — the 5-segment SRB
+ *   rises to peak, sustains, then tail-offs. Linear interpolation between
+ *   certified test-data points is the standard industry practice for propulsion
+ *   simulation (used in MATLAB/Simulink Aerospace Blockset and OpenRocket).
+ * Inputs:
+ *   time    – seconds from ignition, finite real ≥ 0
+ *   profile – ThrustProfile with sorted `points[]`, maxThrust > 0
+ * Outputs: thrust [N], always ≥ 0; 0 outside [0, profile.duration]
+ * Preconditions: profile.points is sorted ascending by time; maxThrust > 0.
+ * Postconditions: return value ∈ [0, maxThrust].
+ * Assumptions: Thrust fraction is normalised to [0, 1]; sea-level vs vacuum
+ *   correction is applied by the caller (integration.ts).
+ * Failure Modes: Unsorted points → incorrect interpolation bracket → wrong thrust.
+ *   Guard: points must be provided in chronological order.
+ * Constraints: Only linear (not cubic spline) interpolation — sufficient for
+ *   ≥10 data points spanning 126 s.
+ * Verification: thrustCurves.spec.ts TEST-THRUST-001 to TEST-THRUST-010.
+ * References: Sutton & Biblarz "Rocket Propulsion Elements" §12;
+ *   NASA TM-2005-213854 "SRB Thrust Vector Control";
+ *   ATK SLS SRB Performance Data (Public Domain).
+ *
  * Thrust Curve Utilities for Rocket Engines
  *
  * Provides interpolation and modeling for engine thrust profiles,
  * particularly for solid rocket motors with complex burn characteristics.
- *
- * Sources:
- * - Rocket Propulsion Elements (Sutton & Biblarz)
- * - NASA Solid Rocket Motor Performance Data
- * - SLS Booster Performance Characteristics (Public Domain)
  */
 
 export interface ThrustPoint {
@@ -29,8 +51,11 @@ export interface ThrustProfile {
  * @returns Thrust value in Newtons
  */
 export function interpolateThrust(time: number, profile: ThrustProfile): number {
-  // Clamp time to profile duration
-  if (time <= 0) return profile.points[0]?.thrust * profile.maxThrust || 0;
+  // Pre-ignition: engine has not fired yet → 0 thrust
+  if (time < 0) return 0;
+  // At exactly t=0: use first profile point (initial ignition value)
+  if (time === 0) return (profile.points[0]?.thrust ?? 0) * profile.maxThrust;
+  // After burnout: engine is exhausted → 0 thrust
   if (time >= profile.duration) return 0;
 
   const points = profile.points;

@@ -1,22 +1,27 @@
 /**
+ * ID: SCEN-MISS-001
+ * Requirement: Define the complete Artemis II crewed lunar-flyby mission
+ *   profile including launch site, target parking orbit, guidance parameters,
+ *   and all mission phases from pre-launch through TLI.
+ * Purpose: Provide the simulation and UI with a single authoritative mission
+ *   configuration that drives phase timelines, guidance programs, and
+ *   telemetry display labels.
+ * Rationale: A declarative mission profile (data, not code) lets mission
+ *   planners modify timelines without touching guidance or integrator logic.
+ *   The pitchProgram and throttleProfile arrays are consumed directly by
+ *   SLSGuidance in guidance.ts, ensuring consistency.
+ * Assumptions: All times are seconds from liftoff (T+0 = ignition command);
+ *   negative start times are pre-launch activities.  Orbit altitude in km.
+ * Failure Modes: Wrong inclination → launch window miss; wrong MECO time
+ *   → incorrect parking orbit.  Caught by artemis2.spec.ts regression suite.
+ * Constraints: pitchProgram must be monotonically decreasing (validated in test);
+ *   throttleProfile[0].throttle = 1.0 (full liftoff thrust).
+ * Verification: artemis2.spec.ts TEST-ARTEMIS2-001 (20 tests).
+ * References: NASA Artemis II Mission Overview (2022 public release);
+ *   KSC LC-39B Site Data; NASA SP-2005-626 "Trajectory Design and Analysis";
+ *   SLSGuidance GNC-GUID-001.
+ *
  * Artemis II Mission Profile
- *
- * Mission overview: Crewed lunar flyby mission launched on SLS Block 1
- * Launch Site: Kennedy Space Center Launch Complex 39B
- * Target: Trans-Lunar Injection after Earth parking orbit
- * Crew: 4 astronauts in Orion spacecraft
- *
- * Mission phases:
- * 1. Ascent to 185km x 185km parking orbit (28.5° inclination)
- * 2. Coast and systems checkout
- * 3. Trans-Lunar Injection (TLI) burn
- * 4. Cislunar coast and lunar flyby
- * 5. Return trajectory and Earth splashdown
- *
- * Sources:
- * - NASA Artemis II Mission Overview (Public Domain)
- * - Launch Services Program User's Guide
- * - Kennedy Space Center Launch Site Data
  */
 
 import { SLSBlock1, SLSVehicleConfig } from '../vehicles/sls_block1';

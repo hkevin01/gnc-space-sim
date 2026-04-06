@@ -1,3 +1,29 @@
+/**
+ * ID: GNC-NAV-002
+ * Requirement: Provide interface definitions and sensor simulation models for
+ *   IMU, GPS, and barometric altitude sensors used during launch vehicle ascent.
+ * Purpose: Allow the navigation filter (kalman.ts) to ingest simulated sensor
+ *   data with realistic noise and bias models, enabling hardware-in-the-loop
+ *   style testing without physical sensor hardware.
+ * Rationale: Separating sensor models from the navigation filter means noise
+ *   characteristics can be changed without touching filter code. The IMU bias
+ *   model (random-walk) and GPS availability model (altitude-dependent) reflect
+ *   known hardware behaviour on launch vehicles.
+ * Inputs: LaunchState (truth trajectory); noise parameters via sensor configs
+ * Outputs: IMUMeasurement, GPSMeasurement, BaroMeasurement — all with
+ *   statistical noise and availability flags
+ * Preconditions: LaunchState.r/v are finite; timestamp ≥ 0.
+ * Postconditions: measurement.available is false above GPS outage altitude.
+ * Assumptions: IMU noise is additive Gaussian; GPS availability degrades
+ *   above 80 km due to signal blockage by vehicle structure.
+ * Failure Modes: GPS unavailable during Max-Q due to dynamic pressure
+ *   interference — filter must coast on IMU alone.
+ * Constraints: IMU update rate ≥ 100 Hz; GPS ≤ 10 Hz per hardware spec.
+ * Verification: sensors.spec.ts TEST-SENS-001 to TEST-SENS-008.
+ * References: Titterton & Weston "Strapdown Inertial Navigation Technology" §6;
+ *   GPS SPS Performance Standard (NGA, 4th ed.);
+ *   NASA-CR-2020-220499 "Navigation System Studies for Lunar Gateway".
+ */
 import { LaunchState } from '../launch/guidance'
 import { MU_EARTH } from '../math/constants'
 import { Vec3 } from '../orbits/twobody'

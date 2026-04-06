@@ -1,10 +1,33 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
- * TypeScript wrapper for Enhanced SSSP WebAssembly module
+ * ID: GNC-PLAN-002
+ * Requirement: Provide a TypeScript facade over the Rust/WASM SSSP trajectory
+ *   planner, wrapping state-space graph construction, shortest-path queries,
+ *   and manoeuvre sequence extraction in a type-safe API.
+ * Purpose: Allow GNC guidance to request optimal multi-burn trajectories
+ *   (e.g., parking orbit → TLI) without directly manipulating graph structures,
+ *   and to fall back gracefully when the WASM module is not loaded.
+ * Rationale: Separating the WASM ABI boundary from the guidance logic means
+ *   the WASM module can be replaced with an updated version without touching
+ *   guidance code.  The TypeScript fallback (JS SSSP) ensures CI tests pass
+ *   without a build of the Rust crate.
+ * Inputs: start LaunchPhase, target orbit parameters
+ *   (altitude [km], inclination [deg], eccentricity)
+ * Outputs: ManeuverSequence – ordered list of Δv burns with timing
+ * Preconditions: WASM module loaded or JS fallback active; LaunchPhase is valid.
+ * Postconditions: Returned sequence satisfies target orbit constraints within
+ *   configurable tolerance.
+ * Assumptions: State-space discretisation is sufficient for the mission profile;
+ *   Keplerian two-body model used for edge weights.
+ * Failure Modes: WASM module fails to load → JS fallback; JS fallback timeout
+ *   → returns empty sequence (guidance holds last command).
+ * Constraints: Max planning time 50 ms per frame at 5 Hz.
+ * Verification: enhancedSSSP.spec.ts; enhancedSSSP.perf.spec.ts.
+ * References: GNC-PLAN-001; Bate, Mueller & White "Fundamentals of
+ *   Astrodynamics" ch. 6 (Hohmann transfer); NASA-TM-2017-219391.
  *
- * Provides seamless integration between the Rust WASM implementation
- * and the TypeScript GNC system for spacecraft trajectory planning.
+ * TypeScript wrapper for Enhanced SSSP WebAssembly module
  */
 
 import { LaunchPhase } from '../launch/guidance-new'

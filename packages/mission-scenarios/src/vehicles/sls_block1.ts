@@ -1,16 +1,26 @@
 /**
+ * ID: SCEN-VEH-001
+ * Requirement: Provide the authoritative SLS Block 1 vehicle configuration
+ *   (stage masses, thrust levels, Isp, burn times, payload, aerodynamics, and
+ *   mission events) consumed by VehicleIntegrator and the UI telemetry layer.
+ * Purpose: Single source of truth for SLS Block 1 propulsion and mass
+ *   properties, so that guidance, simulation, and display code all draw
+ *   from the same values and are never silently inconsistent.
+ * Rationale: Exporting a typed const (rather than a class or factory) lets the
+ *   object be imported directly into tests and UI without instantiation, and
+ *   TypeScript ensures field completeness at compile time.
+ * Assumptions: Values are from publicly available NASA sources (see References);
+ *   parallel:true SRB entries represent one of two identical boosters.
+ *   VehicleIntegrator multiplies SRB thrust and mass by 2.
+ * Failure Modes: Stale values after a vehicle design change → wrong T/W,
+ *   incorrect staging times.  slsBlock1.spec.ts regression tests guard this.
+ * Constraints: All masses in kg; thrust in N; Isp in seconds; times in seconds.
+ * Verification: slsBlock1.spec.ts TEST-SLS-CONFIG-001 (23 tests).
+ * References: NASA SLS Fact Sheet (FS-2022-01-007-MSFC);
+ *   SLS Block 1 User’s Guide (LS-SLS-19-001); RS-25 Engine Data Sheet;
+ *   Aerojet Rocketdyne RL10B-2 Product Sheet.
+ *
  * NASA Space Launch System (SLS) Block 1 Configuration
- *
- * Vehicle specifications for the SLS Block 1 configuration consisting of:
- * - Core Stage with 4x RS-25 engines
- * - 2x 5-segment Solid Rocket Boosters (SRBs)
- * - Interim Cryogenic Propulsion Stage (ICPS) with RL10B-2
- * - Orion Multi-Purpose Crew Vehicle (MPCV) with Launch Abort System (LAS)
- *
- * Sources:
- * - NASA SLS Fact Sheet (Public Domain)
- * - NASA Launch Services Program User's Guide
- * - Artemis II Mission Overview (NASA, Public Domain)
  */
 
 export interface SLSStage {

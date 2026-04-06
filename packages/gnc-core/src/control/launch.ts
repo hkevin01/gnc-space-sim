@@ -1,3 +1,33 @@
+/**
+ * ID: GNC-CTRL-001
+ * Requirement: Implement closed-loop attitude and thrust-vector control (TVC)
+ *   for a launch vehicle during powered ascent, using discrete-time PID
+ *   controllers for pitch, yaw, and roll axes.
+ * Purpose: Translate guidance pitch/yaw commands into physical engine gimbal
+ *   angles that steer the vehicle along the commanded trajectory.
+ * Rationale: PID control is the industry-standard first choice for TVC on
+ *   launchers (used on Atlas V, Delta IV, SLS) due to its simplicity,
+ *   well-understood stability margins, and tolerance of model uncertainty.
+ *   A more advanced LQR/H-infinity design would require an accurate
+ *   flexible-body model that is not yet available.
+ * Inputs:
+ *   setpoint  – commanded pitch/yaw/roll angle [rad]
+ *   measurement – current IMU-measured angle [rad]
+ *   dt        – control update interval [s], must be > 0
+ *   kp, ki, kd – PID gains, all finite reals ≥ 0
+ * Outputs: gimbal deflection angle [rad], clamped to ±max_gimbal_angle
+ * Preconditions: dt > 0; gains are finite; reset() called between flight phases.
+ * Postconditions: output is bounded by hardware gimbal limits.
+ * Assumptions: Actuator is infinitely fast (no actuator dynamics modelled);
+ *   digital control rate ≥ 10 Hz.
+ * Failure Modes: Integral wind-up → TVC saturation → vehicle destabilisation.
+ *   Mitigated by clamping integral accumulator (TODO: implement anti-windup).
+ * Constraints: Gimbal deflection ≤ 8° per axis (RS-25 hardware limit).
+ * Verification: pidController.spec.ts TEST-PID-001 to TEST-PID-007.
+ * References: Franklin, Powell & Emami-Naeini "Feedback Control of Dynamic
+ *   Systems" §8; NASA-SP-8016 "Effects of Structural Flexibility on Launch
+ *   Vehicle Control Systems".
+ */
 import { LaunchPhase, LaunchState } from '../launch/guidance'
 import { Vec3 } from '../orbits/twobody'
 

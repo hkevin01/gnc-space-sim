@@ -1,6 +1,37 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /**
+ * ID: GNC-PLAN-003
+ * Requirement: Integrate the enhanced SSSP trajectory planner with the GNC
+ *   simulation’s spacecraft state, providing real-time trajectory optimisation
+ *   at configurable replanning frequencies.
+ * Purpose: Top-level orchestrator that accepts a SpacecraftTrajectoryState and
+ *   produces a TrajectoryOptimizationResult including the optimal burn sequence,
+ *   fuel efficiency estimate, and replanning diagnostics.
+ * Rationale: Isolating the replanning logic here (rather than inside guidance.ts)
+ *   allows the optimiser to be hot-swapped between sessions without touching
+ *   the guidance law.  Warm-starting reuses the previous plan’s hop-set as
+ *   a hint, reducing cold-start cost by ~40% (bench.compare.spec.ts).
+ * Inputs:
+ *   state – SpacecraftTrajectoryState (position [m], velocity [m/s], mass [kg],
+ *     phase, target orbit, constraints)
+ *   config – maxPlanningTime [ms], replanFrequency [Hz], graphDensity,
+ *     warmStarting, monitoring
+ * Outputs: TrajectoryOptimizationResult – trajectory points, performance
+ *   metrics (planningTimeMs, nodesVisited, speedupFactor), success flag
+ * Preconditions: state.position / velocity are finite; constraints are positive.
+ * Postconditions: result.success = true iff a valid trajectory was found;
+ *   result.trajectory.length > 0 on success.
+ * Assumptions: Replanning is triggered on schedule or on disturbance detection;
+ *   trajectory is executed open-loop between replanning intervals.
+ * Failure Modes: Planning timeout → result.success = false, previous trajectory
+ *   held.  State divergence detection triggers forced replan.
+ * Constraints: Total onboard budget ≤ 50 ms/frame; monitoring adds ~5% overhead.
+ * Verification: Manual integration run; bench.compare.spec.ts performance regression.
+ * References: GNC-PLAN-001; GNC-PLAN-002; NASA-SP-2010-3407 "Human Integration
+ *   Design Handbook" (trajectory display requirements for crew).
+ */
+/**
  * Enhanced Trajectory Planning Integration
  *
  * Integrates the breakthrough SSSP algorithm with the existing GNC simulation
