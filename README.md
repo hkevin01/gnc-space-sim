@@ -383,6 +383,34 @@ flowchart LR
     D --> B
 ```
 
+<details>
+<summary>🏷️ NASA Comment ID catalog (all 20 annotated source files)</summary>
+
+| ID | File | Description |
+|----|------|-------------|
+| `GNC-ORBIT-001` | `gnc-core/src/orbits/twobody.ts` | Two-body Keplerian propagator |
+| `GNC-CONST-001` | `gnc-core/src/math/constants.ts` | Physical constants (IAU/WGS84/CODATA) |
+| `GNC-PHYS-001` | `gnc-core/src/math/physics.ts` | Atmospheric model + drag |
+| `GNC-NAV-001` | `gnc-core/src/navigation/kalman.ts` | 6-state discrete Kalman Filter |
+| `GNC-NAV-002` | `gnc-core/src/navigation/sensors.ts` | IMU + GPS sensor simulation |
+| `GNC-GUID-001` | `gnc-core/src/launch/guidance.ts` | SLS pitch schedule + launch azimuth |
+| `GNC-INTG-001` | `gnc-core/src/launch/integration.ts` | VehicleIntegrator / staging |
+| `GNC-CTRL-001` | `gnc-core/src/control/launch.ts` | Discrete PID + TVC gimbal |
+| `GNC-ENGINE-001` | `gnc-core/src/engines/thrust_curves.ts` | Thrust curve interpolation |
+| `GNC-PLAN-001` | `gnc-core/src/planning/enhanced-sssp.ts` | SSSP trajectory graph solver |
+| `GNC-PLAN-002` | `gnc-core/src/planning/trajectory-planner.ts` | Trajectory planner |
+| `GNC-PLAN-003` | `gnc-core/src/trajectory-optimizer.ts` | Multi-objective trajectory optimizer |
+| `SCEN-VEH-001` | `mission-scenarios/src/vehicles/sls_block1.ts` | SLS Block 1 config |
+| `SCEN-MISS-001` | `mission-scenarios/src/missions/artemis2.ts` | Artemis II mission profile |
+| `SSIM-SOLARSYS-001–004` | `apps/web/src/components/SolarSystem.tsx` | Planet rendering + texture error boundary |
+| `SSIM-LAUNCHDEMO-001` | `apps/web/src/components/LaunchDemo.tsx` | Launch demo physics loop |
+| `SSIM-LAUNCHSIM-001` | `apps/web/src/components/LaunchSimulation.tsx` | Launch simulation camera + viewport |
+| `SSIM-SLSVIS-001` | `apps/web/src/components/SLSVisualization.tsx` | SLS 3D geometry + exhaust plumes |
+| `SSIM-SLSDEMO-001` | `apps/web/src/components/SLSDemo.tsx` | SLS demo wrapper |
+| `SSIM-SIMPLSLS-001` | `apps/web/src/components/SimpleSLSDemo.tsx` | Simplified SLS demo |
+
+</details>
+
 ### 3 · Control — Discrete PID
 
 Each axis uses an independent `PIDController(kp, ki, kd, dt)`:
