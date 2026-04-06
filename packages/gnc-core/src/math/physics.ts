@@ -1,4 +1,23 @@
 /**
+ * ID: GNC-PHYS-001
+ * Requirement: Provide all physical constants, mission-design parameters, and
+ *   atmospheric/launch-site values required by the GNC simulation stack.
+ * Purpose: Single authoritative module for all numeric parameters so that
+ *   engineering constants are never duplicated across subsystems.
+ * Rationale: Duplicating constants across modules leads to value skew and
+ *   subtle integration bugs (e.g. different EARTH_RADIUS in guidance vs.
+ *   navigation). Centralisation enforces consistency.
+ * Assumptions: All values in SI units (m, kg, s, rad, Pa) unless comment
+ *   explicitly states otherwise.  Values are read-only exports; no mutation.
+ * Failure Modes: Out-of-date constants (e.g. stale J2 value) cause
+ *   secular orbit errors. Validated against IAU/WGS84 at every release.
+ * Constraints: Must not import other project modules (prevents circular deps).
+ * Verification: physics.spec.ts TEST-PHYS-* suite.
+ * References: WGS84 (NIMA TR8350.2 3rd ed.); IAU 2012 numerical standards;
+ *   NASA JPL DE430; NIST CODATA 2018; Vallado, "Fundamentals of
+ *   Astrodynamics and Applications", 4th ed.
+ */
+/**
  * Extended GNC Mathematical Constants and Physical Parameters
  */
 

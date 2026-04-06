@@ -1,4 +1,27 @@
 /**
+ * ID: SSIM-SIMPLSLS-001
+ * Requirement: Render a self-contained SLS mission-selection and 3D launch
+ *   demonstration with no external state dependencies, suitable for standalone
+ *   page embedding or sandboxed preview.
+ * Purpose: Provide a quick-start demo that shows mission selection and real-time
+ *   SLS staging without requiring the full GNC simulation stack to be active.
+ * Rationale: The mock vehicle state (`createMockVehicleState`) uses simple linear
+ *   altitude/velocity models so the demo runs at 60 fps with zero physics cost.
+ *   The full physics engine (VehicleIntegrator + SLSGuidance) is used in
+ *   LaunchSimulation.tsx; this component is for UI/UX preview only.
+ * Inputs: None (self-contained React component)
+ * Outputs: JSX – mission selector card + 3D canvas with SLS vehicle
+ * Preconditions: Browser must support WebGL 2; @react-three/fiber Canvas available.
+ * Postconditions: Camera auto-rotates via OrbitControls; time counter increments
+ *   each animation frame.
+ * Assumptions: Staging events are approximated by linear time thresholds; values
+ *   are NOT authoritative — they are visual props only (see slsMockSimulation.spec.ts).
+ * Failure Modes: Canvas context loss → blank display; handled by R3F error fallback.
+ * Constraints: createMockVehicleState must be a pure function of `time` so the
+ *   test suite can call it without React/WebGL (see slsMockSimulation.spec.ts).
+ * Verification: slsMockSimulation.spec.ts TEST-SLS-INT-001 (14 tests); manual visual smoke.
+ * References: SLSVisualization.tsx SSIM-SLSVIS-001; LaunchSimulation.tsx SSIM-LAUNCHSIM-001.
+ *
  * Simple SLS Demo Component
  *
  * Basic demonstration of SLS vehicle visualization and mission selection.

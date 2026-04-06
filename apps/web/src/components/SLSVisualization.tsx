@@ -1,4 +1,30 @@
 /**
+ * ID: SSIM-SLSVIS-001
+ * Requirement: Render a NASA SLS Block 1 vehicle in 3D using React Three Fiber,
+ *   with geometries, exhaust plumes, and staging animations driven by VehicleState.
+ * Purpose: Provide a visually accurate real-time 3D representation of the SLS
+ *   vehicle so operators can observe staging events and vehicle attitude.
+ * Rationale: Procedural geometry (Three.js primitives) is used over loaded GLTF
+ *   assets to keep bundle size <5 MB and ensure offline functionality.
+ *   Stage separation is triggered by `vehicleState.activeStages` membership,
+ *   matching the ground-truth from VehicleIntegrator.
+ * Inputs:
+ *   position  – [x,y,z] in scene units (millions of km); default [0,0,0]
+ *   vehicleState – VehicleState from @gnc/core VehicleIntegrator
+ *   scale     – uniform scale factor; default 1
+ *   showExhaust    – enables exhaust cone meshes; default true
+ *   showSeparation – enables separation animation; default true
+ * Outputs: React JSX subtree rendered into the Three.js scene graph.
+ * Preconditions: Must be a child of a @react-three/fiber <Canvas>.
+ * Postconditions: Vehicle mesh updates every animation frame via useFrame.
+ * Assumptions: Scene units match LaunchDemo.tsx (EARTH_RADIUS_SCENE ≈ 0.159 units);
+ *   scale prop applies uniformly to keep proportions correct.
+ * Failure Modes: useFrame callback throws → R3F catches and logs, renders blank node.
+ * Constraints: Runs at GPU frame rate; must complete all updates within 16 ms.
+ * Verification: Manual visual smoke test; slsMockSimulation.spec.ts for state contract.
+ * References: NASA SLS Block 1 Configuration Document (NASA/CR-2014-218477);
+ *   Three.js CylinderGeometry docs; React Three Fiber useFrame API.
+ *
  * NASA Space Launch System (SLS) 3D Visualization Component
  *
  * React Three Fiber component for rendering SLS Block 1 vehicle

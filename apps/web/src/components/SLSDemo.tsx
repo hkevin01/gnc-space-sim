@@ -1,4 +1,27 @@
 /**
+ * ID: SSIM-SLSDEMO-001
+ * Requirement: Demonstrate the complete integrated SLS guidance + vehicle
+ *   integration loop (SLSGuidance + VehicleIntegrator) with real-time 3D
+ *   rendering and a live telemetry dashboard for the Artemis II mission.
+ * Purpose: Integration harness that validates the full GNC stack end-to-end
+ *   in a browser context, serving as both a live demo and a manual smoke test.
+ * Rationale: Wiring SLSGuidance → VehicleIntegrator → SLSBlock1 (vis) in a
+ *   single component lets developers verify the full chain without running
+ *   instrumented tests; all state is visible in the overlay.
+ * Inputs: className (optional CSS class string)
+ * Outputs: JSX – mission selector + 3D canvas + telemetry overlay; side-effect:
+ *   requestAnimationFrame loop updates vehicleState at simulation speed.
+ * Preconditions: @gnc/core and @gnc/scenarios packages must be built; WebGL 2 available.
+ * Postconditions: On mission start, VehicleIntegrator advances 0→>600 s wall-clock.
+ * Assumptions: Artemis2Mission and SLSBlock1 (from @gnc/scenarios) contain
+ *   authoritative stage and event data matching the SLS Block 1 user guide.
+ * Failure Modes: VehicleIntegrator.update() exception → mission stops at last
+ *   valid state; error is logged to console.
+ * Constraints: Simulation runs at real-time (1 s wall = 1 s mission time).
+ * Verification: Manual mission run + telemetry verification; SLSDemo smoke test.
+ * References: SLSGuidance GNC-GUID-001; VehicleIntegrator GNC-INTG-001;
+ *   Artemis II mission design (NASA/CR-2019-220391).
+ *
  * SLS Artemis II Demo Component
  *
  * Demonstrates the integrated SLS + Artemis II simulation

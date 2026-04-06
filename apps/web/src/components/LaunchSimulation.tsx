@@ -1,3 +1,21 @@
+/**
+ * ID: SSIM-LAUNCHSIM-001
+ * Requirement: Render the full SLS mission simulation: 3D WebGL canvas at
+ *   correct scale + GNC telemetry overlay, wired to the selected mission config.
+ * Purpose: Top-level container that composes LaunchDemo (physics + 3D) and
+ *   GNCPanel (telemetry readout) so the UI layer stays thin and testable.
+ * Rationale: Separating canvas setup (camera, lights, OrbitControls) from
+ *   guidance/integration logic means each can be tested independently.
+ *   Camera near-plane = 0.0001 prevents Z-fighting at the ~0.159 unit Earth radius.
+ * Inputs: selectedMission (string ID), currentPhase (mission progress object)
+ * Outputs: JSX – Canvas + GNCPanel; side-effects: sets vehicleState via callback
+ * Preconditions: @react-three/fiber Canvas must be supported by the runtime browser.
+ * Assumptions: Scene units are millions of km (1 unit = 1×10⁶ km) per SolarSystem.tsx.
+ *   Camera placed at [0.35, 0.05, 0.15] to frame Earth visual sphere (r ≈ 0.159 units).
+ * Failure Modes: WebGL context loss → blank canvas; caught by React error boundary in App.tsx.
+ * Verification: Manual smoke test; slsMockSimulation.spec.ts for state data contract.
+ * References: LaunchDemo.tsx SSIM-LAUNCHDEMO-001; SolarSystem.tsx SSIM-SOLARSYS-001.
+ */
 import { LaunchPhase, LaunchState } from '@gnc/core'
 import { Canvas } from '@react-three/fiber'
 import { useState } from 'react'
@@ -56,11 +74,12 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
       <div className="flex-1 relative">
         <Canvas
           camera={{
-            // Start camera looking at Earth's surface where rocket is
-            // Rocket starts at [6.371, 0, 0] (Earth radius in scene units)
-            position: [7.5, 0.5, 1.5],  // Slightly behind and above rocket
+            // EARTH_RADIUS_SCENE ≈ 0.159 units (visual Earth sphere radius).
+            // Camera positioned radially outward from Earth surface where rocket starts.
+            // x=0.35 is just outside Earth visual sphere; y/z offset gives oblique view.
+            position: [0.35, 0.05, 0.15],
             fov: 60,
-            near: 0.001,
+            near: 0.0001,
             far: 50000
           }}
           style={{ background: "#000011", maxHeight: "100vh", maxWidth: "100vw" }}

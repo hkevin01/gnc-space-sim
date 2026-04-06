@@ -1,14 +1,58 @@
+/**
+ * ID: SSIM-SOLARSYS-001
+ * Requirement: Render an accurate 3D solar system with textured planets,
+ *   realistic orbital mechanics, and NASA-accurate planetary data.
+ * Purpose: Visual representation of the solar system for mission planning
+ *   and trajectory visualization in the GNC Space Simulation.
+ * Rationale: Uses React Three Fiber for declarative 3D scene management
+ *   with Suspense-based texture loading and ErrorBoundary guards to
+ *   ensure graceful degradation when assets are unavailable.
+ * Assumptions: Public assets at /assets/<body>/<file>.jpg exist in the
+ *   static file server root. If missing, fallback colored spheres render.
+ * Failure Modes: Texture 404 → ErrorBoundary catches → ColoredSphere fallback.
+ * References: NASA JPL Planetary Fact Sheets; physics.info astronomical data.
+ */
+
+import { Component, ErrorInfo, ReactNode, useRef, useMemo, Suspense } from 'react'
 import { useFrame, useLoader } from '@react-three/fiber'
 import {
   generateAsteroidBelt
 } from '../utils/astronomicalData'
-import { useRef, useMemo, Suspense } from 'react'
 import * as THREE from 'three'
-import { TextureLoader } from 'three/src/loaders/TextureLoader.js'
+import { TextureLoader } from 'three'
 import { StarField } from './StarField'
 import { useNasaPositions } from '../hooks/useNasaPositions'
-import { Html, Environment, Line } from '@react-three/drei'
+import { Html, Line } from '@react-three/drei'
 import { PlanetPosition } from '../services/planetaryPositionService'
+
+/**
+ * ID: SSIM-SOLARSYS-002
+ * Requirement: Catch errors from texture-loading Suspense subtrees and
+ *   render a fallback colored sphere without crashing the parent scene.
+ * Failure Modes: If useLoader throws (e.g., 404), React error boundary
+ *   catches it and renders 'fallback' prop instead.
+ */
+interface TextureErrorBoundaryProps {
+  fallback: ReactNode
+  children: ReactNode
+}
+interface TextureErrorBoundaryState { hasError: boolean }
+class TextureErrorBoundary extends Component<TextureErrorBoundaryProps, TextureErrorBoundaryState> {
+  constructor(props: TextureErrorBoundaryProps) {
+    super(props)
+    this.state = { hasError: false }
+  }
+  static getDerivedStateFromError(): TextureErrorBoundaryState {
+    return { hasError: true }
+  }
+  componentDidCatch(error: Error, _info: ErrorInfo) {
+    console.warn('[SolarSystem] Texture load error, using fallback:', error.message)
+  }
+  render() {
+    if (this.state.hasError) return this.props.fallback
+    return this.props.children
+  }
+}
 
 // Texture URL map for planets
 const TEXTURE_URLS: Record<string, string> = {
@@ -18,7 +62,16 @@ const TEXTURE_URLS: Record<string, string> = {
   MARS: '/assets/mars/mars_color.jpg',
 }
 
-// Dedicated textured mesh component using useLoader for reliable texture loading
+/**
+ * ID: SSIM-SOLARSYS-003
+ * Requirement: Load a JPEG texture via useLoader(TextureLoader) and apply
+ *   it to a sphere mesh. Must suspend (Promise throw) while loading so
+ *   the parent Suspense boundary shows the fallback.
+ * Preconditions: textureUrl must be a valid path resolvable by the Vite
+ *   dev server or static file server.
+ * Failure Modes: If URL is unreachable, useLoader throws an Error (not a
+ *   Promise); TextureErrorBoundary above this component must catch it.
+ */
 function TexturedSphere({
   textureUrl,
   radius,
@@ -44,6 +97,37 @@ function TexturedSphere({
         metalness={0.1}
       />
     </mesh>
+  )
+}
+
+/**
+ * ID: SSIM-SOLARSYS-004
+ * Requirement: Render a textured sphere wrapped in both an ErrorBoundary
+ *   and a Suspense boundary so it always resolves to a visible sphere.
+ * Inputs: Same as TexturedSphere. fallbackSphere – JSX to show while
+ *   loading or if the texture fails.
+ */
+function SafeTexturedSphere(props: {
+  textureUrl: string;
+  radius: number;
+  color: string;
+  emissive?: string;
+  emissiveIntensity?: number;
+}) {
+  const fallback = (
+    <ColoredSphere
+      radius={props.radius}
+      color={props.color}
+      emissive={props.emissive}
+      emissiveIntensity={props.emissiveIntensity}
+    />
+  )
+  return (
+    <TextureErrorBoundary fallback={fallback}>
+      <Suspense fallback={fallback}>
+        <TexturedSphere {...props} />
+      </Suspense>
+    </TextureErrorBoundary>
   )
 }
 
@@ -423,26 +507,17 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
       )}
 
       <group ref={groupRef}>
-        {/* Use Suspense with textured sphere for planets with textures */}
+        {/* Use SafeTexturedSphere (ErrorBoundary + Suspense) for planets with textures */}
         {hasTexture ? (
-          <Suspense fallback={
-            <ColoredSphere
+          <group ref={meshRef as React.RefObject<THREE.Group>}>
+            <SafeTexturedSphere
+              textureUrl={TEXTURE_URLS[name]}
               radius={data.sceneRadius}
               color={data.color}
               emissive={name === 'SUN' ? data.color : undefined}
               emissiveIntensity={name === 'SUN' ? 0.3 : 0}
             />
-          }>
-            <group ref={meshRef as React.RefObject<THREE.Group>}>
-              <TexturedSphere
-                textureUrl={TEXTURE_URLS[name]}
-                radius={data.sceneRadius}
-                color={data.color}
-                emissive={name === 'SUN' ? data.color : undefined}
-                emissiveIntensity={name === 'SUN' ? 0.3 : 0}
-              />
-            </group>
-          </Suspense>
+          </group>
         ) : (
           <mesh ref={meshRef} castShadow receiveShadow>
             <sphereGeometry args={[data.sceneRadius, 32, 32]} />
@@ -612,26 +687,17 @@ function NasaPlanet({ planetPosition, showOrbit = false, offset }: NasaPlanetPro
 
   return (
     <group position={adjustedPosition}>
-      {/* Planet mesh with texture loading */}
+      {/* Planet mesh with safe texture loading (ErrorBoundary + Suspense fallback) */}
       {hasTexture ? (
-        <Suspense fallback={
-          <ColoredSphere
+        <group ref={meshRef as React.RefObject<THREE.Group>}>
+          <SafeTexturedSphere
+            textureUrl={TEXTURE_URLS[name]}
             radius={planetData.sceneRadius}
             color={planetData.color}
             emissive={name === 'SUN' ? planetData.color : undefined}
             emissiveIntensity={name === 'SUN' ? 0.3 : 0}
           />
-        }>
-          <group ref={meshRef as React.RefObject<THREE.Group>}>
-            <TexturedSphere
-              textureUrl={TEXTURE_URLS[name]}
-              radius={planetData.sceneRadius}
-              color={planetData.color}
-              emissive={name === 'SUN' ? planetData.color : undefined}
-              emissiveIntensity={name === 'SUN' ? 0.3 : 0}
-            />
-          </group>
-        </Suspense>
+        </group>
       ) : (
         <mesh ref={meshRef}>
           <sphereGeometry args={[planetData.sceneRadius, 32, 32]} />

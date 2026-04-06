@@ -1,4 +1,36 @@
 /**
+ * ID: GNC-NAV-001
+ * Requirement: Implement a discrete-time linear Kalman Filter that fuses
+ *   position and velocity measurements into a 6-DOF state estimate for an
+ *   ascending launch vehicle.
+ * Purpose: Optimal (minimum-variance) state estimation for GNC navigation
+ *   during the powered ascent phase where GPS accuracy is degraded by high
+ *   dynamic pressure and multipath effects.
+ * Rationale: The constant-velocity state-transition model (with process noise
+ *   absorbing un-modelled accelerations) is the standard first-order
+ *   approximation for launch vehicle navigation between guidance updates.
+ *   A full INS/EKF would improve accuracy but adds complexity not justified
+ *   at the current TRL.
+ * Inputs:
+ *   initial.r  – initial position  [m, m, m],  range: Earth surface to LEO
+ *   initial.v  – initial velocity  [m/s × 3],  range: 0..10000 m/s each axis
+ *   covariances.posVar – position covariance   [m²], default 100
+ *   covariances.velVar – velocity covariance   [m²/s²], default 1
+ *   noise.*Std  – 1-σ process/measurement noise, all finite positive reals
+ * Outputs: .x Vec6 = [rx,ry,rz,vx,vy,vz] estimated state; .P 6×6 covariance
+ * Preconditions: dt > 0 for predict(); z has exactly 6 finite elements for update()
+ * Postconditions: After update(), .P is positive-semi-definite (Joseph form not used
+ *   but standard KG formulation numerically stable for this problem scale).
+ * Assumptions: Sensor noise is white Gaussian; process noise diagonal; H = I₆.
+ * Failure Modes: Covariance collapse under repeated low-noise updates → filter
+ *   stops correcting. Mitigated by non-zero process noise floor.
+ * Constraints: Numerical precision limited to IEEE-754 double; position errors
+ *   accumulate at ~50m/min without measurements.
+ * Verification: kalman.spec.ts TEST-KF-001 to TEST-KF-007.
+ * References: Kalman (1960) "A New Approach to Linear Filtering and Prediction
+ *   Problems"; Wertz, "Spacecraft Attitude Determination and Control" §12;
+ *   NASA-HDBK-1001 section 9.
+ *
  * KalmanFilter3D: Linear KF for 3D position-velocity state with constant-acceleration model.
  * State x = [rx, ry, rz, vx, vy, vz]^T
  * Discrete-time model with dt:

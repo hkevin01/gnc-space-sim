@@ -1,4 +1,33 @@
 /**
+ * ID: GNC-INTG-001
+ * Requirement: Implement multi-stage vehicle mass-flow, staging-event, and
+ *   thrust-aggregation logic for the SLS Block 1 (four-stage) configuration.
+ * Purpose: Provide the propulsion and mass model that drives the physical
+ *   simulation; accurate mass history is critical for T/W, drag, and
+ *   trajectory integration.
+ * Rationale: A discrete staging-event system (trigger on time or altitude)
+ *   cleanly separates propulsion physics from navigation/guidance concerns and
+ *   allows unit-testing of each staging event independently.
+ * Inputs:
+ *   stages [StageConfig[]] – dry mass, propellant mass, thrust (SL + vac),
+ *     Isp (SL + vac), optional thrust profile, `parallel` flag for SRBs
+ *   stagingEvents [StagingEvent[]] – jettison/ignition events with condition
+ *     type ('time'|'altitude') and trigger value
+ *   payloadMass [kg] – adapter + spacecraft mass
+ * Outputs: VehicleState per update() call — mass [kg], thrust [N], stage
+ *   propellant remaining [kg], activeStages []
+ * Preconditions: All config values > 0; stagingEvents sorted by trigger value.
+ * Postconditions: mass decreases monotonically; thrust = 0 after all burnouts.
+ * Assumptions: Atmosphere is simplified (uses altitude < 1000 m for SL thrust);
+ *   no TVC misalignment or cosine losses modelled here.
+ * Failure Modes: Misconfigured staging event times → engine remains active after
+ *   burnout → mass goes negative → simulation diverges. Propellant is clamped to 0.
+ * Constraints: Each `update()` call must be forward in time (time ≥ prev time).
+ * Verification: vehicleIntegrator.spec.ts TEST-VINT-001 to TEST-VINT-012.
+ * References: SLS Block 1 user guide (NASA/TM-2019-220230);
+ *   Sutton & Biblarz "Rocket Propulsion Elements" §10.
+ */
+/**
  * Launch Vehicle Integration and Staging for SLS
  *
  * Handles mass flow, thrust calculations, and staging events

@@ -1,3 +1,31 @@
+/**
+ * ID: GNC-GUID-001
+ * Requirement: Implement closed-loop pitch/yaw/throttle guidance for the SLS
+ *   powered ascent from liftoff through MECO, including gravity-turn and a
+ *   time-scheduled pitch programme.
+ * Purpose: Provide the guidance law that steers the launch vehicle along the
+ *   optimal ascent trajectory while managing structural loads (max-Q) and
+ *   achieving the required orbital insertion conditions.
+ * Rationale: A gravity-turn combined with an explicit time-based pitch
+ *   schedule is standard practice for high-T/W vehicles (SLS T/W ≈ 1.35).
+ *   Pure energy-optimal guidance (e.g. PEG) is added in the ICPS phase;
+ *   during the first stage a scheduled open-loop pitch programme is more
+ *   robust against sensor failures.
+ * Inputs: LaunchState (velocity_magnitude [m/s], altitude [m],
+ *   mission_time [s], heading [rad], flight_path_angle [rad])
+ * Outputs: { pitch [rad], yaw [rad], throttle [0..1] }
+ * Preconditions: LaunchState fields are finite real numbers; mission_time ≥ 0.
+ * Postconditions: pitch ∈ [0, π/2]; yaw is finite; throttle ∈ [0, 1].
+ * Assumptions: Launch site is Cape Canaveral (lat 28.608°); atmosphere model
+ *   is exponential (scale height 8.4 km).
+ * Failure Modes: NaN propagation from invalid state → invalid TVC commands →
+ *   vehicle loss. All outputs clamped/validated before consumption by control layer.
+ * Constraints: Guidance updates at simulation frame rate (≥ 1 Hz).
+ * Verification: guidance.spec.ts TEST-GUID-001 to TEST-GUID-011.
+ * References: Greensite, "Analysis and Design of Space Vehicle Flight Control
+ *   Systems"; NASA SP-8110 "Guidance and Navigation for Entry Vehicles"
+ *   (adapted for ascent); SLS Block 1 Mission Design Document.
+ */
 import {
   FAIRING_JETTISON_ALT,
   KARMAN_LINE,
@@ -112,7 +140,9 @@ export class GravityTurnGuidance {
         this.target_orbit_altitude - altitude,
         velocity * 60 // Look ahead 60 seconds
       )
-      pitch = Math.max(target_pitch, 0.1) // Minimum 5.7° pitch
+      // Clamp to gravity-turn end pitch (~27°) to avoid discontinuity at transition
+      const gravity_turn_end_pitch = Math.PI / 2 * (1 - 0.7)
+      pitch = Math.min(gravity_turn_end_pitch, Math.max(target_pitch, 0.1))
     }
 
     // Yaw Program: Launch Azimuth for Target Inclination
@@ -141,11 +171,11 @@ export class GravityTurnGuidance {
     const cos_inclination = Math.cos(target_inclination)
     const cos_latitude = Math.cos(LAUNCH_LAT)
 
-    if (Math.abs(cos_inclination) > Math.abs(cos_latitude)) {
-      // Direct launch possible
+    if (Math.abs(cos_inclination) <= Math.abs(cos_latitude)) {
+      // Direct launch possible: |cos(i)| / |cos(lat)| <= 1, arcsin is valid
       return Math.asin(cos_inclination / cos_latitude)
     } else {
-      // Dogleg maneuver required - simplified eastward launch
+      // Dogleg maneuver required (inclination unreachable from this latitude)
       return 0 // Due east
     }
   }
