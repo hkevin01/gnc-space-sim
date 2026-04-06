@@ -92,6 +92,24 @@ export const CELESTIAL_BODIES: CelestialBodyData[] = [
   }
 ]
 
+export function getCelestialBodyPositions(timeSeconds: number): Map<string, THREE.Vector3> {
+  const positions = new Map<string, THREE.Vector3>()
+  positions.set('sun', new THREE.Vector3(0, 0, 0))
+  const earth = CELESTIAL_BODIES.find(b => b.id === 'earth')!
+  const earthPos = calculatePlanetPosition(earth, timeSeconds)
+  positions.set('earth', earthPos)
+  const moon = CELESTIAL_BODIES.find(b => b.id === 'moon')!
+  if (moon) {
+    const moonLocalPos = calculatePlanetPosition(moon, timeSeconds * 30)
+    positions.set('moon', earthPos.clone().add(moonLocalPos))
+  }
+  CELESTIAL_BODIES.forEach(body => {
+    if (body.type === 'star' || body.id === 'earth' || body.id === 'moon') return
+    positions.set(body.id, calculatePlanetPosition(body, timeSeconds))
+  })
+  return positions
+}
+
 function calculatePlanetPosition(body: CelestialBodyData, timeSeconds: number): THREE.Vector3 {
   if (body.type === 'star') return new THREE.Vector3(0, 0, 0)
 

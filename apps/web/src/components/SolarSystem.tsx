@@ -509,7 +509,7 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
       <group ref={groupRef}>
         {/* Use SafeTexturedSphere (ErrorBoundary + Suspense) for planets with textures */}
         {hasTexture ? (
-          <group ref={meshRef as React.RefObject<THREE.Group>}>
+          <group ref={meshRef as unknown as React.RefObject<THREE.Group>}>
             <SafeTexturedSphere
               textureUrl={TEXTURE_URLS[name]}
               radius={data.sceneRadius}
@@ -689,7 +689,7 @@ function NasaPlanet({ planetPosition, showOrbit = false, offset }: NasaPlanetPro
     <group position={adjustedPosition}>
       {/* Planet mesh with safe texture loading (ErrorBoundary + Suspense fallback) */}
       {hasTexture ? (
-        <group ref={meshRef as React.RefObject<THREE.Group>}>
+        <group ref={meshRef as unknown as React.RefObject<THREE.Group>}>
           <SafeTexturedSphere
             textureUrl={TEXTURE_URLS[name]}
             radius={planetData.sceneRadius}
