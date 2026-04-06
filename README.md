@@ -269,6 +269,12 @@ gnc-space-sim/
 - **Node.js** ≥ 20 — [nodejs.org](https://nodejs.org)
 - **pnpm** ≥ 9 — `npm install -g pnpm`
 - **Docker** (optional, recommended) — [docker.com](https://docker.com)
+- **docker-buildx** (required for Dev Container) — `sudo pacman -S docker-buildx` / `sudo apt install docker-buildx-plugin`
+
+> [!IMPORTANT]
+> If you use the **Dev Container** (`Reopen in Container`), Docker BuildKit must be available via `docker-buildx`.
+> Without it, the legacy builder stalls for 5–6 seconds per build step, making the container appear to hang indefinitely.
+> Verify with `docker buildx version` — if the command is not found, install the plugin before reopening in the container.
 
 ### Clone & Install
 
