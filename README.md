@@ -55,18 +55,18 @@ Every algorithm carries a NASA-style structured comment block (ID, Requirement, 
 
 ## ✨ Key Features
 
-| Icon | Feature | Description | Status |
+| <sub>Icon</sub> | <sub>Feature</sub> | <sub>Description</sub> | <sub>Status</sub> |
 |------|---------|-------------|--------|
-| 🚀 | **SLS Block 1 Simulation** | Full 4-stage vehicle (SRBs + Core + ICPS) with real mass, thrust, and Isp values | ✅ Stable |
-| 🌍 | **Textured Solar System** | NASA-accurate orbital radii with error-boundary-protected texture loading | ✅ Stable |
-| 🧭 | **Gravity-Turn Guidance** | SLS pitch schedule + launch-azimuth azimuth computation at Cape Canaveral | ✅ Stable |
-| 📡 | **Kalman Navigation Filter** | 6-DOF linear KF: predict / update with configurable process & sensor noise | ✅ Stable |
-| 🎛️ | **PID Thrust Vector Control** | Discrete-time PID for pitch / yaw / roll with reset between flight phases | ✅ Stable |
-| 🛰️ | **SSSP Trajectory Planner** | Sub-O(m + n log n) SSSP replacing Dijkstra for real-time orbital replanning | ✅ Stable |
-| 🔬 | **Sensor Simulation** | IMU + GPS models with altitude-dependent availability and noise | ✅ Stable |
-| 🧪 | **161 Automated Tests** | Unit + integration tests across @gnc/core, @gnc/scenarios, and @gnc/web | ✅ Stable |
-| 🐳 | **Docker Dev Environment** | One-command containerised dev with hot reload | ✅ Stable |
-| 🦀 | **Rust/WASM Kernels** | High-performance orbit propagator kernel (in progress) | 🔄 In Progress |
+| <sub>🚀</sub> | <sub>**SLS Block 1 Simulation**</sub> | <sub>Full 4-stage vehicle (SRBs + Core + ICPS) with real mass, thrust, and Isp values</sub> | <sub>✅ Stable</sub> |
+| <sub>🌍</sub> | <sub>**Textured Solar System**</sub> | <sub>NASA-accurate orbital radii with error-boundary-protected texture loading</sub> | <sub>✅ Stable</sub> |
+| <sub>🧭</sub> | <sub>**Gravity-Turn Guidance**</sub> | <sub>SLS pitch schedule + launch-azimuth azimuth computation at Cape Canaveral</sub> | <sub>✅ Stable</sub> |
+| <sub>📡</sub> | <sub>**Kalman Navigation Filter**</sub> | <sub>6-DOF linear KF: predict / update with configurable process & sensor noise</sub> | <sub>✅ Stable</sub> |
+| <sub>🎛️</sub> | <sub>**PID Thrust Vector Control**</sub> | <sub>Discrete-time PID for pitch / yaw / roll with reset between flight phases</sub> | <sub>✅ Stable</sub> |
+| <sub>🛰️</sub> | <sub>**SSSP Trajectory Planner**</sub> | <sub>Sub-O(m + n log n) SSSP replacing Dijkstra for real-time orbital replanning</sub> | <sub>✅ Stable</sub> |
+| <sub>🔬</sub> | <sub>**Sensor Simulation**</sub> | <sub>IMU + GPS models with altitude-dependent availability and noise</sub> | <sub>✅ Stable</sub> |
+| <sub>🧪</sub> | <sub>**161 Automated Tests**</sub> | <sub>Unit + integration tests across @gnc/core, @gnc/scenarios, and @gnc/web</sub> | <sub>✅ Stable</sub> |
+| <sub>🐳</sub> | <sub>**Docker Dev Environment**</sub> | <sub>One-command containerised dev with hot reload</sub> | <sub>✅ Stable</sub> |
+| <sub>🦀</sub> | <sub>**Rust/WASM Kernels**</sub> | <sub>High-performance orbit propagator kernel (in progress)</sub> | <sub>🔄 In Progress</sub> |
 
 **Performance highlights:**
 - 60 FPS 3D rendering at 1080p with active trajectory trails
@@ -243,20 +243,20 @@ gnc-space-sim/
 
 ## 🔬 Technology Stack
 
-| Technology | Version | Purpose | Why Chosen | Alternatives Rejected |
+| <sub>Technology</sub> | <sub>Version</sub> | <sub>Purpose</sub> | <sub>Why Chosen</sub> | <sub>Alternatives Rejected</sub> |
 |------------|---------|---------|------------|-----------------------|
-| **TypeScript** | 5.6 | Type system across all packages | Strict typing prevents unit-conversion bugs in physics constants | Plain JS — too risky for GNC maths |
-| **React** | 18.3 | Component UI + state | Concurrent mode, React Three Fiber integration | Vue/Svelte — smaller R3F ecosystem |
-| **Three.js** | 0.169 | WebGL 3D scene | Best WebGL abstraction, huge community | Babylon.js — heavier bundle |
-| **React Three Fiber** | 8.17 | Declarative R3F scene graph | Idiomatic React + Three.js, hooks API | Raw Three.js — no React composability |
-| **@react-three/drei** | 9.121 | Camera controls, helpers | Pre-built OrbitControls, helpers, avoid boilerplate | Manual Three.js controls |
-| **Vite** | 6.0 | Dev server + bundler | Sub-second HMR, native ESM, fast prod builds | webpack — slower cold start |
-| **Vitest** | 2.1 | Unit / integration tests | Vite-native, instant watch mode, Vitest UI | Jest — requires Babel transform |
-| **pnpm** | 9.12 | Monorepo package manager | Strict linking, disk-efficient, workspace protocol | npm/yarn — slower, less strict |
-| **Zustand** | 5.0 | Global UI state | Minimal API, no boilerplate, TS-first | Redux — too verbose for this scope |
-| **Tailwind CSS** | 4.1 | Utility styling | Zero runtime, consistent tokens | CSS modules — more file overhead |
-| **Docker** | Latest | Dev + prod containers | Reproducible environment across machines | Bare Node — env drift |
-| **Rust + wasm-pack** | nightly | High-perf orbit kernel | Near-native speed for RK4 integration | TS-only — 10–50× slower for dense loops |
+| <sub>**TypeScript**</sub> | <sub>5.6</sub> | <sub>Type system across all packages</sub> | <sub>Strict typing prevents unit-conversion bugs in physics constants</sub> | <sub>Plain JS — too risky for GNC maths</sub> |
+| <sub>**React**</sub> | <sub>18.3</sub> | <sub>Component UI + state</sub> | <sub>Concurrent mode, React Three Fiber integration</sub> | <sub>Vue/Svelte — smaller R3F ecosystem</sub> |
+| <sub>**Three.js**</sub> | <sub>0.169</sub> | <sub>WebGL 3D scene</sub> | <sub>Best WebGL abstraction, huge community</sub> | <sub>Babylon.js — heavier bundle</sub> |
+| <sub>**React Three Fiber**</sub> | <sub>8.17</sub> | <sub>Declarative R3F scene graph</sub> | <sub>Idiomatic React + Three.js, hooks API</sub> | <sub>Raw Three.js — no React composability</sub> |
+| <sub>**@react-three/drei**</sub> | <sub>9.121</sub> | <sub>Camera controls, helpers</sub> | <sub>Pre-built OrbitControls, helpers, avoid boilerplate</sub> | <sub>Manual Three.js controls</sub> |
+| <sub>**Vite**</sub> | <sub>6.0</sub> | <sub>Dev server + bundler</sub> | <sub>Sub-second HMR, native ESM, fast prod builds</sub> | <sub>webpack — slower cold start</sub> |
+| <sub>**Vitest**</sub> | <sub>2.1</sub> | <sub>Unit / integration tests</sub> | <sub>Vite-native, instant watch mode, Vitest UI</sub> | <sub>Jest — requires Babel transform</sub> |
+| <sub>**pnpm**</sub> | <sub>9.12</sub> | <sub>Monorepo package manager</sub> | <sub>Strict linking, disk-efficient, workspace protocol</sub> | <sub>npm/yarn — slower, less strict</sub> |
+| <sub>**Zustand**</sub> | <sub>5.0</sub> | <sub>Global UI state</sub> | <sub>Minimal API, no boilerplate, TS-first</sub> | <sub>Redux — too verbose for this scope</sub> |
+| <sub>**Tailwind CSS**</sub> | <sub>4.1</sub> | <sub>Utility styling</sub> | <sub>Zero runtime, consistent tokens</sub> | <sub>CSS modules — more file overhead</sub> |
+| <sub>**Docker**</sub> | <sub>Latest</sub> | <sub>Dev + prod containers</sub> | <sub>Reproducible environment across machines</sub> | <sub>Bare Node — env drift</sub> |
+| <sub>**Rust + wasm-pack**</sub> | <sub>nightly</sub> | <sub>High-perf orbit kernel</sub> | <sub>Near-native speed for RK4 integration</sub> | <sub>TS-only — 10–50× slower for dense loops</sub> |
 
 <p align="right">(<a href="#top">back to top ↑</a>)</p>
 
@@ -332,12 +332,12 @@ pnpm --filter @gnc/core test && pnpm --filter @gnc/scenarios test && pnpm --filt
 
 ### Key Keyboard Shortcuts
 
-| Key | Action |
+| <sub>Key</sub> | <sub>Action</sub> |
 |-----|--------|
-| <kbd>Space</kbd> | Pause / Resume simulation |
-| <kbd>R</kbd> | Reset to pre-launch |
-| <kbd>F</kbd> | Toggle camera follow mode |
-| <kbd>T</kbd> | Cycle telemetry panels |
+| <sub><kbd>Space</kbd></sub> | <sub>Pause / Resume simulation</sub> |
+| <sub><kbd>R</kbd></sub> | <sub>Reset to pre-launch</sub> |
+| <sub><kbd>F</kbd></sub> | <sub>Toggle camera follow mode</sub> |
+| <sub><kbd>T</kbd></sub> | <sub>Cycle telemetry panels</sub> |
 
 ### Development Commands
 
@@ -392,28 +392,28 @@ flowchart LR
 <details>
 <summary>🏷️ NASA Comment ID catalog (all 20 annotated source files)</summary>
 
-| ID | File | Description |
+| <sub>ID</sub> | <sub>File</sub> | <sub>Description</sub> |
 |----|------|-------------|
-| `GNC-ORBIT-001` | `gnc-core/src/orbits/twobody.ts` | Two-body Keplerian propagator |
-| `GNC-CONST-001` | `gnc-core/src/math/constants.ts` | Physical constants (IAU/WGS84/CODATA) |
-| `GNC-PHYS-001` | `gnc-core/src/math/physics.ts` | Atmospheric model + drag |
-| `GNC-NAV-001` | `gnc-core/src/navigation/kalman.ts` | 6-state discrete Kalman Filter |
-| `GNC-NAV-002` | `gnc-core/src/navigation/sensors.ts` | IMU + GPS sensor simulation |
-| `GNC-GUID-001` | `gnc-core/src/launch/guidance.ts` | SLS pitch schedule + launch azimuth |
-| `GNC-INTG-001` | `gnc-core/src/launch/integration.ts` | VehicleIntegrator / staging |
-| `GNC-CTRL-001` | `gnc-core/src/control/launch.ts` | Discrete PID + TVC gimbal |
-| `GNC-ENGINE-001` | `gnc-core/src/engines/thrust_curves.ts` | Thrust curve interpolation |
-| `GNC-PLAN-001` | `gnc-core/src/planning/enhanced-sssp.ts` | SSSP trajectory graph solver |
-| `GNC-PLAN-002` | `gnc-core/src/planning/trajectory-planner.ts` | Trajectory planner |
-| `GNC-PLAN-003` | `gnc-core/src/trajectory-optimizer.ts` | Multi-objective trajectory optimizer |
-| `SCEN-VEH-001` | `mission-scenarios/src/vehicles/sls_block1.ts` | SLS Block 1 config |
-| `SCEN-MISS-001` | `mission-scenarios/src/missions/artemis2.ts` | Artemis II mission profile |
-| `SSIM-SOLARSYS-001–004` | `apps/web/src/components/SolarSystem.tsx` | Planet rendering + texture error boundary |
-| `SSIM-LAUNCHDEMO-001` | `apps/web/src/components/LaunchDemo.tsx` | Launch demo physics loop |
-| `SSIM-LAUNCHSIM-001` | `apps/web/src/components/LaunchSimulation.tsx` | Launch simulation camera + viewport |
-| `SSIM-SLSVIS-001` | `apps/web/src/components/SLSVisualization.tsx` | SLS 3D geometry + exhaust plumes |
-| `SSIM-SLSDEMO-001` | `apps/web/src/components/SLSDemo.tsx` | SLS demo wrapper |
-| `SSIM-SIMPLSLS-001` | `apps/web/src/components/SimpleSLSDemo.tsx` | Simplified SLS demo |
+| <sub>`GNC-ORBIT-001`</sub> | <sub>`gnc-core/src/orbits/twobody.ts`</sub> | <sub>Two-body Keplerian propagator</sub> |
+| <sub>`GNC-CONST-001`</sub> | <sub>`gnc-core/src/math/constants.ts`</sub> | <sub>Physical constants (IAU/WGS84/CODATA)</sub> |
+| <sub>`GNC-PHYS-001`</sub> | <sub>`gnc-core/src/math/physics.ts`</sub> | <sub>Atmospheric model + drag</sub> |
+| <sub>`GNC-NAV-001`</sub> | <sub>`gnc-core/src/navigation/kalman.ts`</sub> | <sub>6-state discrete Kalman Filter</sub> |
+| <sub>`GNC-NAV-002`</sub> | <sub>`gnc-core/src/navigation/sensors.ts`</sub> | <sub>IMU + GPS sensor simulation</sub> |
+| <sub>`GNC-GUID-001`</sub> | <sub>`gnc-core/src/launch/guidance.ts`</sub> | <sub>SLS pitch schedule + launch azimuth</sub> |
+| <sub>`GNC-INTG-001`</sub> | <sub>`gnc-core/src/launch/integration.ts`</sub> | <sub>VehicleIntegrator / staging</sub> |
+| <sub>`GNC-CTRL-001`</sub> | <sub>`gnc-core/src/control/launch.ts`</sub> | <sub>Discrete PID + TVC gimbal</sub> |
+| <sub>`GNC-ENGINE-001`</sub> | <sub>`gnc-core/src/engines/thrust_curves.ts`</sub> | <sub>Thrust curve interpolation</sub> |
+| <sub>`GNC-PLAN-001`</sub> | <sub>`gnc-core/src/planning/enhanced-sssp.ts`</sub> | <sub>SSSP trajectory graph solver</sub> |
+| <sub>`GNC-PLAN-002`</sub> | <sub>`gnc-core/src/planning/trajectory-planner.ts`</sub> | <sub>Trajectory planner</sub> |
+| <sub>`GNC-PLAN-003`</sub> | <sub>`gnc-core/src/trajectory-optimizer.ts`</sub> | <sub>Multi-objective trajectory optimizer</sub> |
+| <sub>`SCEN-VEH-001`</sub> | <sub>`mission-scenarios/src/vehicles/sls_block1.ts`</sub> | <sub>SLS Block 1 config</sub> |
+| <sub>`SCEN-MISS-001`</sub> | <sub>`mission-scenarios/src/missions/artemis2.ts`</sub> | <sub>Artemis II mission profile</sub> |
+| <sub>`SSIM-SOLARSYS-001–004`</sub> | <sub>`apps/web/src/components/SolarSystem.tsx`</sub> | <sub>Planet rendering + texture error boundary</sub> |
+| <sub>`SSIM-LAUNCHDEMO-001`</sub> | <sub>`apps/web/src/components/LaunchDemo.tsx`</sub> | <sub>Launch demo physics loop</sub> |
+| <sub>`SSIM-LAUNCHSIM-001`</sub> | <sub>`apps/web/src/components/LaunchSimulation.tsx`</sub> | <sub>Launch simulation camera + viewport</sub> |
+| <sub>`SSIM-SLSVIS-001`</sub> | <sub>`apps/web/src/components/SLSVisualization.tsx`</sub> | <sub>SLS 3D geometry + exhaust plumes</sub> |
+| <sub>`SSIM-SLSDEMO-001`</sub> | <sub>`apps/web/src/components/SLSDemo.tsx`</sub> | <sub>SLS demo wrapper</sub> |
+| <sub>`SSIM-SIMPLSLS-001`</sub> | <sub>`apps/web/src/components/SimpleSLSDemo.tsx`</sub> | <sub>Simplified SLS demo</sub> |
 
 </details>
 
@@ -452,28 +452,28 @@ $$\text{pos}_\text{scene} = (r - r_\text{Earth,centre}) \times 10^{-9} + r_\text
 <details>
 <summary>📋 Full test inventory</summary>
 
-| Package | Spec file | Tests | Coverage area |
+| <sub>Package</sub> | <sub>Spec file</sub> | <sub>Tests</sub> | <sub>Coverage area</sub> |
 |---------|-----------|------:|---------------|
-| `@gnc/core` | `physics.spec.ts` | 15 | Orbital constants, two-body propagator |
-| `@gnc/core` | `guidance.spec.ts` | 12 | GravityTurnGuidance, SLSGuidance |
-| `@gnc/core` | `vehicleIntegrator.spec.ts` | 12 | Staging events, mass flow, T/W |
-| `@gnc/core` | `kalman.spec.ts` | 8 | KF init, predict/update, convergence |
-| `@gnc/core` | `thrustCurves.spec.ts` | 14 | SRB + liquid engine interpolation |
-| `@gnc/core` | `pidController.spec.ts` | 9 | P/I/D math, reset, combined gains |
-| `@gnc/core` | `sensors.spec.ts` | 14 | ECEF↔geodetic, IMU/GPS simulation |
-| `@gnc/core` | `enhancedSSSP.spec.ts` | 1 | SSSP correctness |
-| `@gnc/core` | `bench.compare.spec.ts` | 1 | SSSP vs Dijkstra speedup |
-| `@gnc/core` | `enhancedSSSP.perf.spec.ts` | 1 | Throughput regression |
-| `@gnc/core` | `shortestPath.spec.ts` | 1 | Shortest path baseline |
-| `@gnc/core` | `twobody.test.ts` | 1 | Two-body propagator smoke |
-| `@gnc/scenarios` | `slsBlock1.spec.ts` | 23 | Vehicle config, mass, events |
-| `@gnc/scenarios` | `artemis2.spec.ts` | 20 | Mission profile, guidance cross-check |
-| `@gnc/scenarios` | `scenario.test.ts` | 1 | EARTH_ASTEROID_MARS export |
-| `@gnc/web` | `solarSystemScale.spec.ts` | 9 | Scale constant consistency |
-| `@gnc/web` | `slsMockSimulation.spec.ts` | 14 | SLS staging pipeline integration |
-| `@gnc/web` | `SimulationLayout.test.tsx` | 1 | Layout component smoke |
-| `@gnc/web` | `App.test.tsx` | 1 | App root smoke |
-| | **Total** | **161** | |
+| <sub>`@gnc/core`</sub> | <sub>`physics.spec.ts`</sub> | <sub>15</sub> | <sub>Orbital constants, two-body propagator</sub> |
+| <sub>`@gnc/core`</sub> | <sub>`guidance.spec.ts`</sub> | <sub>12</sub> | <sub>GravityTurnGuidance, SLSGuidance</sub> |
+| <sub>`@gnc/core`</sub> | <sub>`vehicleIntegrator.spec.ts`</sub> | <sub>12</sub> | <sub>Staging events, mass flow, T/W</sub> |
+| <sub>`@gnc/core`</sub> | <sub>`kalman.spec.ts`</sub> | <sub>8</sub> | <sub>KF init, predict/update, convergence</sub> |
+| <sub>`@gnc/core`</sub> | <sub>`thrustCurves.spec.ts`</sub> | <sub>14</sub> | <sub>SRB + liquid engine interpolation</sub> |
+| <sub>`@gnc/core`</sub> | <sub>`pidController.spec.ts`</sub> | <sub>9</sub> | <sub>P/I/D math, reset, combined gains</sub> |
+| <sub>`@gnc/core`</sub> | <sub>`sensors.spec.ts`</sub> | <sub>14</sub> | <sub>ECEF↔geodetic, IMU/GPS simulation</sub> |
+| <sub>`@gnc/core`</sub> | <sub>`enhancedSSSP.spec.ts`</sub> | <sub>1</sub> | <sub>SSSP correctness</sub> |
+| <sub>`@gnc/core`</sub> | <sub>`bench.compare.spec.ts`</sub> | <sub>1</sub> | <sub>SSSP vs Dijkstra speedup</sub> |
+| <sub>`@gnc/core`</sub> | <sub>`enhancedSSSP.perf.spec.ts`</sub> | <sub>1</sub> | <sub>Throughput regression</sub> |
+| <sub>`@gnc/core`</sub> | <sub>`shortestPath.spec.ts`</sub> | <sub>1</sub> | <sub>Shortest path baseline</sub> |
+| <sub>`@gnc/core`</sub> | <sub>`twobody.test.ts`</sub> | <sub>1</sub> | <sub>Two-body propagator smoke</sub> |
+| <sub>`@gnc/scenarios`</sub> | <sub>`slsBlock1.spec.ts`</sub> | <sub>23</sub> | <sub>Vehicle config, mass, events</sub> |
+| <sub>`@gnc/scenarios`</sub> | <sub>`artemis2.spec.ts`</sub> | <sub>20</sub> | <sub>Mission profile, guidance cross-check</sub> |
+| <sub>`@gnc/scenarios`</sub> | <sub>`scenario.test.ts`</sub> | <sub>1</sub> | <sub>EARTH_ASTEROID_MARS export</sub> |
+| <sub>`@gnc/web`</sub> | <sub>`solarSystemScale.spec.ts`</sub> | <sub>9</sub> | <sub>Scale constant consistency</sub> |
+| <sub>`@gnc/web`</sub> | <sub>`slsMockSimulation.spec.ts`</sub> | <sub>14</sub> | <sub>SLS staging pipeline integration</sub> |
+| <sub>`@gnc/web`</sub> | <sub>`SimulationLayout.test.tsx`</sub> | <sub>1</sub> | <sub>Layout component smoke</sub> |
+| <sub>`@gnc/web`</sub> | <sub>`App.test.tsx`</sub> | <sub>1</sub> | <sub>App root smoke</sub> |
+|  | <sub>**Total**</sub> | <sub>**161**</sub> |  |
 
 </details>
 
@@ -511,14 +511,14 @@ gantt
     Machine-learning trajectory opt  :c5, 2026-10-01, 2027-02-01
 ```
 
-| Phase | Goals | Target | Status |
+| <sub>Phase</sub> | <sub>Goals</sub> | <sub>Target</sub> | <sub>Status</sub> |
 |-------|-------|--------|--------|
-| **MVP** | SLS sim, textured solar system, 161 tests | Q1 2026 | ✅ Complete |
-| **Perf** | Rust/WASM RK4 kernel, 10× physics throughput | Q2 2026 | 🔄 In Progress |
-| **Nav** | 15-state EKF, INS/GPS fusion | Q2 2026 | 🔄 In Progress |
-| **Plan** | Lambert solver, pork-chop plots | Q3 2026 | ⭕ Planned |
-| **Advanced** | Multi-body gravity, Monte Carlo | Q4 2026 | ⭕ Planned |
-| **AI/ML** | Reinforcement learning trajectory opt | 2027 | ⭕ Planned |
+| <sub>**MVP**</sub> | <sub>SLS sim, textured solar system, 161 tests</sub> | <sub>Q1 2026</sub> | <sub>✅ Complete</sub> |
+| <sub>**Perf**</sub> | <sub>Rust/WASM RK4 kernel, 10× physics throughput</sub> | <sub>Q2 2026</sub> | <sub>🔄 In Progress</sub> |
+| <sub>**Nav**</sub> | <sub>15-state EKF, INS/GPS fusion</sub> | <sub>Q2 2026</sub> | <sub>🔄 In Progress</sub> |
+| <sub>**Plan**</sub> | <sub>Lambert solver, pork-chop plots</sub> | <sub>Q3 2026</sub> | <sub>⭕ Planned</sub> |
+| <sub>**Advanced**</sub> | <sub>Multi-body gravity, Monte Carlo</sub> | <sub>Q4 2026</sub> | <sub>⭕ Planned</sub> |
+| <sub>**AI/ML**</sub> | <sub>Reinforcement learning trajectory opt</sub> | <sub>2027</sub> | <sub>⭕ Planned</sub> |
 
 <p align="right">(<a href="#top">back to top ↑</a>)</p>
 
@@ -584,14 +584,14 @@ git commit -m "feat(guidance): add Lambert solver for interplanetary transfers"
 
 ### Acknowledgements
 
-| Credit | Contribution |
+| <sub>Credit</sub> | <sub>Contribution</sub> |
 |--------|-------------|
-| **NASA** | Public-domain SLS vehicle data, orbital mechanics references, and the Artemis II mission profile |
-| **Three.js & React Three Fiber** | Exceptional WebGL abstraction and React integration |
-| **Duan, Mao, Mao, Shu & Yin (Stanford / Tsinghua / MPI)** | Deterministic near-linear SSSP algorithm (arXiv:2203.07880) underlying the trajectory planner |
-| **Vallado** | *Fundamentals of Astrodynamics and Applications* — primary orbit-mechanics reference |
-| **Sutton & Biblarz** | *Rocket Propulsion Elements* — thrust curve and Isp models |
-| **IAU / WGS84 / NIST CODATA** | Gravitational parameters and physical constants |
+| <sub>**NASA**</sub> | <sub>Public-domain SLS vehicle data, orbital mechanics references, and the Artemis II mission profile</sub> |
+| <sub>**Three.js & React Three Fiber**</sub> | <sub>Exceptional WebGL abstraction and React integration</sub> |
+| <sub>**Duan, Mao, Mao, Shu & Yin (Stanford / Tsinghua / MPI)**</sub> | <sub>Deterministic near-linear SSSP algorithm (arXiv:2203.07880) underlying the trajectory planner</sub> |
+| <sub>**Vallado**</sub> | <sub>*Fundamentals of Astrodynamics and Applications* — primary orbit-mechanics reference</sub> |
+| <sub>**Sutton & Biblarz**</sub> | <sub>*Rocket Propulsion Elements* — thrust curve and Isp models</sub> |
+| <sub>**IAU / WGS84 / NIST CODATA**</sub> | <sub>Gravitational parameters and physical constants</sub> |
 
 ---
 
