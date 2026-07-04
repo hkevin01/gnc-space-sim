@@ -56,16 +56,16 @@ The project exists for three practical reasons. First, educational simulations a
 > The repository prioritizes reproducible test outcomes, deterministic harnesses where practical, and explicit diagnostics for infeasible or numerically fragile scenarios.
 
 <div align="center">
-  <img src="documentation/images/readme/earth-sim-placeholder.jpg" alt="Earth simulation view placeholder" width="860" />
+  <img src="documentation/images/readme/sim-camera-mission-view.jpg" alt="Mission camera perspective screenshot" width="860" />
   <br />
-  <sub>Figure 1. Earth texture used by the simulation scene to represent planet-scale rendering while flight and trajectory logic run in parallel.</sub>
+  <sub>Figure 1. In-simulation mission camera view captured from the running app, showing telemetry UI and real scene perspective.</sub>
 </div>
 
 > [!NOTE]
-> This image represents one of the high-resolution planetary assets used in the live simulation view. In runtime, it is combined with camera controls, state propagation, and mission telemetry overlays.
+> This is a true camera-perspective screenshot from the live simulation runtime, not a raw texture asset.
 
 > [!IMPORTANT]
-> Screenshot refresh plan: these texture-based placeholders will be replaced with true in-simulation screenshots after you provide captures or request generation of new mission-view images.
+> Screenshot refresh plan: these baseline camera captures can be replaced later with higher-fidelity mission snapshots whenever you provide new captures or request a new screenshot pass.
 
 ---
 
@@ -175,9 +175,9 @@ flowchart LR
 ```
 
 <div align="center">
-  <img src="documentation/images/readme/sun-sim-placeholder.jpg" alt="Sun simulation view placeholder" width="860" />
+  <img src="documentation/images/readme/sim-camera-enhanced-orbits-view.jpg" alt="Enhanced orbital mechanics camera screenshot" width="860" />
   <br />
-  <sub>Figure 2. Solar texture used by the simulation for central illumination and visual context in the system view.</sub>
+  <sub>Figure 2. Enhanced orbital mechanics camera view from the running scene, showing dynamic planetary context.</sub>
 </div>
 
 > [!NOTE]
@@ -369,9 +369,9 @@ $$
 $$
 
 <div align="center">
-  <img src="documentation/images/readme/moon-sim-placeholder.jpg" alt="Moon simulation view placeholder" width="860" />
+  <img src="documentation/images/readme/sim-camera-nasa-solar-view.jpg" alt="NASA solar system camera screenshot" width="860" />
   <br />
-  <sub>Figure 3. Moon surface texture used in lunar-context visualization for transfer and trajectory interpretation.</sub>
+  <sub>Figure 3. NASA solar-system mode camera view captured in-app, used to document runtime body-position visualization.</sub>
 </div>
 
 > [!NOTE]
@@ -592,9 +592,9 @@ Estimated effort assumes a contributor who is comfortable with TypeScript and ba
 | You changed package exports | Run workspace typecheck before tests | Catch symbol collisions and export-surface regressions early |
 
 <div align="center">
-  <img src="documentation/images/readme/mars-sim-placeholder.jpg" alt="Mars simulation view placeholder" width="860" />
+  <img src="documentation/images/readme/sim-camera-launch-view.jpg" alt="Launch camera perspective screenshot" width="860" />
   <br />
-  <sub>Figure 4. Mars texture included in the simulation asset set for multi-body scene completeness and future scenario expansion.</sub>
+  <sub>Figure 4. Launch-sequence camera view from the live simulation, showing the ascent-focused perspective used during mission execution.</sub>
 </div>
 
 > [!NOTE]
