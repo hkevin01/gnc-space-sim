@@ -33,6 +33,7 @@ import { PlanetPosition } from '../services/planetaryPositionService'
  *   catches it and renders 'fallback' prop instead.
  */
 interface TextureErrorBoundaryProps {
+  resetKey?: string
   fallback: ReactNode
   children: ReactNode
 }
@@ -48,6 +49,12 @@ class TextureErrorBoundary extends Component<TextureErrorBoundaryProps, TextureE
   componentDidCatch(error: Error, _info: ErrorInfo) {
     console.warn('[SolarSystem] Texture load error, using fallback:', error.message)
   }
+  componentDidUpdate(prevProps: TextureErrorBoundaryProps) {
+    // If the texture key changes (or component remount context shifts), allow retry.
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false })
+    }
+  }
   render() {
     if (this.state.hasError) return this.props.fallback
     return this.props.children
@@ -56,7 +63,7 @@ class TextureErrorBoundary extends Component<TextureErrorBoundaryProps, TextureE
 
 // Texture URL map for planets
 const TEXTURE_URLS: Record<string, string> = {
-  SUN: '/assets/sun/sun_2k.jpg',
+  SUN: '/assets/sun/sun_color.jpg',
   EARTH: '/assets/earth/earth_2k.jpg',
   MOON: '/assets/moon/moon_2k.jpg',
   MARS: '/assets/mars/mars_color.jpg',
@@ -86,6 +93,8 @@ function TexturedSphere({
   emissiveIntensity?: number;
 }) {
   const texture = useLoader(TextureLoader, textureUrl)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.needsUpdate = true
   return (
     <mesh>
       <sphereGeometry args={[radius, 32, 32]} />
@@ -123,7 +132,7 @@ function SafeTexturedSphere(props: {
     />
   )
   return (
-    <TextureErrorBoundary fallback={fallback}>
+    <TextureErrorBoundary resetKey={props.textureUrl} fallback={fallback}>
       <Suspense fallback={fallback}>
         <TexturedSphere {...props} />
       </Suspense>
@@ -546,7 +555,7 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
               radius={data.sceneRadius}
               color={data.color}
               emissive={name === 'SUN' ? data.color : undefined}
-              emissiveIntensity={name === 'SUN' ? 0.3 : 0}
+              emissiveIntensity={name === 'SUN' ? 0.12 : 0}
             />
           </group>
         ) : (
@@ -557,7 +566,7 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
               roughness={name === 'SUN' ? 0 : 0.6}
               metalness={0.1}
               emissive={name === 'SUN' ? data.color : '#000000'}
-              emissiveIntensity={name === 'SUN' ? 0.3 : 0}
+              emissiveIntensity={name === 'SUN' ? 0.12 : 0}
             />
           </mesh>
         )}
@@ -726,7 +735,7 @@ function NasaPlanet({ planetPosition, showOrbit = false, offset }: NasaPlanetPro
             radius={planetData.sceneRadius}
             color={planetData.color}
             emissive={name === 'SUN' ? planetData.color : undefined}
-            emissiveIntensity={name === 'SUN' ? 0.3 : 0}
+            emissiveIntensity={name === 'SUN' ? 0.12 : 0}
           />
         </group>
       ) : (
@@ -737,7 +746,7 @@ function NasaPlanet({ planetPosition, showOrbit = false, offset }: NasaPlanetPro
             roughness={name === 'SUN' ? 0 : 0.8}
             metalness={0.1}
             emissive={name === 'SUN' ? planetData.color : '#000000'}
-            emissiveIntensity={name === 'SUN' ? 0.3 : 0}
+            emissiveIntensity={name === 'SUN' ? 0.12 : 0}
           />
         </mesh>
       )}

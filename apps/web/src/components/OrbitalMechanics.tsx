@@ -21,7 +21,7 @@ const SIZE_MULT = {
 
 // Texture URLs - using LOCAL 2K assets from public folder (Solar System Scope)
 const TEXTURE_URLS: Record<string, string> = {
-  sun: '/assets/sun/sun_2k.jpg',
+  sun: '/assets/sun/sun_color.jpg',
   earth: '/assets/earth/earth_2k.jpg',
   moon: '/assets/moon/moon_2k.jpg',
   mars: '/assets/mars/mars_color.jpg',
@@ -132,7 +132,9 @@ function calculatePlanetPosition(body: CelestialBodyData, timeSeconds: number): 
 // Individual texture components for each planet with textures
 function SunMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRadius: number }) {
   const meshRef = useRef<THREE.Mesh>(null)
-  const texture = useLoader(TextureLoader, '/assets/sun/sun_2k.jpg')
+  const texture = useLoader(TextureLoader, '/assets/sun/sun_color.jpg')
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.needsUpdate = true
 
   useFrame(() => {
     if (meshRef.current) {
@@ -144,7 +146,7 @@ function SunMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRa
   return (
     <mesh ref={meshRef}>
       <sphereGeometry args={[scaledRadius, 64, 64]} />
-      <meshStandardMaterial map={texture} emissive="#FFD700" emissiveIntensity={0.8} />
+      <meshStandardMaterial map={texture} emissive="#FFD700" emissiveIntensity={0.18} />
     </mesh>
   )
 }
@@ -152,6 +154,8 @@ function SunMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRa
 function EarthMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRadius: number }) {
   const meshRef = useRef<THREE.Mesh>(null)
   const texture = useLoader(TextureLoader, '/assets/earth/earth_2k.jpg')
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.needsUpdate = true
 
   useFrame(() => {
     if (meshRef.current) {
@@ -171,6 +175,8 @@ function EarthMesh({ position, scaledRadius }: { position: THREE.Vector3; scaled
 function MoonMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRadius: number }) {
   const meshRef = useRef<THREE.Mesh>(null)
   const texture = useLoader(TextureLoader, '/assets/moon/moon_2k.jpg')
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.needsUpdate = true
 
   useFrame(() => {
     if (meshRef.current) {
@@ -190,6 +196,8 @@ function MoonMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledR
 function MarsMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRadius: number }) {
   const meshRef = useRef<THREE.Mesh>(null)
   const texture = useLoader(TextureLoader, '/assets/mars/mars_color.jpg')
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.needsUpdate = true
 
   useFrame(() => {
     if (meshRef.current) {
