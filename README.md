@@ -25,7 +25,9 @@
 
 - [What This Project Is](#what-this-project-is)
 - [Quick Decision Tables (Use / Do Not Use)](#quick-decision-tables-use--do-not-use)
+- [Feature Maturity Matrix](#feature-maturity-matrix)
 - [System Architecture](#system-architecture)
+- [Diagram Legend (Symbol Decoder)](#diagram-legend-symbol-decoder)
 - [Monorepo Layout](#monorepo-layout)
 - [Technology Stack and Why It Exists](#technology-stack-and-why-it-exists)
 - [Algorithms, Equations, and Engineering Trade-offs](#algorithms-equations-and-engineering-trade-offs)
@@ -33,6 +35,7 @@
 - [API Reference (Collapsible)](#api-reference-collapsible)
 - [Testing and Validation Strategy](#testing-and-validation-strategy)
 - [Installation and Local Development](#installation-and-local-development)
+- [First-Week Contributor Path](#first-week-contributor-path)
 - [Operational Tips and Troubleshooting](#operational-tips-and-troubleshooting)
 - [Research References (NASA, Papers, arXiv)](#research-references-nasa-papers-arxiv)
 - [Contributing](#contributing)
@@ -51,6 +54,18 @@ The project exists for three practical reasons. First, educational simulations a
 
 > [!NOTE]
 > The repository prioritizes reproducible test outcomes, deterministic harnesses where practical, and explicit diagnostics for infeasible or numerically fragile scenarios.
+
+<div align="center">
+  <img src="documentation/images/readme/earth-sim-placeholder.jpg" alt="Earth simulation view placeholder" width="860" />
+  <br />
+  <sub>Figure 1. Earth texture used by the simulation scene to represent planet-scale rendering while flight and trajectory logic run in parallel.</sub>
+</div>
+
+> [!NOTE]
+> This image represents one of the high-resolution planetary assets used in the live simulation view. In runtime, it is combined with camera controls, state propagation, and mission telemetry overlays.
+
+> [!IMPORTANT]
+> Screenshot refresh plan: these texture-based placeholders will be replaced with true in-simulation screenshots after you provide captures or request generation of new mission-view images.
 
 ---
 
@@ -95,6 +110,31 @@ The project exists for three practical reasons. First, educational simulations a
 
 ---
 
+## Feature Maturity Matrix
+
+This matrix gives a practical snapshot of where each major module stands today. Stable modules are expected to be safe for routine use and extension, experimental modules are actively evolving and may change interfaces more frequently, and planned modules describe intended future capability that is not yet complete.
+
+Use this section before selecting work for a milestone, because it helps contributors choose changes that match their risk tolerance and available review bandwidth. For example, contributors who want low-friction onboarding should prefer stable modules, while contributors exploring performance or advanced mission methods may choose experimental or planned tracks.
+
+| Module / Area | Status | What It Currently Supports | What Is Still Missing | Recommended Contribution Type |
+|---|---|---|---|---|
+| Launch guidance profile and mission-phase wiring | Stable | Phase-aware ascent references and mission flow integration | Broader mission families beyond baseline profiles | Refinement, docs, regression tests |
+| Lambert solver with diagnostics and conic classification | Stable | Transfer solve, infeasible-time diagnostics, failure reason outputs | Extended validation against larger benchmark catalogs | Validation tests and edge-case hardening |
+| Two-body propagation default path (RK4) | Stable | Accurate fixed-step propagation baseline and regression behavior | Adaptive-step mode for advanced studies | Numerical benchmark additions |
+| EKF-15 with outage and Jacobian coupling coverage | Stable | Predict/update flow, outage recovery behavior, covariance checks | Expanded measurement model variants | Sensor-model extensions and tests |
+| N-body propagation and perturbation breakdown | Stable | Multi-body acceleration modeling and perturbation reporting | Additional scenario baselines and long-window profiling | Scenario validation and profiling |
+| Deterministic Monte Carlo engine | Stable | Seeded repeatability and summary statistics | Richer multidimensional campaign reporting | Analysis tooling and report formatting |
+| Web visual behavior harness (camera and rocket invariants) | Stable | Headless invariant assertions across mission windows | Optional image/snapshot layer for presentation QA | Test expansion and contributor docs |
+| NASA body fallback rendering completeness | Stable | Required-body fallback when upstream data is partial | Additional fallback policies for degraded feeds | Reliability and UX messaging updates |
+| Rust/WASM numerical kernels | Experimental | Initial scaffolding for high-performance computation path | Broader algorithm parity and production integration | Performance experiments and interface prototyping |
+| Advanced optimization-based transfer stack (direct methods) | Planned | Conceptual direction and references in docs | Implementation, benchmark suites, interfaces | Design proposals and prototype branches |
+| Real-time uncertainty visualization overlays | Planned | Conceptual alignment with Monte Carlo outputs | UI layer, statistical rendering semantics | UI design and data-contract proposals |
+
+> [!IMPORTANT]
+> “Stable” in this matrix means stable in this repository context and test suite, not certified for mission operations.
+
+---
+
 ## System Architecture
 
 The architecture intentionally isolates core aerospace math from the user interface. That separation keeps algorithms reusable and testable in headless environments while the React/Three.js app focuses on rendering, interaction, and telemetry presentation.
@@ -133,6 +173,15 @@ flowchart LR
   Harness --> Scene
   Harness --> Orbit
 ```
+
+<div align="center">
+  <img src="documentation/images/readme/sun-sim-placeholder.jpg" alt="Sun simulation view placeholder" width="860" />
+  <br />
+  <sub>Figure 2. Solar texture used by the simulation for central illumination and visual context in the system view.</sub>
+</div>
+
+> [!NOTE]
+> In the running simulation, this asset anchors the broader solar-system context so contributors can visually relate launch and transfer behavior to planetary geometry.
 
 ### 2) Launch Loop and Data Path
 
@@ -198,6 +247,36 @@ flowchart LR
   E --> F[Visual Invariant Harness]
   F --> G[Report + Artifacts]
 ```
+
+---
+
+## Diagram Legend (Symbol Decoder)
+
+This section translates common symbols and shorthand used in the architecture and algorithm diagrams so contributors without aerospace background can read them quickly. The goal is to remove ambiguity when a diagram uses compact labels such as EKF, state vectors, or transfer-solver notation.
+
+If a symbol is unclear while you are reviewing a change, update this legend in the same pull request. Keeping these mappings current is one of the fastest ways to make the repository easier for new contributors.
+
+| Symbol / Term | Meaning | Where You See It | Why It Matters |
+|---|---|---|---|
+| r1, r2 | Initial and final position vectors | Lambert decision and transfer flow diagrams | Defines boundary conditions for transfer solve |
+| tof | Time of flight | Transfer-solver decision graph | Determines feasibility and solution branch |
+| EKF | Extended Kalman Filter | Navigation flow and state-machine diagrams | Core estimator for noisy measurements |
+| dt | Simulation time step | Launch loop and integrator pathways | Controls propagation resolution and stability |
+| state_estimate | Filtered vehicle state | Navigation and telemetry flow | Drives control and display decisions |
+| covariance (P) | Estimated uncertainty matrix | EKF predict/update equations and nav logic | Quantifies confidence in the estimate |
+| guidance command | Desired attitude/throttle target | Launch loop sequence diagram | Connects mission intent to control action |
+| conic case | Orbit class interpretation for transfer | Lambert diagnostics outputs | Helps classify transfer geometry behavior |
+| perturbation breakdown | Contribution split by force source | N-body analysis outputs | Explains why trajectories diverge from two-body paths |
+| visual invariant harness | Deterministic render-behavior assertions | Web test pipeline and QA flow diagrams | Catches camera/scene regressions without manual inspection |
+
+### Diagram Reading Tips
+
+- In flowcharts, boxes typically represent computations and diamonds represent decision points.
+- In sequence diagrams, each vertical lane is a subsystem and each arrow is information transfer over one frame or event.
+- In state diagrams, transitions describe when the estimator or simulation mode changes under specific conditions.
+
+> [!NOTE]
+> “Vector” means a directional quantity with magnitude and direction, while “scalar” means a single magnitude value. Many bugs come from accidentally mixing these two concepts.
 
 ---
 
@@ -288,6 +367,15 @@ $$
 $$
 \beta = \arcsin\left(\frac{\cos i}{\cos \phi}\right)
 $$
+
+<div align="center">
+  <img src="documentation/images/readme/moon-sim-placeholder.jpg" alt="Moon simulation view placeholder" width="860" />
+  <br />
+  <sub>Figure 3. Moon surface texture used in lunar-context visualization for transfer and trajectory interpretation.</sub>
+</div>
+
+> [!NOTE]
+> This visual context is especially useful when validating mission windows that include translunar phases, because contributors can quickly correlate trajectory behavior with mission intent.
 
 ### 9) Formula-to-Subsystem Mapping Table
 
@@ -454,6 +542,44 @@ pnpm --filter @gnc/web test
 
 ---
 
+## First-Week Contributor Path
+
+This path is designed to help a new contributor become productive in the first week without guessing where to start. The checklist emphasizes small, reviewable tasks that build familiarity with architecture, testing discipline, and module boundaries before deeper algorithm changes.
+
+Estimated effort assumes a contributor who is comfortable with TypeScript and basic Git workflows. If you are new to astrodynamics, the same path still works, but plan extra reading time in the references section and focus on test-first tasks before touching core math.
+
+| Day / Milestone | Task | Estimated Effort | Output / Definition of Done |
+|---|---|---:|---|
+| Day 1 | Set up workspace, run tests and typechecks | 1.0 to 1.5 hours | Local environment validated and baseline command set recorded |
+| Day 1 to Day 2 | Read architecture, stack, and algorithm sections in README + docs | 1.5 to 2.5 hours | Clear mental map of package boundaries and simulation loop |
+| Day 2 | Pick one stable module and trace one end-to-end test path | 1.0 to 2.0 hours | Short notes on input/output contracts and key invariants |
+| Day 3 | Submit a docs or small test-improvement PR | 1.5 to 3.0 hours | First merged contribution with CI passing |
+| Day 4 | Add one edge-case test in core or web harness | 2.0 to 4.0 hours | Regression test demonstrating a real guardrail |
+| Day 5 | Pair one code improvement with rationale notes | 2.0 to 4.0 hours | Small implementation PR with explanation of why/impact |
+
+### First-Week Checklist
+
+- [ ] Run `pnpm -r test` and `pnpm -r typecheck` successfully.
+- [ ] Read the maturity matrix and pick one stable area to start.
+- [ ] Read at least one algorithm section and one corresponding test file.
+- [ ] Open one issue comment or discussion question with a concrete proposal.
+- [ ] Submit one small PR with passing checks.
+- [ ] Add or improve at least one test assertion tied to a known invariant.
+
+### Good First Task Categories
+
+| Category | Examples | Why It Is Good for Week 1 |
+|---|---|---|
+| Documentation precision | Clarify assumptions, add symbol explanations, improve setup notes | Low risk and high leverage for future contributors |
+| Test hardening | Add edge-case assertions for diagnostics and invariants | Builds confidence in regression discipline |
+| Small refactors in stable modules | Extract pure helper, reduce duplication, improve naming | Teaches architecture without large behavioral risk |
+| Developer experience improvements | Script clarity, command docs, troubleshooting notes | Improves onboarding speed for everyone |
+
+> [!TIP]
+> If you are unsure between two tasks, choose the one that adds or strengthens a test. It creates durable value even when implementation details evolve.
+
+---
+
 ## Operational Tips and Troubleshooting
 
 ### 13) Practical Tips Table
@@ -464,6 +590,15 @@ pnpm --filter @gnc/web test
 | You changed transfer logic | Run lambert and orbit test groups with diagnostics enabled | Failure reason mismatches are often more informative than raw delta-v mismatches |
 | You changed EKF tuning | Run outage and recovery tests with deterministic seeds | Prevents intermittent filter behavior and unstable covariance growth |
 | You changed package exports | Run workspace typecheck before tests | Catch symbol collisions and export-surface regressions early |
+
+<div align="center">
+  <img src="documentation/images/readme/mars-sim-placeholder.jpg" alt="Mars simulation view placeholder" width="860" />
+  <br />
+  <sub>Figure 4. Mars texture included in the simulation asset set for multi-body scene completeness and future scenario expansion.</sub>
+</div>
+
+> [!NOTE]
+> Even when a mission profile does not target Mars directly, keeping this body visible in the scene helps test rendering stability, asset fallback behavior, and cross-body scaling consistency.
 
 > [!WARNING]
 > Avoid blending rendering-side scaling constants with algorithm-side physical constants. Keep conversion boundaries explicit so units remain auditable.
