@@ -1,5 +1,6 @@
 export * from './control/launch';
 export * from './control/mpc';
+export { runMonteCarlo, runScalarDispersion, createSeededRandom, summarize, } from './analysis/monte_carlo';
 export * from './engines/thrust_curves';
 export * from './launch/guidance';
 export * from './launch/integration';
@@ -7,5 +8,9 @@ export * from './launch/simulation';
 export * from './math/constants';
 export * from './math/physics';
 export * from './navigation/kalman';
+export { EKF15Navigation, } from './navigation/ekf15';
 export * from './navigation/sensors';
+export { lambertIzzo, lambertDeltaV, } from './orbits/lambert';
+export { nbodyAcceleration, nbodyRK4Step, nbodyPropagate, perturbationBreakdown, BODIES_EARTH_MOON_SUN, } from './orbits/nbody';
+export { eulerStep, rk4Step, rk4Propagate, propagateTwoBody, rk4Trajectory, orbitalEnergy, orbitalPeriod, semiMajorAxis, } from './orbits/rk4';
 export * from './orbits/twobody';
