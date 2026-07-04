@@ -1,5 +1,15 @@
 export * from './control/launch'
 export * from './control/mpc'
+export {
+	runMonteCarlo,
+	runScalarDispersion,
+	createSeededRandom,
+	summarize,
+	type SeededRandom,
+	type MonteCarloConfig,
+	type MonteCarloResult,
+	type DispersionSummary,
+} from './analysis/monte_carlo'
 export * from './engines/thrust_curves'
 export * from './launch/guidance'
 export * from './launch/integration'
@@ -24,17 +34,22 @@ export {
 	nbodyAcceleration,
 	nbodyRK4Step,
 	nbodyPropagate,
+	perturbationBreakdown,
 	BODIES_EARTH_MOON_SUN,
 	type CelestialBody,
+	type PerturbationBreakdown,
 	type SpacecraftState,
 } from './orbits/nbody'
 export {
+	eulerStep,
 	rk4Step,
 	rk4Propagate,
+	propagateTwoBody,
 	rk4Trajectory,
 	orbitalEnergy,
 	orbitalPeriod,
 	semiMajorAxis,
+	type PropagationMode,
 } from './orbits/rk4'
 export * from './orbits/twobody'
 

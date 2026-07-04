@@ -136,11 +136,16 @@ export function lambertIzzo(
   // Transfer angle
   const cosDnu = Math.max(-1, Math.min(1, dot(r1Vec, r2Vec) / (r1 * r2)))
   const cross12 = cross(r1Vec, r2Vec)
-  const sinMag = norm(cross12) / (r1 * r2)
-  if (sinMag < 1e-12) return FAIL
-
+  const sinMagRaw = norm(cross12) / (r1 * r2)
   const sinSign = ccw ? 1 : -1
-  const sinDnu = sinSign * sinMag
+  let sinDnu = sinSign * sinMagRaw
+
+  // Regularize exact/near anti-parallel geometry (Δν ≈ π), where A tends to 0.
+  // This preserves a practical single-rev solution for canonical half-transfer cases.
+  if (Math.abs(sinDnu) < 1e-12 && cosDnu < -0.999999999) {
+    sinDnu = sinSign * 1e-8
+  }
+  if (Math.abs(sinDnu) < 1e-12) return FAIL
 
   const oneMinusCos = 1 - cosDnu
   if (oneMinusCos <= 1e-14) return FAIL

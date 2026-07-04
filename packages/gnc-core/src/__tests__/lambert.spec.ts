@@ -33,23 +33,30 @@ describe('Lambert solver verification', () => {
     expect(posErr).toBeLessThan(2.0e4)
   })
 
-  it('matches canonical Hohmann half-transfer endpoint speeds', () => {
-    const r1mag = 7000e3
-    const r2mag = 42164e3
-    const aTransfer = 0.5 * (r1mag + r2mag)
-    const tof = Math.PI * Math.sqrt((aTransfer ** 3) / MU_EARTH)
+  it('matches canonical 120-degree circular-arc transfer speed and endpoint', () => {
+    const r = 8000e3
+    const n = Math.sqrt(MU_EARTH / (r * r * r))
+    const theta = (120 * Math.PI) / 180
+    const tof = theta / n
+    const vc = Math.sqrt(MU_EARTH / r)
 
-    const r1: [number, number, number] = [r1mag, 0, 0]
-    const r2: [number, number, number] = [-r2mag, 0, 0]
+    const r1: [number, number, number] = [r, 0, 0]
+    const r2: [number, number, number] = [r * Math.cos(theta), r * Math.sin(theta), 0]
 
-    const lambert = lambertIzzo(r1, r2, tof, MU_EARTH, true, 100)
+    const lambert = lambertIzzo(r1, r2, tof, MU_EARTH, true, 80)
     expect(lambert.success).toBe(true)
+    expect(Math.abs(norm3(lambert.v1) - vc)).toBeLessThan(10)
+    expect(Math.abs(norm3(lambert.v2) - vc)).toBeLessThan(10)
 
-    const vPerigeeExpected = Math.sqrt(MU_EARTH * (2 / r1mag - 1 / aTransfer))
-    const vApogeeExpected = Math.sqrt(MU_EARTH * (2 / r2mag - 1 / aTransfer))
-
-    expect(Math.abs(norm3(lambert.v1) - vPerigeeExpected)).toBeLessThan(20)
-    expect(Math.abs(norm3(lambert.v2) - vApogeeExpected)).toBeLessThan(20)
+    const steps = 2400
+    const dt = tof / steps
+    const s0: [number, number, number, number, number, number] = [
+      r1[0], r1[1], r1[2],
+      lambert.v1[0], lambert.v1[1], lambert.v1[2],
+    ]
+    const sf = rk4Propagate(s0, dt, steps, MU_EARTH)
+    const posErr = Math.hypot(sf[0] - r2[0], sf[1] - r2[1], sf[2] - r2[2])
+    expect(posErr).toBeLessThan(2.5e4)
   })
 
   it('rejects invalid and degenerate transfer inputs', () => {

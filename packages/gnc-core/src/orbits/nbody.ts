@@ -38,12 +38,27 @@ export interface SpacecraftState {
   velocity: Vec3   // m/s
 }
 
+export interface PerturbationBreakdown {
+  primaryName: string
+  primaryAcceleration: Vec3
+  perturbationAcceleration: Vec3
+  totalAcceleration: Vec3
+  primaryMagnitude: number
+  perturbationMagnitude: number
+  perturbationRatio: number
+}
+
+const MIN_DISTANCE_M = 1.0
+
 /** Gravitational acceleration from a single body at position `pos` from distance `r3` */
 function gravAccel(sc: Vec3, body: CelestialBody): Vec3 {
   const dx = body.position[0] - sc[0]
   const dy = body.position[1] - sc[1]
   const dz = body.position[2] - sc[2]
   const r2 = dx * dx + dy * dy + dz * dz
+  if (r2 < MIN_DISTANCE_M * MIN_DISTANCE_M) {
+    return [0, 0, 0]
+  }
   const r  = Math.sqrt(r2)
   const f  = body.mu / (r2 * r)
   return [f * dx, f * dy, f * dz]
@@ -112,6 +127,43 @@ export function nbodyPropagate(
   let s = sc
   for (let i = 0; i < steps; i++) s = nbodyRK4Step(s, bodies, dt)
   return s
+}
+
+/**
+ * Decompose acceleration into a named primary body contribution and all
+ * remaining perturbation terms.
+ */
+export function perturbationBreakdown(
+  sc: Vec3,
+  bodies: CelestialBody[],
+  primaryName = 'Earth',
+): PerturbationBreakdown {
+  const primary = bodies.find((b) => b.name === primaryName)
+  if (!primary) {
+    throw new Error(`Primary body '${primaryName}' not found`)
+  }
+
+  const aPrimary = gravAccel(sc, primary)
+  const aTotal = nbodyAcceleration(sc, bodies)
+  const aPert: Vec3 = [
+    aTotal[0] - aPrimary[0],
+    aTotal[1] - aPrimary[1],
+    aTotal[2] - aPrimary[2],
+  ]
+
+  const primaryMagnitude = Math.hypot(aPrimary[0], aPrimary[1], aPrimary[2])
+  const perturbationMagnitude = Math.hypot(aPert[0], aPert[1], aPert[2])
+  const perturbationRatio = perturbationMagnitude / Math.max(primaryMagnitude, 1e-12)
+
+  return {
+    primaryName,
+    primaryAcceleration: aPrimary,
+    perturbationAcceleration: aPert,
+    totalAcceleration: aTotal,
+    primaryMagnitude,
+    perturbationMagnitude,
+    perturbationRatio,
+  }
 }
 
 /**
