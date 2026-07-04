@@ -29,6 +29,25 @@
 
 export type Vec3 = [number, number, number]
 
+export type LambertConicCase = 'elliptic' | 'parabolic' | 'hyperbolic' | 'unknown'
+
+export type LambertFailureReason =
+  | 'invalid_input'
+  | 'degenerate_geometry'
+  | 'infeasible_time_of_flight'
+  | 'non_convergence'
+  | 'numerical_failure'
+
+export interface LambertDiagnostics {
+  requestedTof: number
+  minFeasibleTof?: number
+  maxFeasibleTof?: number
+  transferAngleRad?: number
+  transferDirection?: 'prograde' | 'retrograde'
+  energyAtDeparture?: number
+  failureReason?: LambertFailureReason
+}
+
 export interface LambertResult {
   /** Departure velocity vector [m/s] */
   v1: Vec3
@@ -38,6 +57,10 @@ export interface LambertResult {
   success: boolean
   /** Number of Halley iterations used */
   iterations: number
+  /** Transfer conic family based on specific orbital energy */
+  conicCase?: LambertConicCase
+  /** Additional diagnostics for tooling and debug */
+  diagnostics?: LambertDiagnostics
 }
 
 // ─── Vector helpers ──────────────────────────────────────────────────────────
@@ -60,6 +83,44 @@ function scale3(v: Vec3, s: number): Vec3 {
 }
 function add3(a: Vec3, b: Vec3): Vec3 {
   return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
+}
+
+function classifyConicByEnergy(energy: number): LambertConicCase {
+  if (!Number.isFinite(energy)) return 'unknown'
+  if (Math.abs(energy) <= 1e-6) return 'parabolic'
+  return energy < 0 ? 'elliptic' : 'hyperbolic'
+}
+
+function estimateFeasibleTofBounds(
+  r1: number,
+  r2: number,
+  A: number,
+  mu: number,
+): { minFeasibleTof?: number; maxFeasibleTof?: number } {
+  let minFeasibleTof = Number.POSITIVE_INFINITY
+  let maxFeasibleTof = 0
+  let anyFeasible = false
+
+  // Sample a wide psi range to estimate practical TOF bounds for this geometry.
+  const samples = 240
+  const psiMin = -4 * Math.PI ** 2
+  const psiMax = 4 * Math.PI ** 2
+  const step = (psiMax - psiMin) / samples
+  for (let i = 0; i <= samples; i++) {
+    const psi = psiMin + i * step
+    const t = timeOfFlightFromPsi(psi, r1, r2, A, mu).tof
+    if (Number.isFinite(t) && t > 0) {
+      anyFeasible = true
+      if (t < minFeasibleTof) minFeasibleTof = t
+      if (t > maxFeasibleTof) maxFeasibleTof = t
+    }
+  }
+
+  if (!anyFeasible) return {}
+  return {
+    minFeasibleTof,
+    maxFeasibleTof,
+  }
 }
 
 function sub3(a: Vec3, b: Vec3): Vec3 {
@@ -125,13 +186,24 @@ export function lambertIzzo(
   ccw = true,
   maxIter = 50,
 ): LambertResult {
-  const FAIL: LambertResult = { v1: [0, 0, 0], v2: [0, 0, 0], success: false, iterations: 0 }
+  const FAIL = (reason: LambertFailureReason, diagnostics?: Partial<LambertDiagnostics>): LambertResult => ({
+    v1: [0, 0, 0],
+    v2: [0, 0, 0],
+    success: false,
+    iterations: 0,
+    conicCase: 'unknown',
+    diagnostics: { requestedTof: tof, failureReason: reason, ...diagnostics },
+  })
 
   const r1 = norm(r1Vec)
   const r2 = norm(r2Vec)
 
-  if (r1 < 1 || r2 < 1 || tof <= 0 || mu <= 0 || !Number.isFinite(tof) || !Number.isFinite(mu)) return FAIL
-  if (norm(sub3(r1Vec, r2Vec)) < 1e-6) return FAIL
+  if (r1 < 1 || r2 < 1 || tof <= 0 || mu <= 0 || !Number.isFinite(tof) || !Number.isFinite(mu)) {
+    return FAIL('invalid_input')
+  }
+  if (norm(sub3(r1Vec, r2Vec)) < 1e-6) {
+    return FAIL('degenerate_geometry')
+  }
 
   // Transfer angle
   const cosDnu = Math.max(-1, Math.min(1, dot(r1Vec, r2Vec) / (r1 * r2)))
@@ -145,14 +217,30 @@ export function lambertIzzo(
   if (Math.abs(sinDnu) < 1e-12 && cosDnu < -0.999999999) {
     sinDnu = sinSign * 1e-8
   }
-  if (Math.abs(sinDnu) < 1e-12) return FAIL
+  if (Math.abs(sinDnu) < 1e-12) {
+    return FAIL('degenerate_geometry', { transferAngleRad: Math.acos(cosDnu) })
+  }
 
   const oneMinusCos = 1 - cosDnu
-  if (oneMinusCos <= 1e-14) return FAIL
+  if (oneMinusCos <= 1e-14) {
+    return FAIL('degenerate_geometry', { transferAngleRad: Math.acos(cosDnu) })
+  }
 
   // Lancaster A parameter (constant for this problem)
   const A = sinDnu * Math.sqrt((r1 * r2) / oneMinusCos)
-  if (!isFinite(A) || Math.abs(A) < 1e-9) return FAIL
+  if (!isFinite(A) || Math.abs(A) < 1e-9) {
+    return FAIL('numerical_failure')
+  }
+
+  const tofBounds = estimateFeasibleTofBounds(r1, r2, A, mu)
+  if (tofBounds.minFeasibleTof !== undefined && tof < tofBounds.minFeasibleTof * (1 - 1e-6)) {
+    return FAIL('infeasible_time_of_flight', {
+      minFeasibleTof: tofBounds.minFeasibleTof,
+      maxFeasibleTof: tofBounds.maxFeasibleTof,
+      transferAngleRad: Math.acos(cosDnu),
+      transferDirection: ccw ? 'prograde' : 'retrograde',
+    })
+  }
 
   let psiLo = -4 * Math.PI ** 2
   let psiHi = 4 * Math.PI ** 2
@@ -178,16 +266,27 @@ export function lambertIzzo(
     psi = 0.5 * (psiLo + psiHi)
   }
 
-  if (!isFinite(last.tof) || Math.abs(last.tof - tof) > 5e-4) return FAIL
+  if (!isFinite(last.tof) || Math.abs(last.tof - tof) > 5e-4) {
+    return FAIL('non_convergence', {
+      minFeasibleTof: tofBounds.minFeasibleTof,
+      maxFeasibleTof: tofBounds.maxFeasibleTof,
+      transferAngleRad: Math.acos(cosDnu),
+      transferDirection: ccw ? 'prograde' : 'retrograde',
+    })
+  }
 
   const y = last.y
-  if (!(y > 0)) return FAIL
+  if (!(y > 0)) {
+    return FAIL('numerical_failure')
+  }
 
   const f = 1 - y / r1
   const g = A * Math.sqrt(y / mu)
   const gdot = 1 - y / r2
 
-  if (Math.abs(g) < 1e-12) return FAIL
+  if (Math.abs(g) < 1e-12) {
+    return FAIL('numerical_failure')
+  }
 
   const v1: Vec3 = [
     (r2Vec[0] - f * r1Vec[0]) / g,
@@ -203,9 +302,28 @@ export function lambertIzzo(
   // Sanity: vis-viva check
   const vmag1 = norm(v1)
   const vmag2 = norm(v2)
-  if (!isFinite(vmag1) || !isFinite(vmag2) || vmag1 > 1e6 || vmag2 > 1e6 || vmag1 < 1 || vmag2 < 1) return FAIL
+  if (!isFinite(vmag1) || !isFinite(vmag2) || vmag1 > 1e6 || vmag2 > 1e6 || vmag1 < 1 || vmag2 < 1) {
+    return FAIL('numerical_failure')
+  }
 
-  return { v1, v2, success: true, iterations: iters }
+  const energy = 0.5 * vmag1 * vmag1 - mu / r1
+  const transferAngleRad = Math.acos(cosDnu)
+
+  return {
+    v1,
+    v2,
+    success: true,
+    iterations: iters,
+    conicCase: classifyConicByEnergy(energy),
+    diagnostics: {
+      requestedTof: tof,
+      minFeasibleTof: tofBounds.minFeasibleTof,
+      maxFeasibleTof: tofBounds.maxFeasibleTof,
+      transferAngleRad,
+      transferDirection: ccw ? 'prograde' : 'retrograde',
+      energyAtDeparture: energy,
+    },
+  }
 }
 
 /**

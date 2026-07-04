@@ -105,6 +105,12 @@ export function LaunchDemo({
     return new GravityTurnGuidance(400000, (28.5 * Math.PI) / 180);
   }, []);
 
+  useEffect(() => {
+    if (onCameraRef) {
+      onCameraRef(controlsRef as unknown as React.RefObject<typeof OrbitControls | null>);
+    }
+  }, [onCameraRef]);
+
   const initialState: LaunchState = useMemo(() => {
     const vehicle = LAUNCH_VEHICLES.FALCON_9;
     return {
@@ -146,6 +152,8 @@ export function LaunchDemo({
     return new THREE.Vector3(0, 0, 0);
   }, []);
 
+  const isFiniteVector3 = (v: THREE.Vector3) => Number.isFinite(v.x) && Number.isFinite(v.y) && Number.isFinite(v.z);
+
   // Listen for user OrbitControls interaction
   useEffect(() => {
     if (!controlsRef.current) return;
@@ -180,6 +188,7 @@ export function LaunchDemo({
 
     if (vehicleRef.current) {
       const rocketPos = getRocketPosition();
+      if (!isFiniteVector3(rocketPos)) return;
 
       // If rocket position is at origin, use Earth visual surface position
       const actualRocketPos = rocketPos.length() < 0.01
@@ -228,13 +237,16 @@ export function LaunchDemo({
         // Position camera offset from rocket - behind and slightly above
         const cameraOffset = new THREE.Vector3(cameraDistance * 0.3, cameraDistance * 0.2, cameraDistance);
         const targetCamPos = actualRocketPos.clone().add(cameraOffset);
+        if (!isFiniteVector3(targetCamPos)) return;
         camera.position.lerp(targetCamPos, 0.03); // Smooth following
 
         // Look at rocket
         camera.lookAt(actualRocketPos);
 
         if (controlsRef.current) {
-          controlsRef.current.target.lerp(actualRocketPos, 0.05);
+          if (isFiniteVector3(actualRocketPos)) {
+            controlsRef.current.target.lerp(actualRocketPos, 0.05);
+          }
           controlsRef.current.update();
         }
       }

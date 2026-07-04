@@ -29,6 +29,9 @@ export {
 	lambertIzzo,
 	lambertDeltaV,
 	type LambertResult,
+	type LambertConicCase,
+	type LambertFailureReason,
+	type LambertDiagnostics,
 } from './orbits/lambert'
 export {
 	nbodyAcceleration,

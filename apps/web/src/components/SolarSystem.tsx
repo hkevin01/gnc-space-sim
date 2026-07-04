@@ -394,6 +394,37 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   }
 }
 
+const REQUIRED_BODIES: Array<keyof typeof SOLAR_SYSTEM_DATA> = [
+  'SUN',
+  'MERCURY',
+  'VENUS',
+  'EARTH',
+  'MOON',
+  'MARS',
+  'JUPITER',
+  'SATURN',
+  'URANUS',
+  'NEPTUNE'
+]
+
+export function ensureRenderablePlanetPositions(
+  positions: PlanetPosition[],
+  missionTime = 0
+): PlanetPosition[] {
+  const byName = new Map(positions.map((p) => [p.name, p]))
+  return REQUIRED_BODIES.map((name) => {
+    const existing = byName.get(name)
+    if (existing) return existing
+
+    return {
+      name,
+      position: getBodyPosition(name, missionTime),
+      dataSource: 'fallback',
+      timestamp: new Date(),
+    }
+  })
+}
+
 interface PlanetProps {
   name: keyof typeof SOLAR_SYSTEM_DATA
   showOrbit?: boolean
@@ -757,13 +788,15 @@ export function NasaSolarSystem({ showOrbits = false, centerOn = 'SUN', useNasaD
   // Status logging
   console.log(`🌍 NASA Solar System - Data Source: ${dataSource}, Loading: ${loading}, Error: ${error}`);
 
+  const renderPositions = useMemo(() => ensureRenderablePlanetPositions(positions, 0), [positions])
+
   // Compute offset for camera centering
   const centerPos = useMemo(() => {
     if (centerOn === 'SUN') return [0, 0, 0] as [number, number, number];
 
-    const centerPlanet = positions.find(p => p.name === centerOn);
+    const centerPlanet = renderPositions.find(p => p.name === centerOn);
     return centerPlanet ? centerPlanet.position : [0, 0, 0] as [number, number, number];
-  }, [centerOn, positions]);
+  }, [centerOn, renderPositions]);
 
   const offset: [number, number, number] = [centerPos[0], centerPos[1], centerPos[2]];
 
@@ -836,7 +869,7 @@ export function NasaSolarSystem({ showOrbits = false, centerOn = 'SUN', useNasaD
       )}
 
       {/* Render planets using NASA positions or fallback */}
-      {positions.map((planetPosition) => (
+      {renderPositions.map((planetPosition) => (
         <NasaPlanet
           key={planetPosition.name}
           planetPosition={planetPosition}
