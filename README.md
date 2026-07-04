@@ -1,21 +1,21 @@
 <div align="center" id="top">
-  <h1>🛸 GNC Space Simulation</h1>
-  <p><em>Physics-accurate, browser-native Guidance, Navigation & Control simulation of the NASA SLS Block 1 and beyond — powered by React Three Fiber, Vitest, and a full GNC algorithm stack.</em></p>
+  <h1>GNC Space Simulation</h1>
+  <p><em>Physics-informed, browser-native Guidance, Navigation, and Control mission simulation with modern web visualization and test-driven aerospace algorithms.</em></p>
 </div>
 
 <div align="center">
 
-[![License](https://img.shields.io/github/license/hkevin01/gnc-space-sim?style=flat-square)](LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/hkevin01/gnc-space-sim?style=flat-square)](https://github.com/hkevin01/gnc-space-sim/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/hkevin01/gnc-space-sim?style=flat-square)](https://github.com/hkevin01/gnc-space-sim/network)
-[![Last Commit](https://img.shields.io/github/last-commit/hkevin01/gnc-space-sim?style=flat-square)](https://github.com/hkevin01/gnc-space-sim/commits/main)
-[![Repo Size](https://img.shields.io/github/repo-size/hkevin01/gnc-space-sim?style=flat-square)](https://github.com/hkevin01/gnc-space-sim)
-[![Issues](https://img.shields.io/github/issues/hkevin01/gnc-space-sim?style=flat-square)](https://github.com/hkevin01/gnc-space-sim/issues)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178c6?style=flat-square&logo=typescript)](https://typescriptlang.org)
-[![React](https://img.shields.io/badge/React-18.3-61dafb?style=flat-square&logo=react)](https://react.dev)
-[![Three.js](https://img.shields.io/badge/Three.js-0.169-black?style=flat-square&logo=threedotjs)](https://threejs.org)
-[![Vitest](https://img.shields.io/badge/Vitest-2.1-6e9f18?style=flat-square&logo=vitest)](https://vitest.dev)
-[![pnpm](https://img.shields.io/badge/pnpm-9-f69220?style=flat-square&logo=pnpm)](https://pnpm.io)
+[![License](https://img.shields.io/github/license/hkevin01/gnc-space-sim?style=for-the-badge)](LICENSE)
+[![Main Branch](https://img.shields.io/github/last-commit/hkevin01/gnc-space-sim/main?style=for-the-badge&label=main%20commit)](https://github.com/hkevin01/gnc-space-sim/commits/main)
+[![Issues](https://img.shields.io/github/issues/hkevin01/gnc-space-sim?style=for-the-badge)](https://github.com/hkevin01/gnc-space-sim/issues)
+[![Pull Requests](https://img.shields.io/github/issues-pr/hkevin01/gnc-space-sim?style=for-the-badge)](https://github.com/hkevin01/gnc-space-sim/pulls)
+[![Stars](https://img.shields.io/github/stars/hkevin01/gnc-space-sim?style=for-the-badge)](https://github.com/hkevin01/gnc-space-sim/stargazers)
+[![Forks](https://img.shields.io/github/forks/hkevin01/gnc-space-sim?style=for-the-badge)](https://github.com/hkevin01/gnc-space-sim/network)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-18.x-20232a?style=for-the-badge&logo=react)](https://react.dev/)
+[![Three.js](https://img.shields.io/badge/Three.js-WebGL-black?style=for-the-badge&logo=threedotjs)](https://threejs.org/)
+[![Vitest](https://img.shields.io/badge/Tested%20With-Vitest-6E9F18?style=for-the-badge&logo=vitest)](https://vitest.dev/)
+[![pnpm](https://img.shields.io/badge/Monorepo-pnpm-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io/)
 
 </div>
 
@@ -23,582 +23,493 @@
 
 ## Table of Contents
 
-- [Overview](#-overview)
-- [Key Features](#-key-features)
-- [Architecture](#-architecture)
-- [Monorepo Structure](#-monorepo-structure)
-- [Technology Stack](#-technology-stack)
-- [Setup & Installation](#-setup--installation)
-- [Usage](#-usage)
-- [GNC Algorithm Details](#-gnc-algorithm-details)
-- [Test Suite](#-test-suite)
-- [Roadmap](#-roadmap)
-- [Contributing](#-contributing)
-- [License & Acknowledgements](#-license--acknowledgements)
+- [What This Project Is](#what-this-project-is)
+- [Quick Decision Tables (Use / Do Not Use)](#quick-decision-tables-use--do-not-use)
+- [System Architecture](#system-architecture)
+- [Monorepo Layout](#monorepo-layout)
+- [Technology Stack and Why It Exists](#technology-stack-and-why-it-exists)
+- [Algorithms, Equations, and Engineering Trade-offs](#algorithms-equations-and-engineering-trade-offs)
+- [How the Simulation Works Step by Step](#how-the-simulation-works-step-by-step)
+- [API Reference (Collapsible)](#api-reference-collapsible)
+- [Testing and Validation Strategy](#testing-and-validation-strategy)
+- [Installation and Local Development](#installation-and-local-development)
+- [Operational Tips and Troubleshooting](#operational-tips-and-troubleshooting)
+- [Research References (NASA, Papers, arXiv)](#research-references-nasa-papers-arxiv)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## 🎯 Overview
+## What This Project Is
 
-**GNC Space Simulation** is a monorepo containing a complete Guidance, Navigation & Control engine for launch vehicles, paired with a real-time 3D solar system visualiser running entirely in the browser. It simulates a full SLS Block 1 / Artemis II mission profile — from liftoff at LC-39B through SRB separation, Core Stage MECO, ICPS burn, and Trans-Lunar Injection — while rendering a scale NASA solar system with textured planets alongside.
+This repository is an end-to-end simulation platform for launch-vehicle Guidance, Navigation, and Control. It combines physically motivated algorithms, deterministic tests, and browser rendering so developers can inspect both the math and the behavior in one workflow. The codebase is intentionally split between pure algorithm packages and a visual application so numerical logic can remain testable without a rendering dependency.
 
-The project targets three audiences: **aerospace students** who want to interact with real GNC maths, **engineers** who want a testbed for guidance algorithm prototyping, and **hobbyists** who want to explore the solar system at NASA-accurate scale in their browser.
-
-Every algorithm carries a NASA-style structured comment block (ID, Requirement, Purpose, Rationale, Failure Modes, References) and is covered by a growing suite of 161 automated unit and integration tests.
+The project exists for three practical reasons. First, educational simulations are most useful when they are executable and inspectable, not only descriptive. Second, GNC code tends to fail at boundaries (staging, noisy sensors, edge transfer geometry), so this project treats edge-case hardening as a first-class concern. Third, modern front-end infrastructure can now support a rich aerospace simulation loop directly in-browser, reducing setup friction for contributors.
 
 > [!IMPORTANT]
-> This simulation is for educational and research purposes. Vehicle configuration numbers are sourced from publicly available NASA documentation, not from export-controlled flight software.
+> This is an educational and engineering-research simulation environment. It is not flight-certified software and should not be used for safety-critical operational decisions.
 
-<p align="right">(<a href="#top">back to top ↑</a>)</p>
-
----
-
-## ✨ Key Features
-
-| <sub>Icon</sub> | <sub>Feature</sub> | <sub>Description</sub> | <sub>Status</sub> |
-|------|---------|-------------|--------|
-| <sub>🚀</sub> | <sub>**SLS Block 1 Simulation**</sub> | <sub>Full 4-stage vehicle (SRBs + Core + ICPS) with real mass, thrust, and Isp values</sub> | <sub>✅ Stable</sub> |
-| <sub>🌍</sub> | <sub>**Textured Solar System**</sub> | <sub>NASA-accurate orbital radii with error-boundary-protected texture loading</sub> | <sub>✅ Stable</sub> |
-| <sub>🧭</sub> | <sub>**Gravity-Turn Guidance**</sub> | <sub>SLS pitch schedule + launch-azimuth azimuth computation at Cape Canaveral</sub> | <sub>✅ Stable</sub> |
-| <sub>📡</sub> | <sub>**Kalman Navigation Filter**</sub> | <sub>6-DOF linear KF: predict / update with configurable process & sensor noise</sub> | <sub>✅ Stable</sub> |
-| <sub>🎛️</sub> | <sub>**PID Thrust Vector Control**</sub> | <sub>Discrete-time PID for pitch / yaw / roll with reset between flight phases</sub> | <sub>✅ Stable</sub> |
-| <sub>🛰️</sub> | <sub>**SSSP Trajectory Planner**</sub> | <sub>Sub-O(m + n log n) SSSP replacing Dijkstra for real-time orbital replanning</sub> | <sub>✅ Stable</sub> |
-| <sub>🔬</sub> | <sub>**Sensor Simulation**</sub> | <sub>IMU + GPS models with altitude-dependent availability and noise</sub> | <sub>✅ Stable</sub> |
-| <sub>🧪</sub> | <sub>**161 Automated Tests**</sub> | <sub>Unit + integration tests across @gnc/core, @gnc/scenarios, and @gnc/web</sub> | <sub>✅ Stable</sub> |
-| <sub>🐳</sub> | <sub>**Docker Dev Environment**</sub> | <sub>One-command containerised dev with hot reload</sub> | <sub>✅ Stable</sub> |
-| <sub>🦀</sub> | <sub>**Rust/WASM Kernels**</sub> | <sub>High-performance orbit propagator kernel (in progress)</sub> | <sub>🔄 In Progress</sub> |
-
-**Performance highlights:**
-- 60 FPS 3D rendering at 1080p with active trajectory trails
-- 100 Hz physics integration rate during simulated ascent
-- Full production build in < 30 s; hot-reload ready in < 5 s
-- 161 tests across 19 spec files complete in < 2 s
-
-<p align="right">(<a href="#top">back to top ↑</a>)</p>
+> [!NOTE]
+> The repository prioritizes reproducible test outcomes, deterministic harnesses where practical, and explicit diagnostics for infeasible or numerically fragile scenarios.
 
 ---
 
-## 🏗️ Architecture
+## Quick Decision Tables (Use / Do Not Use)
 
-### System Component Map
+### 1) Capability Selection Matrix
+
+| Capability | What It Does | Use When | Do Not Use When | Why This Distinction Matters |
+|---|---|---|---|---|
+| Lambert solver | Solves two-point boundary transfer velocity vectors for a chosen time-of-flight | You have start/end position vectors and need transfer injection estimates quickly | You need full-force model trajectory optimization with thrust arcs and constraints | Lambert is excellent for impulsive transfer intuition but does not model finite-burn controls by itself |
+| Two-body RK4 propagation | Numerically integrates orbit states under central gravity with higher accuracy than Euler | You need stable medium-duration propagation and energy behavior suitable for regression tests | You need high-fidelity multi-body perturbations over long windows | RK4 gives a strong accuracy/runtime compromise in deterministic test pipelines |
+| N-body propagation | Includes additional gravitating bodies and perturbation effects | Third-body effects, perturbation breakdown analysis, or longer mission arcs are important | You only need fast local launch-phase approximations | N-body cost is higher, but captures dynamics two-body cannot |
+| EKF-15 navigation | Fuses dynamic model and noisy measurements into corrected state estimates | Sensor noise/outage handling and covariance behavior are part of system validation | Full nonlinear observability demands UKF/particle methods and highly non-Gaussian regimes | EKF is efficient and practical for many aerospace pipelines with proper tuning |
+| Deterministic Monte Carlo | Runs repeatable seeded dispersion analyses | You need reproducible uncertainty regression in CI | You need random non-reproducible campaign statistics for exploratory studies | Determinism enables stable baselines and change detection |
+
+### 2) Integrator Comparison (When to Use Which)
+
+| Integrator | Order | Cost per Step | Typical Error Trend | Best Fit in This Repo | Not Ideal For |
+|---|---:|---:|---|---|---|
+| Euler | 1 | Low | Larger drift for fixed step size | Baseline comparisons and educational contrast tests | Long windows where energy stability matters |
+| RK4 | 4 | Medium | Much lower truncation error for same step | Default two-body path and benchmarked propagation | Very stiff dynamics requiring implicit methods |
+| Adaptive variable-step (future option) | Varies | Variable | Better local control under changing dynamics | Potential future high-fidelity mission studies | Cases demanding deterministic fixed-step reproducibility |
+
+### 3) Guidance / Navigation / Control Role Separation
+
+| Subsystem | Core Question It Answers | Primary Inputs | Primary Outputs | Failure Mode if Missing |
+|---|---|---|---|---|
+| Guidance | Where should the vehicle go next? | Mission objectives, phase, constraints | Reference attitude/throttle profile | Vehicle can remain stable but miss mission geometry |
+| Navigation | Where is the vehicle now? | Sensor measurements + process model | Estimated state and covariance | Guidance/control act on wrong state assumptions |
+| Control | How should we actuate now? | Guidance command + estimated state | Actuator-level corrections | Commands remain theoretical and unexecuted |
+
+### 4) Practical Mission Window Behavior Checks
+
+| Window | Typical Time Span | Expected Behavior | Invariant to Assert | Common Regression Caught |
+|---|---|---|---|---|
+| Pad to early ascent | 0s to ~60s | Rapid acceleration, low altitude | Finite rocket scene vectors, positive mass, valid camera target | Bad coordinate scaling and camera NaN vectors |
+| Mid ascent | ~60s to ~300s | Increasing altitude/velocity, dynamic attitude | Monotonic camera-distance tiers by altitude bins | Broken camera schedule thresholds |
+| Upper ascent / handoff | ~300s to ~650s | High velocity, long path arc | No invalid vectors in follow camera outputs | Drift from numerical instability or transform mismatches |
+
+> [!TIP]
+> Near the top of your workflow, decide whether a task is “visual confidence” or “physics confidence.” Visual confidence relies on camera/position invariants, while physics confidence requires propagator and estimator checks with strict numeric tolerances.
+
+---
+
+## System Architecture
+
+The architecture intentionally isolates core aerospace math from the user interface. That separation keeps algorithms reusable and testable in headless environments while the React/Three.js app focuses on rendering, interaction, and telemetry presentation.
+
+### 1) High-Level Package Interaction
 
 ```mermaid
-flowchart TD
-    subgraph Browser["🌐 Browser — apps/web"]
-        UI[React 18 UI\nMission selector · Telemetry overlay]
-        R3F[React Three Fiber Canvas\nSolarSystem · SLSBlock1 · StarField]
-        LD[LaunchDemo\nPhysics loop · Camera snap]
-    end
+flowchart LR
+  subgraph Web[apps/web]
+    UI[React UI]
+    Scene[Three.js + R3F Scene]
+    Harness[Visual Behavior Tests]
+  end
 
-    subgraph Core["📦 @gnc/core"]
-        GUID[SLSGuidance\nPitch schedule · Throttle program]
-        INTG[VehicleIntegrator\nStaging events · Mass flow]
-        KF[KalmanFilter3D\nPredict · Update · 6-DOF state]
-        PID[AttitudeControlSystem\nPID × 3 axes · TVC gimbal]
-        SSSP[EnhancedSSSpSolver\nSub-Dijkstra trajectory graph]
-        SENS[SensorSimulator\nIMU · GPS · CoordTransforms]
-    end
+  subgraph Core[packages/gnc-core]
+    Guidance[Guidance]
+    Nav[Navigation EKF]
+    Control[Control Laws]
+    Orbit[Orbit Solvers + Propagators]
+    Analysis[Monte Carlo + Diagnostics]
+  end
 
-    subgraph Scenarios["📦 @gnc/scenarios"]
-        SLS[SLSBlock1 config\nStages · Events · Aerodynamics]
-        A2[Artemis2Mission\nLC-39B · 185 km orbit · TLI phases]
-    end
+  subgraph Scenarios[packages/mission-scenarios]
+    Vehicles[Vehicle Definitions]
+    Missions[Mission Profiles]
+  end
 
-    subgraph Infra["🔧 Infrastructure"]
-        DOCK[Docker\nDev + Prod multi-stage]
-        VITE[Vite 6\nHMR · ESM bundling]
-        PNPM[pnpm workspaces\nMonorepo dependency graph]
-    end
-
-    UI --> R3F
-    R3F --> LD
-    LD --> GUID
-    LD --> INTG
-    INTG --> KF
-    GUID --> PID
-    PID --> SSSP
-    INTG --> SENS
-    INTG --> SLS
-    A2 --> SLS
-    LD --> A2
-    VITE --> UI
-    PNPM --> Core
-    PNPM --> Scenarios
-    DOCK --> VITE
+  UI --> Scene
+  Scene --> Guidance
+  Scene --> Orbit
+  Scene --> Nav
+  Scene --> Control
+  Guidance --> Missions
+  Orbit --> Vehicles
+  Analysis --> Orbit
+  Harness --> Scene
+  Harness --> Orbit
 ```
 
-### GNC Data Flow — Powered Ascent
+### 2) Launch Loop and Data Path
 
 ```mermaid
 sequenceDiagram
-    participant F  as useFrame (60 Hz)
-    participant G  as SLSGuidance
-    participant I  as VehicleIntegrator
-    participant K  as KalmanFilter3D
-    participant P  as PIDController
-    participant V  as SLSBlock1 mesh
+  participant Frame as Render/Sim Frame
+  participant Guidance as Guidance Module
+  participant Dynamics as Integrator/Propagator
+  participant Nav as EKF-15
+  participant Cam as Camera Follow Logic
+  participant UI as Telemetry UI
 
-    F->>G: computeGuidance(LaunchState)
-    G-->>F: {pitch, yaw, throttle}
-    F->>I: update(time, altitude, velocity)
-    I-->>F: VehicleState {mass, thrust, activeStages}
-    F->>K: predict(dt) → update(gpsMeasurement)
-    K-->>F: x̂ = [rx,ry,rz,vx,vy,vz]
-    F->>P: update(pitch_cmd, pitch_meas)
-    P-->>F: gimbal_deflection [rad]
-    F->>V: position.set(rx·scale, ry·scale, rz·scale)
-    V-->>F: rendered frame
+  Frame->>Guidance: mission_state, phase, constraints
+  Guidance-->>Frame: target attitude + throttle
+  Frame->>Dynamics: state, commands, dt
+  Dynamics-->>Frame: next_state
+  Frame->>Nav: predict/update(measurements)
+  Nav-->>Frame: state_estimate + covariance
+  Frame->>Cam: rocket_scene_position + altitude
+  Cam-->>Frame: camera_position + lookAt
+  Frame->>UI: publish telemetry
 ```
 
-### Module Dependency Topology
+### 3) Navigation Estimate State Machine
 
 ```mermaid
-mindmap
-  root((gnc-space-sim))
-    apps/web
-      SolarSystem.tsx
-        TextureErrorBoundary
-        SafeTexturedSphere
-      LaunchDemo.tsx
-        EARTH_RADIUS_SCENE
-        ROCKET_POS_SCALE
-      SLSVisualization.tsx
-        SRB geometry
-        Exhaust plumes
-    packages/gnc-core
-      launch
-        guidance.ts GNC-GUID-001
-        integration.ts GNC-INTG-001
-      navigation
-        kalman.ts GNC-NAV-001
-        sensors.ts GNC-NAV-002
-      control
-        launch.ts GNC-CTRL-001
-      engines
-        thrust_curves.ts GNC-ENGINE-001
-      orbits
-        twobody.ts GNC-ORBIT-001
-      planning
-        enhanced-sssp.ts GNC-PLAN-001
-    packages/mission-scenarios
-      vehicles/sls_block1.ts SCEN-VEH-001
-      missions/artemis2.ts SCEN-MISS-001
+stateDiagram-v2
+  [*] --> Initialized
+  Initialized --> Predicting: dt available
+  Predicting --> Updating: measurement available
+  Updating --> Predicting: next frame
+  Updating --> MeasurementGap: sensor outage
+  MeasurementGap --> Predicting: process-only propagation
+  MeasurementGap --> Updating: sensor recovery
+  Predicting --> Fault: numerical singularity
+  Updating --> Fault: invalid covariance
+  Fault --> [*]
 ```
 
-### Codebase Composition
+### 4) Transfer-Solver Decision Graph
 
 ```mermaid
-pie title Lines of TypeScript by subsystem
-  "GNC Algorithms (guidance/nav/control)" : 38
-  "3D Visualisation (R3F components)" : 27
-  "Mission Scenarios & Config" : 17
-  "Test Suites (19 spec files)" : 12
-  "Planning / SSSP" : 6
+flowchart TD
+  Start[Need transfer estimate] --> Inputs{Have r1, r2, tof?}
+  Inputs -- No --> Collect[Collect boundary conditions]
+  Collect --> Inputs
+  Inputs -- Yes --> Feasible{Feasible time window?}
+  Feasible -- No --> Diagnose[Return infeasible diagnostics]
+  Feasible -- Yes --> Solve[Lambert solve]
+  Solve --> Classify[Conic-case classification]
+  Classify --> Validate[Delta-v and geometry checks]
+  Validate --> Done[Use in mission design / tests]
 ```
 
-<p align="right">(<a href="#top">back to top ↑</a>)</p>
+### 5) CI and Quality Flow
 
----
-
-## 📁 Monorepo Structure
-
-```text
-gnc-space-sim/
-├── apps/
-│   └── web/                      # React Three Fiber frontend (Vite 6)
-│       ├── src/components/       # SolarSystem, LaunchDemo, SLSVisualization, …
-│       ├── src/__tests__/        # solarSystemScale, slsMockSimulation specs
-│       └── tests/playwright/     # E2E smoke + orbital-mechanics tests
-│
-├── packages/
-│   ├── gnc-core/                 # Pure GNC algorithm library (no React)
-│   │   ├── src/launch/           # guidance.ts · integration.ts
-│   │   ├── src/navigation/       # kalman.ts · sensors.ts
-│   │   ├── src/control/          # launch.ts (PID + TVC)
-│   │   ├── src/engines/          # thrust_curves.ts
-│   │   ├── src/orbits/           # twobody.ts
-│   │   ├── src/planning/         # enhanced-sssp · trajectory-planner
-│   │   └── src/__tests__/        # 12 spec files · 89 tests
-│   │
-│   ├── mission-scenarios/        # Mission data library (@gnc/scenarios)
-│   │   ├── src/vehicles/         # sls_block1.ts
-│   │   ├── src/missions/         # artemis2.ts
-│   │   └── test/                 # slsBlock1 · artemis2 · scenario specs
-│   │
-│   ├── ui-components/            # Shared React UI primitives
-│   └── gnc-rust/                 # Rust/WASM orbit propagator (WIP)
-│
-├── tools/
-│   ├── docker/                   # Dockerfile · docker-compose · nginx configs
-│   └── scripts/                  # run.sh · docker-dev.sh · setup.sh
-│
-├── documentation/                # Design docs (SSSP, MPC, orbital mechanics)
-├── build-tools/                  # ESLint config · tsconfig.base.json
-└── tests/integration/            # Cross-package integration tests
+```mermaid
+flowchart LR
+  A[Commit/PR] --> B[Lint + Typecheck]
+  B --> C[Core Tests]
+  C --> D[Scenario Tests]
+  D --> E[Web Tests]
+  E --> F[Visual Invariant Harness]
+  F --> G[Report + Artifacts]
 ```
 
-<p align="right">(<a href="#top">back to top ↑</a>)</p>
+---
+
+## Monorepo Layout
+
+### 5) Package and Responsibility Table
+
+| Package | Role | Contains | Why It Exists Separately |
+|---|---|---|---|
+| apps/web | Browser application | React UI, Three scene, visual harness tests | Keeps UI concerns isolated from math kernels |
+| packages/gnc-core | Algorithmic core | Lambert, RK4, EKF-15, Monte Carlo, n-body, utilities | Enables headless testing and reusable scientific logic |
+| packages/mission-scenarios | Mission and vehicle definitions | Stage masses, mission events, profile configs | Decouples scenario data from reusable algorithms |
+| packages/ui-components | Shared UI primitives | Common visual components | Prevents duplication across front-end surfaces |
+| packages/gnc-rust | Performance experiments | Rust numerical kernels, wasm bridge | Supports future speedups in heavy integration loops |
+
+### 6) Folder-Level Navigation Guide
+
+| Path | What You Will Find | Start Here If You Need | Typical Contributor |
+|---|---|---|---|
+| apps/web/src/components | Scene objects, launch demo, camera logic | Visual bugs, rendering behavior, camera follow | Front-end + simulation integrator |
+| apps/web/src/__tests__ | Browser-side behavior and utility tests | Visual regression harness and rendering invariants | QA-focused contributor |
+| packages/gnc-core/src/orbits | Solvers and propagators | Transfer math, orbit integration, perturbation studies | Astrodynamics contributor |
+| packages/gnc-core/src/navigation | EKF and sensor pathways | Estimator tuning, outage behavior, covariance checks | Navigation contributor |
+| packages/gnc-core/src/analysis | Monte Carlo and summary tools | Repeatable uncertainty campaigns | Systems analysis contributor |
+| documentation | Design notes and rationale docs | Deeper conceptual background | Any contributor onboarding |
+
+> [!NOTE]
+> Keeping orbit and estimator logic in packages instead of the web app prevents accidental coupling to rendering frame rate, which is a common source of hidden numerical bugs.
 
 ---
 
-## 🔬 Technology Stack
+## Technology Stack and Why It Exists
 
-| <sub>Technology</sub> | <sub>Version</sub> | <sub>Purpose</sub> | <sub>Why Chosen</sub> | <sub>Alternatives Rejected</sub> |
-|------------|---------|---------|------------|-----------------------|
-| <sub>**TypeScript**</sub> | <sub>5.6</sub> | <sub>Type system across all packages</sub> | <sub>Strict typing prevents unit-conversion bugs in physics constants</sub> | <sub>Plain JS — too risky for GNC maths</sub> |
-| <sub>**React**</sub> | <sub>18.3</sub> | <sub>Component UI + state</sub> | <sub>Concurrent mode, React Three Fiber integration</sub> | <sub>Vue/Svelte — smaller R3F ecosystem</sub> |
-| <sub>**Three.js**</sub> | <sub>0.169</sub> | <sub>WebGL 3D scene</sub> | <sub>Best WebGL abstraction, huge community</sub> | <sub>Babylon.js — heavier bundle</sub> |
-| <sub>**React Three Fiber**</sub> | <sub>8.17</sub> | <sub>Declarative R3F scene graph</sub> | <sub>Idiomatic React + Three.js, hooks API</sub> | <sub>Raw Three.js — no React composability</sub> |
-| <sub>**@react-three/drei**</sub> | <sub>9.121</sub> | <sub>Camera controls, helpers</sub> | <sub>Pre-built OrbitControls, helpers, avoid boilerplate</sub> | <sub>Manual Three.js controls</sub> |
-| <sub>**Vite**</sub> | <sub>6.0</sub> | <sub>Dev server + bundler</sub> | <sub>Sub-second HMR, native ESM, fast prod builds</sub> | <sub>webpack — slower cold start</sub> |
-| <sub>**Vitest**</sub> | <sub>2.1</sub> | <sub>Unit / integration tests</sub> | <sub>Vite-native, instant watch mode, Vitest UI</sub> | <sub>Jest — requires Babel transform</sub> |
-| <sub>**pnpm**</sub> | <sub>9.12</sub> | <sub>Monorepo package manager</sub> | <sub>Strict linking, disk-efficient, workspace protocol</sub> | <sub>npm/yarn — slower, less strict</sub> |
-| <sub>**Zustand**</sub> | <sub>5.0</sub> | <sub>Global UI state</sub> | <sub>Minimal API, no boilerplate, TS-first</sub> | <sub>Redux — too verbose for this scope</sub> |
-| <sub>**Tailwind CSS**</sub> | <sub>4.1</sub> | <sub>Utility styling</sub> | <sub>Zero runtime, consistent tokens</sub> | <sub>CSS modules — more file overhead</sub> |
-| <sub>**Docker**</sub> | <sub>Latest</sub> | <sub>Dev + prod containers</sub> | <sub>Reproducible environment across machines</sub> | <sub>Bare Node — env drift</sub> |
-| <sub>**Rust + wasm-pack**</sub> | <sub>nightly</sub> | <sub>High-perf orbit kernel</sub> | <sub>Near-native speed for RK4 integration</sub> | <sub>TS-only — 10–50× slower for dense loops</sub> |
+The stack is selected to optimize for correctness, maintainability, and contributor throughput. TypeScript provides compile-time defense against unit and shape mismatch errors. React plus React Three Fiber provide a practical, composable way to render mission states while still integrating deeply with simulation outputs. Vitest and pnpm workspaces give fast feedback loops and clean package boundaries for monorepo development.
 
-<p align="right">(<a href="#top">back to top ↑</a>)</p>
+### 7) Stack Trade-Off Table
+
+| Technology | Purpose in Project | Why Chosen | Alternative Considered | Why Alternative Was Not Primary |
+|---|---|---|---|---|
+| TypeScript | Strong static contracts across simulation/data interfaces | Reduces unit confusion and catches shape errors early | Plain JavaScript | Too permissive for physics-heavy code paths |
+| React + R3F | Real-time scene and telemetry UI | Mature ecosystem and excellent WebGL integration | Raw Three.js | More imperative boilerplate and less composability |
+| Vitest | Fast unit/integration tests | Native Vite integration and fast startup | Jest | Higher transform overhead in this repo setup |
+| pnpm workspaces | Monorepo dependency graph | Fast installs and strict linking behavior | npm workspaces | Less strict and less efficient in large monorepos |
+| Docker tooling | Reproducible local/dev container workflows | Consistent environment across machines | Host-only setup | Greater environment drift risk |
 
 ---
 
-## ⚡ Setup & Installation
+## Algorithms, Equations, and Engineering Trade-offs
+
+This project chooses algorithms that are both instructive and practical in a browser-native engineering workflow. The emphasis is not only on obtaining plausible trajectories but on producing debuggable diagnostics and repeatable tests under edge conditions. Where possible, algorithm choices are paired with explicit reasons and alternatives so contributors can understand decision boundaries.
+
+### 8) Algorithm Choice Table (What, Why, and Why Not Others)
+
+| Algorithm | What It Does | Formula / Model Focus | Why Chosen Here | Why Not the Main Alternative |
+|---|---|---|---|---|
+| Lambert universal-variable solver | Computes transfer velocities between boundary positions at a target time-of-flight | Solves boundary-value conditions under two-body assumptions | Fast transfer feasibility checks with diagnostic output | Full direct transcription optimization is heavier for routine CI tests |
+| RK4 propagation | Numerically integrates state dynamics with fourth-order local accuracy | Repeated slope evaluation over sub-steps | Better error/energy behavior than Euler for similar fixed step workflows | Symplectic methods are excellent for very long horizons but more complex for current mixed workloads |
+| EKF-15 | Estimates state/covariance under noisy measurements and process dynamics | Linearized covariance propagation and correction updates | Balance of performance and observability handling in practical aerospace pipelines | UKF/particle filters are more expensive and require more tuning for this baseline |
+| Deterministic Monte Carlo | Runs seeded scenario perturbations reproducibly | Controlled pseudo-random sampling | CI-friendly reproducibility and comparative analysis across commits | Non-seeded random campaigns are harder to baseline in regression suites |
+| N-body perturbation analysis | Includes third-body and perturbation influences | Summation of gravitational accelerations across bodies | Needed for scenario validation beyond strict two-body simplifications | Two-body only cannot represent important transfer perturbation effects |
+
+### Core Equations Used
+
+The simulation applies a mixture of classical astrodynamics and state-estimation equations:
+
+1. Two-body acceleration model:
+
+$$
+\mathbf{a} = -\mu \frac{\mathbf{r}}{\lVert \mathbf{r} \rVert^3}
+$$
+
+2. Discrete-time EKF covariance predict/update pattern:
+
+$$
+\mathbf{P}_{k|k-1} = \mathbf{F}_k \mathbf{P}_{k-1|k-1} \mathbf{F}_k^\top + \mathbf{Q}_k
+$$
+
+$$
+\mathbf{K}_k = \mathbf{P}_{k|k-1}\mathbf{H}_k^\top\left(\mathbf{H}_k\mathbf{P}_{k|k-1}\mathbf{H}_k^\top + \mathbf{R}_k\right)^{-1}
+$$
+
+$$
+\mathbf{x}_{k|k} = \mathbf{x}_{k|k-1} + \mathbf{K}_k\left(\mathbf{z}_k - \mathbf{H}_k\mathbf{x}_{k|k-1}\right)
+$$
+
+3. Launch azimuth geometric relationship used in guidance derivation:
+
+$$
+\beta = \arcsin\left(\frac{\cos i}{\cos \phi}\right)
+$$
+
+### 9) Formula-to-Subsystem Mapping Table
+
+| Formula | Used In | Why Needed | If Removed |
+|---|---|---|---|
+| Two-body acceleration | Propagators and baseline orbital dynamics | Supplies physically meaningful central gravity evolution | Position and velocity become physically inconsistent |
+| EKF predict/update equations | Navigation estimation | Fuses noisy observations with modeled dynamics | Guidance/control consume raw noisy states |
+| Launch azimuth relationship | Initial ascent guidance | Aligns trajectory inclination targets with launch site geometry | Early heading can be physically invalid for mission target |
+
+> [!IMPORTANT]
+> Numerical methods are chosen to be understandable and testable first. More sophisticated methods can be added, but the repository defaults to approaches that support deterministic regression and clear diagnostics.
+
+---
+
+## How the Simulation Works Step by Step
+
+A single simulated mission frame can be understood as a small pipeline. Guidance computes desired behavior from mission phase and current state. Dynamics advances the physical state based on vehicle and environment parameters. Navigation corrects state confidence with sensor information. Rendering then maps state into scene coordinates, and camera logic chooses stable and readable viewpoints.
+
+1. Build current mission context (phase, remaining propellant, target profile).
+2. Compute guidance outputs (attitude/throttle references).
+3. Integrate vehicle state for the frame interval.
+4. Update navigation estimate using available measurements.
+5. Transform physical vectors into scene coordinates.
+6. Compute camera target and distance schedule.
+7. Publish telemetry and render.
+
+### 10) Step-by-Step Signal Contract Table
+
+| Step | Input Contract | Output Contract | Why This Contract Is Important |
+|---|---|---|---|
+| Guidance | State + mission profile | Command references | Prevents ad-hoc control behavior between mission phases |
+| Dynamics integration | Prior state + commands + dt | Physically advanced state | Maintains continuity and conservation expectations |
+| Navigation update | Predicted state + measurements | Corrected estimate + covariance | Controls and telemetry rely on estimate quality |
+| Scene transform | Physical state vectors | Scene-space vectors | Avoids scale/offset ambiguity in visual layer |
+| Camera logic | Scene position + altitude | Camera pose/look target | Keeps operator context during fast dynamics |
+
+---
+
+## API Reference (Collapsible)
+
+<details>
+<summary>Core orbital and transfer APIs</summary>
+
+| API | Package Path | Purpose | Typical Inputs | Typical Outputs |
+|---|---|---|---|---|
+| lambert | packages/gnc-core/src/orbits/lambert.ts | Boundary-value transfer solve with diagnostics | r1, r2, tof, mu | velocity vectors, conic case, failure diagnostics |
+| propagateTwoBody | packages/gnc-core/src/orbits/rk4.ts | Two-body propagation with selectable mode | state0, dt, steps, mode | propagated trajectory/state history |
+| nbodyPropagate | packages/gnc-core/src/orbits/nbody.ts | Multi-body integration with perturbation accounting | initial state, body set, dt | evolved state + perturbation breakdown |
+
+```ts
+// Example shape only; check source for exact typing.
+const result = propagateTwoBody(initialState, {
+  dt: 1,
+  steps: 1200,
+  mode: 'rk4',
+})
+```
+
+</details>
+
+<details>
+<summary>Navigation and analysis APIs</summary>
+
+| API | Package Path | Purpose | Typical Inputs | Typical Outputs |
+|---|---|---|---|---|
+| EKF15.predict / EKF15.updateGPS | packages/gnc-core/src/navigation/ekf15.ts | Estimate state and covariance under process/sensor models | state estimate, covariance, measurement | updated estimate + covariance |
+| runMonteCarlo | packages/gnc-core/src/analysis/monte_carlo.ts | Deterministic seeded dispersion campaigns | seed, sample count, callback model | distribution samples and summaries |
+| summarize | packages/gnc-core/src/analysis/monte_carlo.ts | Aggregate statistical outputs | sample array | min/mean/max/std style summaries |
+
+```ts
+// Example shape only; check source for exact typing.
+const mc = runMonteCarlo({
+  seed: 42,
+  samples: 200,
+  simulate: (rng) => model(rng),
+})
+```
+
+</details>
+
+<details>
+<summary>Web visual behavior utility APIs</summary>
+
+| API | Path | Purpose | Typical Usage |
+|---|---|---|---|
+| rocketScenePositionFromR | apps/web/src/utils/launchVisualBehavior.ts | Converts physical state vector to scene coordinates | called each simulation update before rendering |
+| cameraDistanceForAltitudeKm | apps/web/src/utils/launchVisualBehavior.ts | Computes altitude-tier camera distance | used in follow-camera schedule |
+| followCameraTarget | apps/web/src/utils/launchVisualBehavior.ts | Produces camera position and look target | used by launch camera follow logic |
+| isValidRocketScenePosition | apps/web/src/utils/launchVisualBehavior.ts | Guard against invalid vectors | used in visual invariant tests |
+
+```ts
+// Example shape only; check source for exact typing.
+const rocketPos = rocketScenePositionFromR(state.r)
+const cam = followCameraTarget(rocketPos, altitudeKm)
+```
+
+</details>
+
+> [!TIP]
+> Keep visual utility functions pure and deterministic. This makes them easy to test in headless mode and keeps production camera behavior aligned with test assertions.
+
+---
+
+## Testing and Validation Strategy
+
+Validation is treated as a layered pipeline rather than a single pass/fail gate. Core algorithms are verified in package-level tests with deterministic assertions and edge-case diagnostics. Scenario packages validate mission profile consistency. Web tests ensure rendering and camera behavior remain stable, including practical mission-window invariants that avoid manual visual inspection.
+
+### 11) Validation Layers Table
+
+| Layer | Scope | Typical Assertion Type | Why It Exists |
+|---|---|---|---|
+| Unit tests (core) | Individual algorithms and helpers | Numeric tolerances, diagnostic reasons, edge handling | Prevent silent math regressions |
+| Integration tests (scenarios) | Multi-module mission logic | Event ordering, mission profile consistency | Catch cross-module assumption mismatches |
+| Web behavior tests | UI-linked simulation outputs | Finite vectors, camera invariants, scene mapping checks | Catch visual/transform regressions early |
+| Workspace typecheck/lint | Entire monorepo | Static contracts and style constraints | Enforce maintainable interfaces |
+
+### 12) Regression Signals and Expected Meanings
+
+| Signal | Likely Cause | First Place to Inspect |
+|---|---|---|
+| Camera vector becomes NaN | Scene transform mismatch or invalid state propagation | launch visual behavior utilities and launch demo wiring |
+| Transfer test switches to infeasible unexpectedly | Lambert diagnostics threshold or geometry edge | lambert solver and corresponding diagnostics output |
+| Energy drift jump in benchmark | Integrator mode/path regression | rk4/euler benchmark tests and two-body default path |
+| EKF covariance grows without recovery | Measurement update path or Jacobian issue | EKF predict/update implementation and outage-mode tests |
+
+---
+
+## Installation and Local Development
+
+The project is optimized for local Node workflows and can also run in containerized environments for consistent onboarding. Use pnpm workspaces at the repository root so all packages are installed and resolved correctly.
 
 ### Prerequisites
 
-- **Node.js** ≥ 20 — [nodejs.org](https://nodejs.org)
-- **pnpm** ≥ 9 — `npm install -g pnpm`
-- **Docker** (optional, recommended) — [docker.com](https://docker.com)
-- **docker-buildx** (required for Dev Container) — `sudo pacman -S docker-buildx` / `sudo apt install docker-buildx-plugin`
+- Node.js 20+
+- pnpm 9+
+- Docker (optional)
 
-> [!IMPORTANT]
-> If you use the **Dev Container** (`Reopen in Container`), Docker BuildKit must be available via `docker-buildx`.
-> Without it, the legacy builder stalls for 5–6 seconds per build step, making the container appear to hang indefinitely.
-> Verify with `docker buildx version` — if the command is not found, install the plugin before reopening in the container.
-
-### Clone & Install
+### Setup
 
 ```bash
 git clone https://github.com/hkevin01/gnc-space-sim.git
 cd gnc-space-sim
-
-# Install all workspace dependencies
 pnpm install
 ```
 
-### Start Development Server
+### Common Commands
 
 ```bash
-# Option A — bare Node (fastest)
-pnpm dev
-# → http://localhost:5173
+# Run all tests
+pnpm -r test
 
-# Option B — Docker (reproducible)
-./tools/scripts/run.sh
-# → http://localhost:5173
+# Run full type checks
+pnpm -r typecheck
+
+# Start web app
+pnpm --filter @gnc/web dev
+
+# Run only web tests
+pnpm --filter @gnc/web test
 ```
-
-### Fetch Earth Textures (optional but recommended)
-
-```bash
-bash apps/web/scripts/fetch-earth-textures.sh
-# Downloads NASA Blue Marble 2k texture tiles to apps/web/public/assets/
-```
-
-### Verify Installation
-
-```bash
-# Run full test suite — should output "161 passed"
-pnpm --filter @gnc/core test && pnpm --filter @gnc/scenarios test && pnpm --filter @gnc/web test
-```
-
-> [!TIP]
-> If `pnpm` is not on your PATH after install, run:
-> `export PNPM_HOME="$HOME/.local/share/pnpm" && export PATH="$PNPM_HOME:$PATH"`
-
-<p align="right">(<a href="#top">back to top ↑</a>)</p>
-
----
-
-## 🚀 Usage
-
-### Launching the SLS Demo
-
-1. Open <http://localhost:5173> after starting the dev server.
-2. Select **Artemis II** from the mission selector dropdown.
-3. Press **Launch** — the SLS vehicle lifts off from LC-39B and the ascent simulation begins.
-4. Use <kbd>Left Click</kbd> + drag to orbit the camera; <kbd>Scroll</kbd> to zoom.
-5. The telemetry overlay shows live altitude, velocity, mass, active stages, and T/W ratio.
-
-### Key Keyboard Shortcuts
-
-| <sub>Key</sub> | <sub>Action</sub> |
-|-----|--------|
-| <sub><kbd>Space</kbd></sub> | <sub>Pause / Resume simulation</sub> |
-| <sub><kbd>R</kbd></sub> | <sub>Reset to pre-launch</sub> |
-| <sub><kbd>F</kbd></sub> | <sub>Toggle camera follow mode</sub> |
-| <sub><kbd>T</kbd></sub> | <sub>Cycle telemetry panels</sub> |
-
-### Development Commands
-
-```bash
-# Run specific package tests with verbose output
-pnpm --filter @gnc/core      test --reporter=verbose
-pnpm --filter @gnc/scenarios test --reporter=verbose
-pnpm --filter @gnc/web       test --reporter=verbose
-
-# Type-check all packages
-pnpm typecheck
-
-# Lint
-pnpm lint
-
-# Production build
-pnpm build
-
-# Docker: full QA pipeline
-./tools/scripts/docker-dev.sh qa:run
-```
-
-<p align="right">(<a href="#top">back to top ↑</a>)</p>
-
----
-
-## 🧮 GNC Algorithm Details
-
-### 1 · Guidance — SLS Pitch Schedule
-
-The `SLSGuidance` class (extends `GravityTurnGuidance`) interpolates a time-based pitch program from 90° at T+0 to 0° at MECO (T+480 s) and computes the launch azimuth using the spherical-trigonometry formula:
-
-$$\beta = \arcsin\!\left(\frac{\cos i}{\cos \varphi}\right)$$
-
-where $i$ = target inclination (28.5°) and $\varphi$ = LC-39B latitude (28.608°).
 
 > [!NOTE]
-> A subtle bug was found and fixed during development: the original `computeLaunchAzimuth` used `|cos i| > |cos φ|` as the "direct launch" guard — the correct condition is `≤`. The inverted guard caused `arcsin` to receive a value outside `[−1, 1]`, producing `NaN` yaw commands for all realistic inclinations. The fix is in `guidance.ts::computeLaunchAzimuth`.
-
-### 2 · Navigation — Linear Kalman Filter
-
-`KalmanFilter3D` implements a standard discrete-time KF with state $\mathbf{x} = [r_x,r_y,r_z,v_x,v_y,v_z]^\top$ and constant-velocity state transition $A(\Delta t) = \begin{bmatrix}I & \Delta t\,I \\ 0 & I\end{bmatrix}$.
-
-```mermaid
-flowchart LR
-    A[x₀, P₀\ninitial state] --> B[predict\nx = A·x\nP = A·P·Aᵀ + Q]
-    B --> C[update\nK = P·Hᵀ·S⁻¹\nx = x + K·y]
-    C --> D[x̂, P\nestimated state]
-    D --> B
-```
-
-<details>
-<summary>🏷️ NASA Comment ID catalog (all 20 annotated source files)</summary>
-
-| <sub>ID</sub> | <sub>File</sub> | <sub>Description</sub> |
-|----|------|-------------|
-| <sub>`GNC-ORBIT-001`</sub> | <sub>`gnc-core/src/orbits/twobody.ts`</sub> | <sub>Two-body Keplerian propagator</sub> |
-| <sub>`GNC-CONST-001`</sub> | <sub>`gnc-core/src/math/constants.ts`</sub> | <sub>Physical constants (IAU/WGS84/CODATA)</sub> |
-| <sub>`GNC-PHYS-001`</sub> | <sub>`gnc-core/src/math/physics.ts`</sub> | <sub>Atmospheric model + drag</sub> |
-| <sub>`GNC-NAV-001`</sub> | <sub>`gnc-core/src/navigation/kalman.ts`</sub> | <sub>6-state discrete Kalman Filter</sub> |
-| <sub>`GNC-NAV-002`</sub> | <sub>`gnc-core/src/navigation/sensors.ts`</sub> | <sub>IMU + GPS sensor simulation</sub> |
-| <sub>`GNC-GUID-001`</sub> | <sub>`gnc-core/src/launch/guidance.ts`</sub> | <sub>SLS pitch schedule + launch azimuth</sub> |
-| <sub>`GNC-INTG-001`</sub> | <sub>`gnc-core/src/launch/integration.ts`</sub> | <sub>VehicleIntegrator / staging</sub> |
-| <sub>`GNC-CTRL-001`</sub> | <sub>`gnc-core/src/control/launch.ts`</sub> | <sub>Discrete PID + TVC gimbal</sub> |
-| <sub>`GNC-ENGINE-001`</sub> | <sub>`gnc-core/src/engines/thrust_curves.ts`</sub> | <sub>Thrust curve interpolation</sub> |
-| <sub>`GNC-PLAN-001`</sub> | <sub>`gnc-core/src/planning/enhanced-sssp.ts`</sub> | <sub>SSSP trajectory graph solver</sub> |
-| <sub>`GNC-PLAN-002`</sub> | <sub>`gnc-core/src/planning/trajectory-planner.ts`</sub> | <sub>Trajectory planner</sub> |
-| <sub>`GNC-PLAN-003`</sub> | <sub>`gnc-core/src/trajectory-optimizer.ts`</sub> | <sub>Multi-objective trajectory optimizer</sub> |
-| <sub>`SCEN-VEH-001`</sub> | <sub>`mission-scenarios/src/vehicles/sls_block1.ts`</sub> | <sub>SLS Block 1 config</sub> |
-| <sub>`SCEN-MISS-001`</sub> | <sub>`mission-scenarios/src/missions/artemis2.ts`</sub> | <sub>Artemis II mission profile</sub> |
-| <sub>`SSIM-SOLARSYS-001–004`</sub> | <sub>`apps/web/src/components/SolarSystem.tsx`</sub> | <sub>Planet rendering + texture error boundary</sub> |
-| <sub>`SSIM-LAUNCHDEMO-001`</sub> | <sub>`apps/web/src/components/LaunchDemo.tsx`</sub> | <sub>Launch demo physics loop</sub> |
-| <sub>`SSIM-LAUNCHSIM-001`</sub> | <sub>`apps/web/src/components/LaunchSimulation.tsx`</sub> | <sub>Launch simulation camera + viewport</sub> |
-| <sub>`SSIM-SLSVIS-001`</sub> | <sub>`apps/web/src/components/SLSVisualization.tsx`</sub> | <sub>SLS 3D geometry + exhaust plumes</sub> |
-| <sub>`SSIM-SLSDEMO-001`</sub> | <sub>`apps/web/src/components/SLSDemo.tsx`</sub> | <sub>SLS demo wrapper</sub> |
-| <sub>`SSIM-SIMPLSLS-001`</sub> | <sub>`apps/web/src/components/SimpleSLSDemo.tsx`</sub> | <sub>Simplified SLS demo</sub> |
-
-</details>
-
-### 3 · Control — Discrete PID
-
-Each axis uses an independent `PIDController(kp, ki, kd, dt)`:
-
-$$u_k = K_p e_k + K_i \sum_{j=0}^{k} e_j \Delta t + K_d \frac{e_k - e_{k-1}}{\Delta t}$$
-
-Gimbal deflection is clamped to ±8° (RS-25 hardware limit).
-
-### 4 · Propulsion — Thrust Curve Interpolation
-
-`interpolateThrust(t, profile)` does piecewise-linear interpolation on certified test-data points. A pre-ignition guard (`t < 0 → return 0`) prevents the startup-value being returned for negative times — a bug found and fixed in `thrust_curves.ts`.
-
-### 5 · Scale Constants (critical)
-
-The 3D scene uses **1 scene unit = 1 million km** with `SIZE_MULT_INNER = 25` for visual planet enlargement:
-
-$$r_\text{Earth,scene} = \frac{6371\,\text{km}}{10^6\,\text{km/unit}} \times 25 = 0.15928\,\text{units}$$
-
-Rocket position maps from metres (physics) to scene units via:
-
-$$\text{pos}_\text{scene} = (r - r_\text{Earth,centre}) \times 10^{-9} + r_\text{Earth,scene}$$
-
-`solarSystemScale.spec.ts` verifies these constants can never silently regress.
-
-<p align="right">(<a href="#top">back to top ↑</a>)</p>
+> If you are changing algorithms and visuals together, run both core and web tests in the same iteration. This catches coordinate-map regressions that pure core tests cannot see.
 
 ---
 
-## 🧪 Test Suite
+## Operational Tips and Troubleshooting
 
-161 tests across 3 packages and 19 spec files, all completing in < 2 s.
+### 13) Practical Tips Table
 
-<details>
-<summary>📋 Full test inventory</summary>
+| Scenario | Recommended Action | Why |
+|---|---|---|
+| You changed camera follow logic | Run visual-behavior utility tests and launch behavior tests first | Camera regressions often appear as finite/target issues before visual artifacts |
+| You changed transfer logic | Run lambert and orbit test groups with diagnostics enabled | Failure reason mismatches are often more informative than raw delta-v mismatches |
+| You changed EKF tuning | Run outage and recovery tests with deterministic seeds | Prevents intermittent filter behavior and unstable covariance growth |
+| You changed package exports | Run workspace typecheck before tests | Catch symbol collisions and export-surface regressions early |
 
-| <sub>Package</sub> | <sub>Spec file</sub> | <sub>Tests</sub> | <sub>Coverage area</sub> |
-|---------|-----------|------:|---------------|
-| <sub>`@gnc/core`</sub> | <sub>`physics.spec.ts`</sub> | <sub>15</sub> | <sub>Orbital constants, two-body propagator</sub> |
-| <sub>`@gnc/core`</sub> | <sub>`guidance.spec.ts`</sub> | <sub>12</sub> | <sub>GravityTurnGuidance, SLSGuidance</sub> |
-| <sub>`@gnc/core`</sub> | <sub>`vehicleIntegrator.spec.ts`</sub> | <sub>12</sub> | <sub>Staging events, mass flow, T/W</sub> |
-| <sub>`@gnc/core`</sub> | <sub>`kalman.spec.ts`</sub> | <sub>8</sub> | <sub>KF init, predict/update, convergence</sub> |
-| <sub>`@gnc/core`</sub> | <sub>`thrustCurves.spec.ts`</sub> | <sub>14</sub> | <sub>SRB + liquid engine interpolation</sub> |
-| <sub>`@gnc/core`</sub> | <sub>`pidController.spec.ts`</sub> | <sub>9</sub> | <sub>P/I/D math, reset, combined gains</sub> |
-| <sub>`@gnc/core`</sub> | <sub>`sensors.spec.ts`</sub> | <sub>14</sub> | <sub>ECEF↔geodetic, IMU/GPS simulation</sub> |
-| <sub>`@gnc/core`</sub> | <sub>`enhancedSSSP.spec.ts`</sub> | <sub>1</sub> | <sub>SSSP correctness</sub> |
-| <sub>`@gnc/core`</sub> | <sub>`bench.compare.spec.ts`</sub> | <sub>1</sub> | <sub>SSSP vs Dijkstra speedup</sub> |
-| <sub>`@gnc/core`</sub> | <sub>`enhancedSSSP.perf.spec.ts`</sub> | <sub>1</sub> | <sub>Throughput regression</sub> |
-| <sub>`@gnc/core`</sub> | <sub>`shortestPath.spec.ts`</sub> | <sub>1</sub> | <sub>Shortest path baseline</sub> |
-| <sub>`@gnc/core`</sub> | <sub>`twobody.test.ts`</sub> | <sub>1</sub> | <sub>Two-body propagator smoke</sub> |
-| <sub>`@gnc/scenarios`</sub> | <sub>`slsBlock1.spec.ts`</sub> | <sub>23</sub> | <sub>Vehicle config, mass, events</sub> |
-| <sub>`@gnc/scenarios`</sub> | <sub>`artemis2.spec.ts`</sub> | <sub>20</sub> | <sub>Mission profile, guidance cross-check</sub> |
-| <sub>`@gnc/scenarios`</sub> | <sub>`scenario.test.ts`</sub> | <sub>1</sub> | <sub>EARTH_ASTEROID_MARS export</sub> |
-| <sub>`@gnc/web`</sub> | <sub>`solarSystemScale.spec.ts`</sub> | <sub>9</sub> | <sub>Scale constant consistency</sub> |
-| <sub>`@gnc/web`</sub> | <sub>`slsMockSimulation.spec.ts`</sub> | <sub>14</sub> | <sub>SLS staging pipeline integration</sub> |
-| <sub>`@gnc/web`</sub> | <sub>`SimulationLayout.test.tsx`</sub> | <sub>1</sub> | <sub>Layout component smoke</sub> |
-| <sub>`@gnc/web`</sub> | <sub>`App.test.tsx`</sub> | <sub>1</sub> | <sub>App root smoke</sub> |
-|  | <sub>**Total**</sub> | <sub>**161**</sub> |  |
+> [!WARNING]
+> Avoid blending rendering-side scaling constants with algorithm-side physical constants. Keep conversion boundaries explicit so units remain auditable.
 
-</details>
-
-```bash
-# Run everything and see per-package totals
-pnpm --filter @gnc/core      test   # → 89 passed
-pnpm --filter @gnc/scenarios test   # → 44 passed
-pnpm --filter @gnc/web       test   # → 28 passed
-```
-
-<p align="right">(<a href="#top">back to top ↑</a>)</p>
+> [!CAUTION]
+> Large simulation time multipliers can hide step-size stability problems. For correctness checks, prefer stable deterministic dt settings and then evaluate visualization smoothness separately.
 
 ---
 
-## 🗺️ Roadmap
+## Research References (NASA, Papers, arXiv)
 
-```mermaid
-gantt
-  title GNC Space Sim — Development Roadmap
-  dateFormat YYYY-MM-DD
-  section Completed ✅
-    Monorepo & Docker setup          :done, a1, 2024-01-01, 2024-02-01
-    3D solar system (textured)       :done, a2, 2024-02-01, 2024-04-01
-    SLS GNC algorithm stack          :done, a3, 2024-04-01, 2024-07-01
-    Kalman filter & sensor models    :done, a4, 2024-07-01, 2024-09-01
-    161-test suite + NASA comments   :done, a5, 2024-09-01, 2026-04-06
-  section In Progress 🔄
-    Rust/WASM RK4 orbit kernel       :active, b1, 2026-04-06, 2026-05-15
-    Extended Kalman Filter (15-state):active, b2, 2026-04-15, 2026-06-01
-  section Planned ⭕
-    Lambert solver (interplanetary)  :c1, 2026-05-15, 2026-07-01
-    Monte Carlo dispersion analysis  :c2, 2026-07-01, 2026-09-01
-    Multi-body gravity (Moon + Sun)  :c3, 2026-08-01, 2026-10-01
-    Playwright E2E full coverage     :c4, 2026-06-01, 2026-08-01
-    Machine-learning trajectory opt  :c5, 2026-10-01, 2027-02-01
-```
+The following references are useful for understanding why these modeling choices are reasonable and where future improvements may come from. They include classical astrodynamics texts, practical state-estimation references, and arXiv papers relevant to transfer and optimization methods.
 
-| <sub>Phase</sub> | <sub>Goals</sub> | <sub>Target</sub> | <sub>Status</sub> |
-|-------|-------|--------|--------|
-| <sub>**MVP**</sub> | <sub>SLS sim, textured solar system, 161 tests</sub> | <sub>Q1 2026</sub> | <sub>✅ Complete</sub> |
-| <sub>**Perf**</sub> | <sub>Rust/WASM RK4 kernel, 10× physics throughput</sub> | <sub>Q2 2026</sub> | <sub>🔄 In Progress</sub> |
-| <sub>**Nav**</sub> | <sub>15-state EKF, INS/GPS fusion</sub> | <sub>Q2 2026</sub> | <sub>🔄 In Progress</sub> |
-| <sub>**Plan**</sub> | <sub>Lambert solver, pork-chop plots</sub> | <sub>Q3 2026</sub> | <sub>⭕ Planned</sub> |
-| <sub>**Advanced**</sub> | <sub>Multi-body gravity, Monte Carlo</sub> | <sub>Q4 2026</sub> | <sub>⭕ Planned</sub> |
-| <sub>**AI/ML**</sub> | <sub>Reinforcement learning trajectory opt</sub> | <sub>2027</sub> | <sub>⭕ Planned</sub> |
-
-<p align="right">(<a href="#top">back to top ↑</a>)</p>
-
----
-
-## 🤝 Contributing
+1. D. A. Vallado, *Fundamentals of Astrodynamics and Applications*, 4th ed.
+2. R. H. Battin, *An Introduction to the Mathematics and Methods of Astrodynamics*, AIAA.
+3. M. D. Shuster, “A Survey of Attitude Representations,” *Journal of the Astronautical Sciences*.
+4. D. Izzo, “Revisiting Lambert’s Problem,” arXiv:1403.2705, 2014. https://arxiv.org/abs/1403.2705
+5. S. J. Julier and J. K. Uhlmann, “Unscented Filtering and Nonlinear Estimation,” *Proceedings of the IEEE*, 2004.
+6. G. Welch and G. Bishop, “An Introduction to the Kalman Filter,” UNC technical report.
+7. E. Hairer, C. Lubich, and G. Wanner, *Geometric Numerical Integration*.
+8. J. Betts, *Practical Methods for Optimal Control and Estimation Using Nonlinear Programming*.
+9. J. T. Conway (ed.), *Spacecraft Trajectory Optimization*.
+10. NASA SP and mission documentation for SLS/Artemis public mission profiles.
 
 > [!TIP]
-> All contributions — bug reports, algorithm improvements, documentation, and new mission scenarios — are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide.
-
-### Quick Workflow
-
-```bash
-# 1. Fork → clone your fork
-git clone https://github.com/<your-handle>/gnc-space-sim.git
-cd gnc-space-sim
-
-# 2. Create a feature branch
-git checkout -b feat/my-improvement
-
-# 3. Install deps
-pnpm install
-
-# 4. Make changes, then verify
-pnpm lint && pnpm typecheck && pnpm test
-
-# 5. Commit with conventional commits
-git commit -m "feat(guidance): add Lambert solver for interplanetary transfers"
-
-# 6. Open a PR against main
-```
-
-<details>
-<summary>📋 Contribution Standards</summary>
-
-**Code**
-- TypeScript strict mode — no `any` unless suppressed with a lint-disable comment explaining why
-- Every new algorithm function must carry a NASA-style structured comment block (ID, Requirement, Purpose, Rationale, Failure Modes, References)
-- New source files require at least one corresponding spec file
-
-**Tests**
-- Unit tests for all pure functions (guidance, navigation, control, engines)
-- Integration tests for staging pipelines and mission config correctness
-- All tests must pass with `vitest run` — no `.only` or `.skip` left in PRs
-
-**Commits**
-- Use [Conventional Commits](https://www.conventionalcommits.org/): `feat`, `fix`, `test`, `docs`, `refactor`, `perf`
-- Breaking changes must include `!` and a `BREAKING CHANGE:` footer
-
-**Scientific accuracy**
-- Any change to a physics constant must cite the source (IAU, WGS84, JPL, NASA TM, etc.)
-- Include an updated test that guards the new value
-
-</details>
-
-<p align="right">(<a href="#top">back to top ↑</a>)</p>
+> If you are extending the solver stack, add a short “why this method” note and at least one citation in the relevant module docs so future contributors can evaluate trade-offs quickly.
 
 ---
 
-## 📄 License & Acknowledgements
+## Contributing
 
-**MIT License** — see [LICENSE](LICENSE). Free to use, modify, and distribute with attribution.
+Contributions are welcome across algorithms, tests, rendering, and documentation. For code changes, favor small focused pull requests with deterministic tests and clear rationale. For algorithm changes, explain what changed mathematically, why it improves behavior, and what regression tests were added.
 
-### Acknowledgements
+Before opening a pull request:
 
-| <sub>Credit</sub> | <sub>Contribution</sub> |
-|--------|-------------|
-| <sub>**NASA**</sub> | <sub>Public-domain SLS vehicle data, orbital mechanics references, and the Artemis II mission profile</sub> |
-| <sub>**Three.js & React Three Fiber**</sub> | <sub>Exceptional WebGL abstraction and React integration</sub> |
-| <sub>**Duan, Mao, Mao, Shu & Yin (Stanford / Tsinghua / MPI)**</sub> | <sub>Deterministic near-linear SSSP algorithm (arXiv:2203.07880) underlying the trajectory planner</sub> |
-| <sub>**Vallado**</sub> | <sub>*Fundamentals of Astrodynamics and Applications* — primary orbit-mechanics reference</sub> |
-| <sub>**Sutton & Biblarz**</sub> | <sub>*Rocket Propulsion Elements* — thrust curve and Isp models</sub> |
-| <sub>**IAU / WGS84 / NIST CODATA**</sub> | <sub>Gravitational parameters and physical constants</sub> |
+1. Run test suites relevant to changed packages.
+2. Run workspace type checks.
+3. Update documentation if behavior or interfaces changed.
+4. Include edge-case notes when touching solver or estimator internals.
+
+See CONTRIBUTING.md for repository conventions.
 
 ---
 
-<div align="center">
+## License
 
-Built with ❤️ for the aerospace community
+This repository is licensed under the terms described in LICENSE.
 
-*Advancing space exploration through open-source simulation*
-
-</div>
+<p align="right">(<a href="#top">back to top</a>)</p>

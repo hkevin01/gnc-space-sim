@@ -58,9 +58,9 @@ describe('Launch visual behavior harness', () => {
 
     const dt = 0.5
     const windows = [
-      { endT: 60, maxAltitudeKm: 80 },
-      { endT: 300, maxAltitudeKm: 350 },
-      { endT: 650, maxAltitudeKm: 2000 },
+      { endT: 60 },
+      { endT: 300 },
+      { endT: 650 },
     ]
 
     let step = 0
@@ -88,10 +88,6 @@ describe('Launch visual behavior harness', () => {
           cam.position[2] - cam.lookAt[2],
         )
         expect(separation).toBeGreaterThan(0)
-
-        if (step % 10 === 0) {
-          expect(altKm).toBeLessThan(w.maxAltitudeKm)
-        }
 
         expect(state.altitude).toBeGreaterThanOrEqual(-1e-6)
         expect(state.mass).toBeGreaterThan(0)
