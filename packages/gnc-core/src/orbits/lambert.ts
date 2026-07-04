@@ -62,6 +62,10 @@ function add3(a: Vec3, b: Vec3): Vec3 {
   return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
 }
 
+function sub3(a: Vec3, b: Vec3): Vec3 {
+  return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
+}
+
 // ─── Izzo's TOF equation ──────────────────────────────────────────────────────
 
 /**
@@ -89,25 +93,22 @@ function stumpff(psi: number): [number, number] {
  * Algorithm from Bate-Mueller-White §5.3.
  * Returns {tof, dtdpsi} for Newton iteration.
  */
-function tofFromPsi(
+function timeOfFlightFromPsi(
   psi: number,
   r1: number,
   r2: number,
   A: number,
-): { tof: number; dtdpsi: number } {
-  const [c2, c3] = stumpff(psi)
-  const y = r1 + r2 + A * (psi * c3 - 1) / Math.sqrt(c2)
-  if (y < 0) return { tof: -1, dtdpsi: 1 }
+  mu: number,
+): { tof: number; y: number; c2: number; c3: number } {
+  const [c2Raw, c3] = stumpff(psi)
+  const c2 = Math.max(c2Raw, 1e-14)
+  const y = r1 + r2 + (A * (psi * c3 - 1)) / Math.sqrt(c2)
 
-  const chi = Math.sqrt(y / c2)
-  const tof = (chi * chi * chi * c3 + A * Math.sqrt(y)) / Math.sqrt(1) // normalised by 1/√mu below
+  if (y <= 0) return { tof: Number.POSITIVE_INFINITY, y, c2, c3 }
 
-  // dT/dψ via chain rule (Battin 7.84)
-  const dtdpsi =
-    chi ** 3 * (1 / (2 * psi) * (c2 - 1.5 * c3 / c2) + 0.75 * c3 ** 2 / c2) +
-    (A / 8) * (3 * c3 * Math.sqrt(y) / c2 + A / chi)
-
-  return { tof: tof / Math.sqrt(1), dtdpsi }
+  const x = Math.sqrt(y / c2)
+  const tof = (x * x * x * c3 + A * Math.sqrt(y)) / Math.sqrt(mu)
+  return { tof, y, c2, c3 }
 }
 
 // ─── Main solver ──────────────────────────────────────────────────────────────
@@ -129,61 +130,57 @@ export function lambertIzzo(
   const r1 = norm(r1Vec)
   const r2 = norm(r2Vec)
 
-  if (r1 < 1 || r2 < 1 || tof <= 0 || mu <= 0) return FAIL
+  if (r1 < 1 || r2 < 1 || tof <= 0 || mu <= 0 || !Number.isFinite(tof) || !Number.isFinite(mu)) return FAIL
+  if (norm(sub3(r1Vec, r2Vec)) < 1e-6) return FAIL
 
   // Transfer angle
   const cosDnu = Math.max(-1, Math.min(1, dot(r1Vec, r2Vec) / (r1 * r2)))
-  const angMom = cross(r1Vec, r2Vec)
+  const cross12 = cross(r1Vec, r2Vec)
+  const sinMag = norm(cross12) / (r1 * r2)
+  if (sinMag < 1e-12) return FAIL
+
   const sinSign = ccw ? 1 : -1
-  // prograde:  z-component of angular momentum > 0 → Δν < π
-  const sinDnu = sinSign * norm(cross(r1Vec, r2Vec)) / (r1 * r2)
+  const sinDnu = sinSign * sinMag
+
+  const oneMinusCos = 1 - cosDnu
+  if (oneMinusCos <= 1e-14) return FAIL
 
   // Lancaster A parameter (constant for this problem)
-  const A = sinDnu * Math.sqrt(r1 * r2 / (1 - cosDnu))
-  if (!isFinite(A) || Math.abs(A) < 1) return FAIL
+  const A = sinDnu * Math.sqrt((r1 * r2) / oneMinusCos)
+  if (!isFinite(A) || Math.abs(A) < 1e-9) return FAIL
 
-  // Target TOF normalised by √mu
-  const tofN = tof * Math.sqrt(mu)
-
-  // Initial guess for ψ (use ψ = 0 → parabolic as neutral start)
-  let psi    = 0
-  let psiLo  = -4 * Math.PI ** 2
-  let psiHi  = 4 * Math.PI ** 2
-  let iters  = 0
+  let psiLo = -4 * Math.PI ** 2
+  let psiHi = 4 * Math.PI ** 2
+  let psi = 0
+  let last = timeOfFlightFromPsi(psi, r1, r2, A, mu)
+  let iters = 0
 
   for (let i = 0; i < maxIter; i++) {
     iters = i + 1
-    const { tof: t, dtdpsi } = tofFromPsi(psi, r1, r2, A)
+    last = timeOfFlightFromPsi(psi, r1, r2, A, mu)
 
-    if (t < 0) {
+    if (!isFinite(last.tof)) {
       psiLo = psi
-      psi = (psiLo + psiHi) / 2
+      psi = 0.5 * (psiLo + psiHi)
       continue
     }
 
-    const err = tofN - t
-    if (Math.abs(err) < 1e-6) break
+    const err = last.tof - tof
+    if (Math.abs(err) <= 1e-7) break
 
-    // Newton step, fallback to bisection
-    let dpsi = err / dtdpsi
-    const psiNew = psi + dpsi
-    if (psiNew > psiHi || psiNew < psiLo) {
-      dpsi = err > 0 ? (psiHi - psi) / 2 : (psiLo - psi) / 2
-    }
-    if (err > 0) psiLo = psi
-    else psiHi = psi
-    psi += dpsi
+    if (err > 0) psiHi = psi
+    else psiLo = psi
+    psi = 0.5 * (psiLo + psiHi)
   }
 
-  // Recover Lagrange coefficients
-  const [c2, c3] = stumpff(psi)
-  const y   = r1 + r2 + A * (psi * c3 - 1) / Math.sqrt(c2)
-  if (y < 0) return FAIL
-  const chi = Math.sqrt(y / c2)
+  if (!isFinite(last.tof) || Math.abs(last.tof - tof) > 5e-4) return FAIL
 
-  const f     = 1 - y / r1
-  const g     = A * Math.sqrt(y / mu)
-  const gdot  = 1 - y / r2
+  const y = last.y
+  if (!(y > 0)) return FAIL
+
+  const f = 1 - y / r1
+  const g = A * Math.sqrt(y / mu)
+  const gdot = 1 - y / r2
 
   if (Math.abs(g) < 1e-12) return FAIL
 
@@ -201,7 +198,7 @@ export function lambertIzzo(
   // Sanity: vis-viva check
   const vmag1 = norm(v1)
   const vmag2 = norm(v2)
-  if (!isFinite(vmag1) || !isFinite(vmag2) || vmag1 > 1e6 || vmag2 > 1e6) return FAIL
+  if (!isFinite(vmag1) || !isFinite(vmag2) || vmag1 > 1e6 || vmag2 > 1e6 || vmag1 < 1 || vmag2 < 1) return FAIL
 
   return { v1, v2, success: true, iterations: iters }
 }

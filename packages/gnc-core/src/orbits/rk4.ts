@@ -24,6 +24,8 @@
 export type Vec3 = [number, number, number]
 export type Vec6 = [number, number, number, number, number, number]
 
+export type PropagationMode = 'rk4' | 'euler'
+
 /** Two-body gravitational derivative: ẋ = f(x) */
 function deriv(s: Vec6, mu: number): Vec6 {
   const r2 = s[0] ** 2 + s[1] ** 2 + s[2] ** 2
@@ -38,6 +40,12 @@ function addScale(a: Vec6, b: Vec6, s: number): Vec6 {
     a[0] + s * b[0], a[1] + s * b[1], a[2] + s * b[2],
     a[3] + s * b[3], a[4] + s * b[4], a[5] + s * b[5],
   ]
+}
+
+/** Single forward-Euler step, preserved for benchmark and regression comparison. */
+export function eulerStep(state: Vec6, dt: number, mu: number): Vec6 {
+  const k1 = deriv(state, mu)
+  return addScale(state, k1, dt)
 }
 
 /** Single classical RK4 step. */
@@ -55,6 +63,25 @@ export function rk4Step(state: Vec6, dt: number, mu: number): Vec6 {
     state[4] + f * (k1[4] + 2 * k2[4] + 2 * k3[4] + k4[4]),
     state[5] + f * (k1[5] + 2 * k2[5] + 2 * k3[5] + k4[5]),
   ]
+}
+
+/**
+ * Default high-fidelity two-body propagator.
+ * RK4 is intentionally the default mode for mission-critical propagation paths.
+ */
+export function propagateTwoBody(
+  state: Vec6,
+  dt: number,
+  steps: number,
+  mu: number,
+  mode: PropagationMode = 'rk4',
+): Vec6 {
+  if (mode === 'euler') {
+    let s = state
+    for (let i = 0; i < steps; i++) s = eulerStep(s, dt, mu)
+    return s
+  }
+  return rk4Propagate(state, dt, steps, mu)
 }
 
 /**
