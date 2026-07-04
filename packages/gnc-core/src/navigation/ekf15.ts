@@ -157,6 +157,14 @@ export class EKF15Navigation {
       }
     }
 
+    // dv/deuler = d(R_nb * f_body)/deuler * dt
+    const dAccdEuler = attitudeAccelJacobianNumerical(euler, fBody)
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        F[3 + i][6 + j] = dAccdEuler[i][j] * dt
+      }
+    }
+
     // deuler/dbg = -I
     F[6][12] = -dt
     F[7][13] = -dt
@@ -248,6 +256,27 @@ function rotationMatrixBodyToNav(roll: number, pitch: number, yaw: number): numb
     [sy * cp, sy * sp * sr + cy * cr, sy * sp * cr - cy * sr],
     [-sp, cp * sr, cp * cr]
   ]
+}
+
+function attitudeAccelJacobianNumerical(euler: Vec3, fBody: Vec3): number[][] {
+  const eps = 1e-6
+  const J = zeros(3, 3)
+
+  for (let j = 0; j < 3; j++) {
+    const ep: Vec3 = [euler[0], euler[1], euler[2]]
+    const em: Vec3 = [euler[0], euler[1], euler[2]]
+    ep[j] += eps
+    em[j] -= eps
+
+    const ap = matVec3(rotationMatrixBodyToNav(ep[0], ep[1], ep[2]), fBody)
+    const am = matVec3(rotationMatrixBodyToNav(em[0], em[1], em[2]), fBody)
+
+    J[0][j] = (ap[0] - am[0]) / (2 * eps)
+    J[1][j] = (ap[1] - am[1]) / (2 * eps)
+    J[2][j] = (ap[2] - am[2]) / (2 * eps)
+  }
+
+  return J
 }
 
 function wrapAngle(a: number): number {

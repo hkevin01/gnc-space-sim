@@ -119,4 +119,48 @@ describe('EKF15Navigation', () => {
     const postTrace = trace(ekf.getCovariance())
     expect(postTrace).toBeLessThan(preTrace)
   })
+
+  it('prediction introduces attitude-to-velocity covariance coupling under acceleration', () => {
+    const tilted: EKF15State = {
+      ...baseState,
+      attitude: { roll: 0.1, pitch: -0.05, yaw: 0.2 }
+    }
+    const ekf = new EKF15Navigation(tilted)
+
+    ekf.predict({ specificForce: [2.0, -0.4, 0.3], angularRate: [0, 0, 0] }, 0.1)
+    const P = ekf.getCovariance()
+
+    expect(Math.abs(P[3][6]) + Math.abs(P[3][7]) + Math.abs(P[3][8])).toBeGreaterThan(0)
+  })
+
+  it('covariance grows during prolonged GPS outage and shrinks when GPS returns', () => {
+    const ekf = new EKF15Navigation(baseState)
+    const trace = (M: number[][]) => M.reduce((s, r, i) => s + r[i], 0)
+
+    const t0 = trace(ekf.getCovariance())
+    for (let i = 0; i < 80; i++) {
+      ekf.predict(zeroImu, 0.25)
+      ekf.updateGPS({
+        position: baseState.position,
+        velocity: baseState.velocity,
+        positionStd: 3,
+        velocityStd: 0.2,
+        available: false
+      })
+    }
+
+    const tOutage = trace(ekf.getCovariance())
+    expect(tOutage).toBeGreaterThan(t0)
+
+    ekf.updateGPS({
+      position: baseState.position,
+      velocity: baseState.velocity,
+      positionStd: 2,
+      velocityStd: 0.1,
+      available: true
+    })
+
+    const tRecover = trace(ekf.getCovariance())
+    expect(tRecover).toBeLessThan(tOutage)
+  })
 })
