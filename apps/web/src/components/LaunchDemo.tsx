@@ -12,6 +12,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useLaunchControl } from '../state/launchControlStore';
 import { NasaSolarSystem } from './SolarSystem';
+import {
+  EARTH_RADIUS_SCENE,
+  ROCKET_VISUAL_SCALE,
+  followCameraTarget,
+  rocketScenePositionFromR,
+} from '../utils/launchVisualBehavior';
 
 /**
  * ID: SSIM-LAUNCH-001
@@ -28,33 +34,6 @@ import { NasaSolarSystem } from './SolarSystem';
  *   EARTH_RADIUS_SCENE to look physically plausible.
  * References: SolarSystem.tsx SOLAR_SYSTEM_DATA.EARTH.sceneRadius formula.
  */
-
-// Solar system scale constants (must stay in sync with SolarSystem.tsx)
-// 1 scene unit = 1 million km; SIZE_MULT.INNER = 25 for inner planets
-const KM_PER_SCENE_UNIT = 1_000_000;     // km → scene-units conversion factor
-const EARTH_RADIUS_KM    = 6371.0;       // Earth mean radius [km]
-const SIZE_MULT_INNER    = 25;           // Visual enlargement factor (SolarSystem.tsx)
-
-/**
- * Earth's visual sphere radius in scene units (= physical radius × SIZE_MULT).
- * The rocket starts at this offset so it appears on Earth's visible surface.
- */
-const EARTH_RADIUS_SCENE = (EARTH_RADIUS_KM / KM_PER_SCENE_UNIT) * SIZE_MULT_INNER; // ≈ 0.159 units
-
-/**
- * Physical-to-scene-unit scale for rocket trajectory positions.
- * 1 metre = 1e-9 scene units  (1 scene unit = 1e9 m = 1e6 km)
- */
-const ROCKET_POS_SCALE = 1e-9; // metres → scene units
-
-/**
- * Rocket visual size in scene units. Exaggerated for visibility since a
- * real SLS (~100 m) would be invisible at solar-system scale.
- */
-const ROCKET_VISUAL_SCALE = EARTH_RADIUS_SCENE * 0.3; // proportional to visual Earth
-
-// Legacy alias kept for camera initialisation clarity
-const EARTH_RADIUS_UNITS = EARTH_RADIUS_SCENE;
 
 export function LaunchDemo({
   timeMultiplier = 50, // Increased default for better visual pacing
@@ -218,25 +197,12 @@ export function LaunchDemo({
           console.log('📍 Camera snapped to rocket at:', actualRocketPos.toArray());
         }
 
-        // Calculate dynamic camera distance based on altitude - keep camera close to rocket
         const altitude = stateRef.current.altitude / 1000; // km
-        // Scene-unit distances proportional to EARTH_RADIUS_SCENE (≈0.159 units)
-        let cameraDistance: number;
-        if (altitude < 50) {
-          cameraDistance = EARTH_RADIUS_SCENE * 0.5;   // very close on launch pad
-        } else if (altitude < 200) {
-          cameraDistance = EARTH_RADIUS_SCENE * 0.8;   // ascent
-        } else if (altitude < 500) {
-          cameraDistance = EARTH_RADIUS_SCENE * 1.5;   // high altitude
-        } else if (altitude < 2000) {
-          cameraDistance = EARTH_RADIUS_SCENE * 3.0;   // orbital view
-        } else {
-          cameraDistance = EARTH_RADIUS_SCENE * 6.0;   // deep space view
-        }
-
-        // Position camera offset from rocket - behind and slightly above
-        const cameraOffset = new THREE.Vector3(cameraDistance * 0.3, cameraDistance * 0.2, cameraDistance);
-        const targetCamPos = actualRocketPos.clone().add(cameraOffset);
+        const cam = followCameraTarget(
+          [actualRocketPos.x, actualRocketPos.y, actualRocketPos.z],
+          altitude
+        );
+        const targetCamPos = new THREE.Vector3(cam.position[0], cam.position[1], cam.position[2]);
         if (!isFiniteVector3(targetCamPos)) return;
         camera.position.lerp(targetCamPos, 0.03); // Smooth following
 
@@ -342,12 +308,8 @@ export function LaunchDemo({
         // This keeps the rocket at the correct physical position relative to Earth origin.
         // The NasaSolarSystem offsets Earth to world-origin so (r - Earth_centre) * posScale
         // gives the displacement from Earth's visual centre in scene units.
-        const earthCenterM = 6.371e6; // Earth mean radius [m] = starting r[0]
-        const newPos = new THREE.Vector3(
-          (nextState.r[0] - earthCenterM) * ROCKET_POS_SCALE + EARTH_RADIUS_SCENE,
-          nextState.r[1] * ROCKET_POS_SCALE,
-          nextState.r[2] * ROCKET_POS_SCALE
-        );
+        const p = rocketScenePositionFromR(nextState.r as [number, number, number]);
+        const newPos = new THREE.Vector3(p[0], p[1], p[2]);
 
         // Validate position before setting (max ~10 scene units = lunar distance range)
         if (newPos.length() < 10) {
@@ -367,12 +329,8 @@ export function LaunchDemo({
       }
 
       if (showTrajectory && isFiniteArray(nextState.r)) {
-        const earthCenterM = 6.371e6;
-        const newPoint = new THREE.Vector3(
-          (nextState.r[0] - earthCenterM) * ROCKET_POS_SCALE + EARTH_RADIUS_SCENE,
-          nextState.r[1] * ROCKET_POS_SCALE,
-          nextState.r[2] * ROCKET_POS_SCALE
-        );
+        const p = rocketScenePositionFromR(nextState.r as [number, number, number]);
+        const newPoint = new THREE.Vector3(p[0], p[1], p[2]);
 
         // Throttle trajectory updates - only add point every 10 frames to reduce re-renders
         if (Number.isFinite(newPoint.x) && Number.isFinite(newPoint.y) && Number.isFinite(newPoint.z)) {
