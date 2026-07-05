@@ -5,12 +5,10 @@
  * and accurate orbital mechanics for all planets in our solar system.
  */
 
-import { OrbitControls, Stats, Environment } from '@react-three/drei'
+import { OrbitControls, Stats } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useState, useRef, useMemo } from 'react'
-import * as THREE from 'three'
+import { useState, useRef } from 'react'
 import { OrbitalSystem } from './OrbitalMechanics'
-import { generateAsteroidBelt } from '../utils/astronomicalData'
 import { StarField } from './StarField'
 
 interface EnhancedOrbitalDemoProps {
@@ -232,18 +230,3 @@ function AnimatedTimeSystem({
 }
 
 export default EnhancedOrbitalDemo
-
-// Simple visual-only asteroid belt for the enhanced demo
-function AsteroidBeltVisual() {
-  const asteroids = useMemo(() => generateAsteroidBelt().slice(0, 400), [])
-  return (
-    <group>
-      {asteroids.map((a: { position: THREE.Vector3; size: number }, i: number) => (
-        <mesh key={i} position={a.position as THREE.Vector3} castShadow>
-          <sphereGeometry args={[a.size * 10, 8, 6]} />
-          <meshStandardMaterial color={new THREE.Color().setHSL(0.08, 0.25, 0.55)} roughness={0.85} metalness={0.05} />
-        </mesh>
-      ))}
-    </group>
-  )
-}

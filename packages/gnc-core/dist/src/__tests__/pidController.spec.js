@@ -80,7 +80,7 @@ describe('PIDController – combined PID', () => {
     it('full PID output is sum of P + I + D terms', () => {
         const kp = 1.0, ki = 0.5, kd = 0.2, dt = 0.1;
         const pid = new PIDController(kp, ki, kd, dt);
-        const setpoint = 10, measurement = 7, error = 3;
+        const setpoint = 10, measurement = 7;
         // P = kp*error = 3
         // I = ki*error*dt = 0.5*3*0.1 = 0.15
         // D = kd*(error-0)/dt = 0.2*3/0.1 = 6

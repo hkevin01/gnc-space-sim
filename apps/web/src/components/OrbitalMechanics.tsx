@@ -1,5 +1,5 @@
 import { useFrame, useLoader } from '@react-three/fiber'
-import { useMemo, useRef, Suspense, useState, useEffect } from 'react'
+import { useMemo, useRef, Suspense } from 'react'
 import { Billboard, Text } from '@react-three/drei'
 import * as THREE from 'three'
 import { TextureLoader } from 'three/src/loaders/TextureLoader.js'
@@ -319,6 +319,7 @@ export function OrbitalSystem({
   showOrbits = false,
   showLabels = true
 }: OrbitalSystemProps) {
+  void showOrbits
   const bodyPositions = useMemo(() => {
     const positions = new Map<string, THREE.Vector3>()
 

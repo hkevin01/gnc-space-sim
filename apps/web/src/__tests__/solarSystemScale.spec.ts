@@ -62,7 +62,6 @@ describe('LaunchDemo scale consistency', () => {
   it('ROCKET_POS_SCALE correctly converts Earth surface metres to scene units', () => {
     const ROCKET_POS_SCALE = 1e-9 // 1 m = 1e-9 scene units (1 scene = 1e9 m = 1e6 km)
     const earthCentreM = 6.371e6  // m
-    const earthCentreScene = earthCentreM * ROCKET_POS_SCALE // should be ~0.006371 units
     // With offset subtraction + EARTH_RADIUS_SCENE, rocket starts at EARTH_RADIUS_SCENE
     const rocketStartPos = (earthCentreM - earthCentreM) * ROCKET_POS_SCALE + LAUNCH_EARTH_SCENE_RADIUS
     expect(rocketStartPos).toBeCloseTo(LAUNCH_EARTH_SCENE_RADIUS, 5)

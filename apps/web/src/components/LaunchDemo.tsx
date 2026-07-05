@@ -30,8 +30,8 @@ import {
  *   scene units via posScale=1e-9) is therefore at physical scale, not
  *   at visual scale.  EARTH_RADIUS_SCENE is the VISUAL sphere radius
  *   (≈0.159 units) so the rocket surface offset matches the Earth sphere.
- * Constraints: ROCKET_VISUAL_SCALE must remain proportional to
- *   EARTH_RADIUS_SCENE to look physically plausible.
+ * Constraints: ROCKET_VISUAL_SCALE is tuned so rocket visual length is
+ *   approximately 1/8 of Moon visual radius for scene readability.
  * References: SolarSystem.tsx SOLAR_SYSTEM_DATA.EARTH.sceneRadius formula.
  */
 

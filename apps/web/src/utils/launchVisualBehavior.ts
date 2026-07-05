@@ -3,12 +3,17 @@ import { LaunchState } from '@gnc/core'
 // Shared scene scale constants; keep aligned with LaunchDemo and SolarSystem.
 const KM_PER_SCENE_UNIT = 1_000_000
 const EARTH_RADIUS_KM = 6371.0
+const MOON_RADIUS_KM = 1737.4
 const SIZE_MULT_INNER = 25
+const SIZE_MULT_MOON = 25
 const EARTH_CENTER_M = 6.371e6
+const ROCKET_CORE_LENGTH_FACTOR = 4
 
 export const EARTH_RADIUS_SCENE = (EARTH_RADIUS_KM / KM_PER_SCENE_UNIT) * SIZE_MULT_INNER
 export const ROCKET_POS_SCALE = 1e-9
-export const ROCKET_VISUAL_SCALE = EARTH_RADIUS_SCENE * 0.3
+const MOON_RADIUS_SCENE = (MOON_RADIUS_KM / KM_PER_SCENE_UNIT) * SIZE_MULT_MOON
+const TARGET_ROCKET_LENGTH_SCENE = MOON_RADIUS_SCENE / 8
+export const ROCKET_VISUAL_SCALE = TARGET_ROCKET_LENGTH_SCENE / ROCKET_CORE_LENGTH_FACTOR
 
 export type Vec3 = [number, number, number]
 

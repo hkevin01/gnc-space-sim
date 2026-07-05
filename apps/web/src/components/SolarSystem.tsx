@@ -13,7 +13,7 @@
  * References: NASA JPL Planetary Fact Sheets; physics.info astronomical data.
  */
 
-import { Component, ErrorInfo, ReactNode, useRef, useMemo, Suspense } from 'react'
+import { Component, ReactNode, useRef, useMemo, Suspense } from 'react'
 import { useFrame, useLoader } from '@react-three/fiber'
 import {
   generateAsteroidBelt
@@ -46,7 +46,7 @@ class TextureErrorBoundary extends Component<TextureErrorBoundaryProps, TextureE
   static getDerivedStateFromError(): TextureErrorBoundaryState {
     return { hasError: true }
   }
-  componentDidCatch(error: Error, _info: ErrorInfo) {
+  componentDidCatch(error: Error) {
     console.warn('[SolarSystem] Texture load error, using fallback:', error.message)
   }
   componentDidUpdate(prevProps: TextureErrorBoundaryProps) {
@@ -82,13 +82,11 @@ const TEXTURE_URLS: Record<string, string> = {
 function TexturedSphere({
   textureUrl,
   radius,
-  color,
   emissive,
   emissiveIntensity = 0
 }: {
   textureUrl: string;
   radius: number;
-  color: string;
   emissive?: string;
   emissiveIntensity?: number;
 }) {
@@ -134,7 +132,12 @@ function SafeTexturedSphere(props: {
   return (
     <TextureErrorBoundary resetKey={props.textureUrl} fallback={fallback}>
       <Suspense fallback={fallback}>
-        <TexturedSphere {...props} />
+        <TexturedSphere
+          textureUrl={props.textureUrl}
+          radius={props.radius}
+          emissive={props.emissive}
+          emissiveIntensity={props.emissiveIntensity}
+        />
       </Suspense>
     </TextureErrorBoundary>
   )
@@ -690,13 +693,12 @@ export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'S
 // NASA Planet component that renders planets using real NASA positions
 interface NasaPlanetProps {
   planetPosition: PlanetPosition;
-  showOrbit?: boolean;
   offset: [number, number, number];
 }
 
-function NasaPlanet({ planetPosition, showOrbit = false, offset }: NasaPlanetProps) {
+function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
   const meshRef = useRef<THREE.Mesh>(null);
-  const { name, position, dataSource } = planetPosition;
+  const { name, position } = planetPosition;
 
   // Get planet data for rendering properties
   const planetData = SOLAR_SYSTEM_DATA[name as keyof typeof SOLAR_SYSTEM_DATA];
@@ -882,7 +884,6 @@ export function NasaSolarSystem({ showOrbits = false, centerOn = 'SUN', useNasaD
         <NasaPlanet
           key={planetPosition.name}
           planetPosition={planetPosition}
-          showOrbit={showOrbits}
           offset={offset}
         />
       ))}
