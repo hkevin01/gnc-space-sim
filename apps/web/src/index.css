@@ -1,7 +1,16 @@
 @import "tailwindcss";
 
+@import "bootstrap/dist/css/bootstrap.min.css";
+
 :root {
   color-scheme: dark;
+  --app-bg: #070b14;
+  --app-surface: #0f172a;
+  --app-surface-2: #111827;
+  --app-border: rgba(148, 163, 184, 0.22);
+  --app-text: #e5e7eb;
+  --app-muted: #9ca3af;
+  --app-accent: #60a5fa;
 }
 
 html, body, #root {
@@ -10,6 +19,63 @@ html, body, #root {
 
 body {
   margin: 0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans,
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans,
     sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji;
+  background: radial-gradient(circle at top, #111827 0%, var(--app-bg) 45%, #02040a 100%);
+  color: var(--app-text);
+  line-height: 1.5;
+}
+
+#root {
+  min-width: 320px;
+}
+
+.app-shell {
+  min-height: 100%;
+}
+
+.app-surface {
+  background: rgba(7, 11, 20, 0.88);
+  border: 1px solid var(--app-border);
+  border-radius: 1rem;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+}
+
+.app-card {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid var(--app-border);
+  border-radius: 1rem;
+}
+
+.app-card-header {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.touch-target,
+.btn,
+.form-check-input,
+.form-range {
+  min-height: 44px;
+}
+
+.btn {
+  border-radius: 0.875rem;
+}
+
+.app-muted {
+  color: var(--app-muted);
+}
+
+.app-text-xs {
+  font-size: 0.875rem;
+}
+
+.scene-panel {
+  min-height: 70vh;
+}
+
+@media (max-width: 991.98px) {
+  .scene-panel {
+    min-height: 60vh;
+  }
 }

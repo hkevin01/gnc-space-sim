@@ -31,6 +31,7 @@
     "@react-three/drei": "^9.121.5",
     "@react-three/fiber": "^8.17.10",
     "@react-three/postprocessing": "^2.19.1",
+    "bootstrap": "^5.3.8",
     "lucide-react": "^0.542.0",
     "plotly.js-dist-min": "^2.35.3",
     "postprocessing": "^6.37.7",
