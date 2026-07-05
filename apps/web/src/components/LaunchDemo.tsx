@@ -364,6 +364,18 @@ export function LaunchDemo({
     }
   }, [trajectory]);
 
+  const phase = currentState?.phase;
+  const phaseAfterBoosterSep = phase === LaunchPhase.STAGE1_SEPARATION || phase === LaunchPhase.STAGE2_IGNITION || phase === LaunchPhase.STAGE2_BURN || phase === LaunchPhase.FAIRING_JETTISON || phase === LaunchPhase.ORBITAL_INSERTION;
+  const phaseAfterCoreSep = phase === LaunchPhase.STAGE2_IGNITION || phase === LaunchPhase.STAGE2_BURN || phase === LaunchPhase.FAIRING_JETTISON || phase === LaunchPhase.ORBITAL_INSERTION;
+  const phaseAfterIcpsSep = phase === LaunchPhase.ORBITAL_INSERTION;
+
+  const showAttachedBoosters = !phaseAfterBoosterSep;
+  const showBoosterSeparation = phase === LaunchPhase.STAGE1_SEPARATION;
+  const showAttachedCore = !phaseAfterCoreSep;
+  const showCoreSeparation = phase === LaunchPhase.STAGE2_IGNITION;
+  const showAttachedIcps = !phaseAfterIcpsSep;
+  const showIcpsSeparation = phaseAfterIcpsSep;
+
   return (
     <group ref={groupRef}>
       <NasaSolarSystem
@@ -375,28 +387,40 @@ export function LaunchDemo({
       {/* Rocket Vehicle Group - visible scale */}
       <group ref={vehicleRef}>
         {/* SLS Core Stage - Orange tank */}
-        <mesh rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[ROCKET_VISUAL_SCALE * 0.4, ROCKET_VISUAL_SCALE * 0.4, ROCKET_VISUAL_SCALE * 4, 16]} />
-          <meshStandardMaterial
-            color="#FF6600"
-            metalness={0.7}
-            roughness={0.3}
-          />
-        </mesh>
+        {showAttachedCore && (
+          <mesh rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[ROCKET_VISUAL_SCALE * 0.4, ROCKET_VISUAL_SCALE * 0.4, ROCKET_VISUAL_SCALE * 4, 16]} />
+            <meshStandardMaterial
+              color="#FF6600"
+              metalness={0.7}
+              roughness={0.3}
+            />
+          </mesh>
+        )}
 
-        {/* Left SRB - Solid Rocket Booster */}
-        <mesh position={[0, ROCKET_VISUAL_SCALE * 0.6, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[ROCKET_VISUAL_SCALE * 0.15, ROCKET_VISUAL_SCALE * 0.15, ROCKET_VISUAL_SCALE * 3.5, 12]} />
-          <meshStandardMaterial color="#FFFFFF" metalness={0.8} roughness={0.2} />
-        </mesh>
+        {/* Attached SRBs before booster separation */}
+        {showAttachedBoosters && (
+          <>
+            <mesh position={[0, ROCKET_VISUAL_SCALE * 0.6, 0]} rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[ROCKET_VISUAL_SCALE * 0.15, ROCKET_VISUAL_SCALE * 0.15, ROCKET_VISUAL_SCALE * 3.5, 12]} />
+              <meshStandardMaterial color="#FFFFFF" metalness={0.8} roughness={0.2} />
+            </mesh>
+            <mesh position={[0, -ROCKET_VISUAL_SCALE * 0.6, 0]} rotation={[0, 0, Math.PI / 2]}>
+              <cylinderGeometry args={[ROCKET_VISUAL_SCALE * 0.15, ROCKET_VISUAL_SCALE * 0.15, ROCKET_VISUAL_SCALE * 3.5, 12]} />
+              <meshStandardMaterial color="#FFFFFF" metalness={0.8} roughness={0.2} />
+            </mesh>
+          </>
+        )}
 
-        {/* Right SRB - Solid Rocket Booster */}
-        <mesh position={[0, -ROCKET_VISUAL_SCALE * 0.6, 0]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[ROCKET_VISUAL_SCALE * 0.15, ROCKET_VISUAL_SCALE * 0.15, ROCKET_VISUAL_SCALE * 3.5, 12]} />
-          <meshStandardMaterial color="#FFFFFF" metalness={0.8} roughness={0.2} />
-        </mesh>
+        {/* ICPS upper stage attached until insertion */}
+        {showAttachedIcps && (
+          <mesh position={[ROCKET_VISUAL_SCALE * 1.55, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
+            <cylinderGeometry args={[ROCKET_VISUAL_SCALE * 0.24, ROCKET_VISUAL_SCALE * 0.24, ROCKET_VISUAL_SCALE * 0.9, 16]} />
+            <meshStandardMaterial color="#6E6E6E" metalness={0.7} roughness={0.35} />
+          </mesh>
+        )}
 
-        {/* Orion Capsule on top */}
+        {/* Orion Capsule */}
         <mesh position={[ROCKET_VISUAL_SCALE * 2.2, 0, 0]} rotation={[0, 0, Math.PI / 2]}>
           <coneGeometry args={[ROCKET_VISUAL_SCALE * 0.35, ROCKET_VISUAL_SCALE * 0.8, 16]} />
           <meshStandardMaterial color="#DDDDDD" metalness={0.8} roughness={0.2} />
@@ -434,7 +458,7 @@ export function LaunchDemo({
         )}
 
         {/* SRB Separation visualization */}
-        {currentState?.phase === LaunchPhase.STAGE1_SEPARATION && (
+        {showBoosterSeparation && (
           <group>
             {/* Separating left SRB */}
             <mesh position={[ROCKET_VISUAL_SCALE * -1, ROCKET_VISUAL_SCALE * 1.2, 0]} rotation={[0, 0, Math.PI / 2 + 0.2]}>
@@ -447,6 +471,22 @@ export function LaunchDemo({
               <meshStandardMaterial color="#CCCCCC" metalness={0.6} roughness={0.4} />
             </mesh>
           </group>
+        )}
+
+        {/* Core stage separation visualization */}
+        {showCoreSeparation && (
+          <mesh position={[-ROCKET_VISUAL_SCALE * 1.4, 0, 0]} rotation={[0, 0, Math.PI / 2 - 0.1]}>
+            <cylinderGeometry args={[ROCKET_VISUAL_SCALE * 0.4, ROCKET_VISUAL_SCALE * 0.35, ROCKET_VISUAL_SCALE * 3.2, 16]} />
+            <meshStandardMaterial color="#CC5500" metalness={0.6} roughness={0.45} />
+          </mesh>
+        )}
+
+        {/* ICPS separation visualization */}
+        {showIcpsSeparation && (
+          <mesh position={[ROCKET_VISUAL_SCALE * 0.85, 0, -ROCKET_VISUAL_SCALE * 0.3]} rotation={[0.12, 0, Math.PI / 2 - 0.15]}>
+            <cylinderGeometry args={[ROCKET_VISUAL_SCALE * 0.24, ROCKET_VISUAL_SCALE * 0.2, ROCKET_VISUAL_SCALE * 0.9, 16]} />
+            <meshStandardMaterial color="#5A5A5A" metalness={0.65} roughness={0.4} />
+          </mesh>
         )}
 
         {/* Fairing jettison visualization */}

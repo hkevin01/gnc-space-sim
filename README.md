@@ -56,9 +56,9 @@ The project exists for three practical reasons. First, educational simulations a
 > The repository prioritizes reproducible test outcomes, deterministic harnesses where practical, and explicit diagnostics for infeasible or numerically fragile scenarios.
 
 <div align="center">
-  <img src="documentation/images/readme/sim-camera-mission-view.jpg" alt="Mission camera perspective screenshot" width="860" />
+  <img src="documentation/images/readme/sim-camera-nasa-earth-close.jpg" alt="NASA demo Earth camera screenshot" width="860" />
   <br />
-  <sub>Figure 1. In-simulation mission camera view captured from the running app, showing telemetry UI and real scene perspective.</sub>
+  <sub>Figure 1. NASA demo Earth-centered camera capture from the running simulation, showing textured planetary rendering without rocket overlap.</sub>
 </div>
 
 > [!NOTE]
@@ -371,7 +371,7 @@ $$
 <div align="center">
   <img src="documentation/images/readme/sim-camera-nasa-solar-view.jpg" alt="NASA solar system camera screenshot" width="860" />
   <br />
-  <sub>Figure 3. NASA solar-system mode camera view captured in-app, used to document runtime body-position visualization.</sub>
+  <sub>Figure 3. NASA solar-system mode wide camera view captured in-app, used to document runtime body-position visualization.</sub>
 </div>
 
 > [!NOTE]
@@ -592,9 +592,9 @@ Estimated effort assumes a contributor who is comfortable with TypeScript and ba
 | You changed package exports | Run workspace typecheck before tests | Catch symbol collisions and export-surface regressions early |
 
 <div align="center">
-  <img src="documentation/images/readme/sim-camera-launch-view.jpg" alt="Launch camera perspective screenshot" width="860" />
+  <img src="documentation/images/readme/sim-camera-nasa-sun-close.jpg" alt="NASA demo Sun camera screenshot" width="860" />
   <br />
-  <sub>Figure 4. Launch-sequence camera view from the live simulation, showing the ascent-focused perspective used during mission execution.</sub>
+  <sub>Figure 4. NASA demo Sun-centered camera capture from the running simulation, highlighting textured solar rendering.</sub>
 </div>
 
 > [!NOTE]
