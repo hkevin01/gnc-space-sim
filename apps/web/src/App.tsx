@@ -1,13 +1,30 @@
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useState } from 'react'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { LaunchSimulation } from './components/LaunchSimulation'
 import { MISSION_SCENARIOS } from './components/MissionTypes'
 import { useLaunchControl } from './state/launchControlStore'
 import { useMissionStore, type MissionState } from './state/missionStore'
-import { EnhancedOrbitalDemo } from './components/EnhancedOrbitalDemo'
-import { NasaDemo } from './components/NasaDemo'
 import { GNCPanel } from './components/GNCPanel'
 import { LaunchPhase, type LaunchState } from '@gnc/core'
+
+const EnhancedOrbitalDemo = lazy(async () => {
+  const module = await import('./components/EnhancedOrbitalDemo')
+  return { default: module.EnhancedOrbitalDemo }
+})
+
+const NasaDemo = lazy(async () => {
+  const module = await import('./components/NasaDemo')
+  return { default: module.NasaDemo }
+})
+
+function DemoLoadingFallback() {
+  return (
+    <div className="app-surface p-4 text-white">
+      <div className="h5 mb-2">Loading demo</div>
+      <div className="text-body-secondary">Preparing the 3D scene and controls.</div>
+    </div>
+  )
+}
 
 export default function App() {
   const phase = useMissionStore((s: MissionState) => s.phase)
@@ -75,7 +92,9 @@ export default function App() {
               </div>
             </div>
           </div>
-          <EnhancedOrbitalDemo />
+          <Suspense fallback={<DemoLoadingFallback />}>
+            <EnhancedOrbitalDemo />
+          </Suspense>
         </div>
       </ErrorBoundary>
     )
@@ -101,7 +120,9 @@ export default function App() {
               </div>
             </div>
           </div>
-          <NasaDemo />
+          <Suspense fallback={<DemoLoadingFallback />}>
+            <NasaDemo />
+          </Suspense>
         </div>
       </ErrorBoundary>
     )

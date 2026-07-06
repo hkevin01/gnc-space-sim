@@ -51,9 +51,12 @@ export interface ParsedEphemerisData {
  * NASA JPL Horizons API Service Class
  */
 export class NasaHorizonsApiService {
-  private static readonly BASE_URL = 'https://ssd.jpl.nasa.gov/api/horizons.api';
+  private static readonly DIRECT_URL = 'https://ssd.jpl.nasa.gov/api/horizons.api';
+  private static readonly BROWSER_PROXY_URL = '/api/horizons';
   private static readonly CACHE_DURATION = 1000 * 60 * 60; // 1 hour cache
   private static cache = new Map<string, { data: ParsedEphemerisData[]; timestamp: number }>();
+  private static browserProxyAvailable: boolean | null = null;
+  private static hasWarnedBrowserFallback = false;
 
   /**
    * Get current planetary positions for all planets
@@ -64,11 +67,12 @@ export class NasaHorizonsApiService {
 
     // Return cached data if it's still fresh
     if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
-      console.log('🚀 Using cached NASA planetary positions');
       return cached.data;
     }
 
-    console.log('📡 Fetching fresh NASA planetary positions...');
+    if (this.isBrowserRuntime() && this.browserProxyAvailable === false) {
+      return [];
+    }
 
     try {
       const currentDate = new Date();
@@ -77,31 +81,31 @@ export class NasaHorizonsApiService {
       const planets = Object.keys(NASA_BODY_CODES) as PlanetName[];
       const positions: ParsedEphemerisData[] = [];
 
-      // Fetch positions for all planets
+      // Fetch positions until the local proxy proves unavailable; in that case
+      // the app quietly falls back to calculated ephemerides.
       for (const planet of planets) {
-        try {
-          const position = await this.fetchPlanetPosition(
-            planet,
-            currentDate,
-            nextDate
-          );
-          if (position) {
-            positions.push(position);
-          }
-        } catch (error) {
-          console.error(`Failed to fetch position for ${planet}:`, error);
-          // Continue with other planets even if one fails
+        const position = await this.fetchPlanetPosition(
+          planet,
+          currentDate,
+          nextDate
+        );
+
+        if (position) {
+          positions.push(position);
+        }
+
+        if (this.isBrowserRuntime() && this.browserProxyAvailable === false) {
+          break;
         }
       }
 
-      // Cache the results
-      this.cache.set(cacheKey, { data: positions, timestamp: Date.now() });
+      if (positions.length > 0) {
+        this.cache.set(cacheKey, { data: positions, timestamp: Date.now() });
+      }
 
-      console.log(`✅ Successfully fetched positions for ${positions.length}/${planets.length} planets`);
       return positions;
 
     } catch (error) {
-      console.error('❌ Failed to fetch NASA planetary positions:', error);
       throw new Error(`NASA Horizons API error: ${error}`);
     }
   }
@@ -118,11 +122,13 @@ export class NasaHorizonsApiService {
       const bodyCode = NASA_BODY_CODES[planet];
       const url = this.buildApiUrl(bodyCode, startDate, stopDate);
 
-      console.log(`🌍 Fetching ${planet} position from NASA JPL...`);
-
       const response = await fetch(url);
 
       if (!response.ok) {
+        if (this.isBrowserRuntime() && (response.status === 404 || response.status === 502 || response.status === 503)) {
+          this.markBrowserProxyUnavailable(`HTTP ${response.status}`)
+          return null
+        }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
@@ -135,15 +141,21 @@ export class NasaHorizonsApiService {
       const ephemerisData = this.parseEphemerisResult(data.result, planet);
 
       if (!ephemerisData) {
-        console.warn(`⚠️  No ephemeris data parsed for ${planet}`);
         return null;
       }
 
-      console.log(`✅ ${planet} position fetched successfully`);
+      if (this.isBrowserRuntime()) {
+        this.browserProxyAvailable = true
+      }
+
       return ephemerisData;
 
     } catch (error) {
-      console.error(`❌ Error fetching ${planet} position:`, error);
+      if (this.isBrowserRuntime()) {
+        this.markBrowserProxyUnavailable(error instanceof Error ? error.message : 'Unknown fetch error')
+        return null
+      }
+
       return null;
     }
   }
@@ -170,7 +182,24 @@ export class NasaHorizonsApiService {
       CSV_FORMAT: 'NO'
     });
 
-    return `${this.BASE_URL}?${params.toString()}`;
+    return `${this.getBaseUrl()}?${params.toString()}`;
+  }
+
+  private static getBaseUrl(): string {
+    return this.isBrowserRuntime() ? this.BROWSER_PROXY_URL : this.DIRECT_URL
+  }
+
+  private static isBrowserRuntime(): boolean {
+    return typeof window !== 'undefined'
+  }
+
+  private static markBrowserProxyUnavailable(reason: string): void {
+    this.browserProxyAvailable = false
+
+    if (!this.hasWarnedBrowserFallback) {
+      this.hasWarnedBrowserFallback = true
+      console.warn(`[NASA] Horizons proxy unavailable (${reason}). Using calculated planetary positions instead.`)
+    }
   }
 
   /**
@@ -310,7 +339,8 @@ export class NasaHorizonsApiService {
    */
   static clearCache(): void {
     this.cache.clear();
-    console.log('🗑️  NASA Horizons API cache cleared');
+    this.browserProxyAvailable = null;
+    this.hasWarnedBrowserFallback = false;
   }
 
   /**
