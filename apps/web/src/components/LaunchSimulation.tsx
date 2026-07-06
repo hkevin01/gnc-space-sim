@@ -16,12 +16,9 @@
  * Verification: Manual smoke test; slsMockSimulation.spec.ts for state data contract.
  * References: LaunchDemo.tsx SSIM-LAUNCHDEMO-001; SolarSystem.tsx SSIM-SOLARSYS-001.
  */
-import { LaunchPhase, LaunchState } from '@gnc/core'
 import { Canvas } from '@react-three/fiber'
-import { useState } from 'react'
 import * as THREE from 'three'
 import { LaunchDemo } from './LaunchDemo'
-import { GNCPanel } from './GNCPanel'
 import { MissionEvent } from './MissionTypes'
 
 interface LaunchSimulationProps {
@@ -43,84 +40,57 @@ interface LaunchSimulationProps {
  * Combines the 3D visualization with comprehensive scientific displays
  */
 export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimulationProps) {
-  // Demo state for scientific display
-  const [demoState] = useState<LaunchState>({
-    r: [6371000, 0, 50000], // 50km altitude
-    v: [0, 1500, 200],      // Example velocity vector
-    phase: LaunchPhase.STAGE1_BURN,
-    mission_time: 45,
-    altitude: 50000,
-    velocity_magnitude: 1520,
-    flight_path_angle: 0.5,
-    heading: 1.57,
-    mass: 450000,
-    thrust: [0, 0, 6000000],
-    drag: [0, 0, -50000],
-    atmosphere: {
-      pressure: 15000,
-      density: 0.15,
-      temperature: 250
-    },
-    guidance: {
-      pitch_program: 0.3,
-      yaw_program: 1.57,
-      throttle: 0.85
-    }
-  })
-
   return (
-    <div className="flex w-full h-full">
-      {/* 3D Scene Container */}
-      <div className="flex-1 relative">
-        <Canvas
-          camera={{
-            // EARTH_RADIUS_SCENE ≈ 0.159 units (visual Earth sphere radius).
-            // Camera positioned radially outward from Earth surface where rocket starts.
-            // x=0.35 is just outside Earth visual sphere; y/z offset gives oblique view.
-            position: [0.35, 0.05, 0.15],
-            fov: 60,
-            near: 0.0001,
-            far: 50000
-          }}
-          style={{ background: "#000011", maxHeight: "100vh", maxWidth: "100vw" }}
-          onCreated={({ gl }) => {
-            // Configure WebGL context for better stability
-            gl.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            gl.shadowMap.enabled = true;
-            gl.shadowMap.type = THREE.PCFSoftShadowMap;
-
-            // Add context loss handling
-            gl.domElement.addEventListener('webglcontextlost', (event) => {
-              console.warn('WebGL context lost, preventing default behavior');
-              event.preventDefault();
-            });
-
-            gl.domElement.addEventListener('webglcontextrestored', () => {
-              console.log('WebGL context restored');
-            });
-          }}
-        >
-          <ambientLight intensity={0.2} />
-          <pointLight position={[10, 10, 10]} intensity={1} />
-          <pointLight position={[-10, -10, -10]} intensity={0.5} />
-
-          <LaunchDemo
-            timeMultiplier={100}
-            showTrajectory={true}
-          />
-
-          {/* OrbitControls is managed inside LaunchDemo for camera follow */}
-        </Canvas>
+    <div className="app-surface overflow-hidden p-2 p-md-3">
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-start gap-2 px-2 pb-3 text-white small">
+        <div>
+          <div className="fw-semibold">Launch Simulation</div>
+          <div className="text-body-secondary">Mission: {selectedMission}</div>
+        </div>
+        <div className="text-body-secondary">
+          Phase: {currentPhase?.name || 'Pre-Launch'}
+        </div>
       </div>
 
-      {/* GNC Panel */}
-      <div className="w-96 h-full border-l border-zinc-600">
-        <GNCPanel
-          launchState={demoState}
-          selectedMission={selectedMission}
-          currentPhase={currentPhase}
+      <Canvas
+        camera={{
+          // EARTH_RADIUS_SCENE ≈ 0.159 units (visual Earth sphere radius).
+          // Camera positioned radially outward from Earth surface where rocket starts.
+          // x=0.35 is just outside Earth visual sphere; y/z offset gives oblique view.
+          position: [0.35, 0.05, 0.15],
+          fov: 60,
+          near: 0.0001,
+          far: 50000
+        }}
+        style={{ background: '#000011', width: '100%', minHeight: '72vh' }}
+        onCreated={({ gl }) => {
+          // Configure WebGL context for better stability
+          gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+          gl.shadowMap.enabled = true
+          gl.shadowMap.type = THREE.PCFSoftShadowMap
+
+          // Add context loss handling
+          gl.domElement.addEventListener('webglcontextlost', (event) => {
+            console.warn('WebGL context lost, preventing default behavior')
+            event.preventDefault()
+          })
+
+          gl.domElement.addEventListener('webglcontextrestored', () => {
+            console.log('WebGL context restored')
+          })
+        }}
+      >
+        <ambientLight intensity={0.2} />
+        <pointLight position={[10, 10, 10]} intensity={1} />
+        <pointLight position={[-10, -10, -10]} intensity={0.5} />
+
+        <LaunchDemo
+          timeMultiplier={100}
+          showTrajectory={true}
         />
-      </div>
+
+        {/* OrbitControls is managed inside LaunchDemo for camera follow */}
+      </Canvas>
     </div>
   )
 }

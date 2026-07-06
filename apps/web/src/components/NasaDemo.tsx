@@ -3,165 +3,157 @@
  * Demonstrates the NASA JPL Horizons API integration with real-time planetary positions
  */
 
-import React, { useState, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
-import { OrbitControls, Stats } from '@react-three/drei';
-import { NasaSolarSystem, SolarSystem } from './SolarSystem';
+import { useMemo, useState } from 'react'
+import { Canvas } from '@react-three/fiber'
+import { OrbitControls, Stats } from '@react-three/drei'
+import { NasaSolarSystem, SolarSystem } from './SolarSystem'
 
 interface NasaDemoProps {
-  className?: string;
+  className?: string
 }
 
 export function NasaDemo({ className }: NasaDemoProps) {
-  const [useNasaData, setUseNasaData] = useState(true);
-  const [showOrbits, setShowOrbits] = useState(true);
-  const [centerOn, setCenterOn] = useState<'SUN' | 'EARTH'>('EARTH');
+  const [useNasaData, setUseNasaData] = useState(true)
+  const [showOrbits, setShowOrbits] = useState(true)
+  const [centerOn, setCenterOn] = useState<'SUN' | 'EARTH'>('EARTH')
 
-  // Calculate camera target and distances based on centerOn
   const cameraConfig = useMemo(() => {
     if (centerOn === 'SUN') {
       return {
         target: [0, 0, 0] as [number, number, number],
         minDistance: 50,
         maxDistance: 2000
-      };
-    } else { // EARTH
-      // Earth is approximately 150 million km from Sun, scaled to 1 unit = 1 million km = 150 units
-      // We'll set the target to [0, 0, 0] since the SolarSystem component offsets the world
-      return {
-        target: [0, 0, 0] as [number, number, number],
-        minDistance: 1, // Close enough to see Earth details
-        maxDistance: 50 // Far enough to see Earth and Moon system, but not other planets
-      };
+      }
     }
-  }, [centerOn]);
+
+    return {
+      target: [0, 0, 0] as [number, number, number],
+      minDistance: 1,
+      maxDistance: 50
+    }
+  }, [centerOn])
 
   return (
-    <div className={`relative w-full h-screen ${className || ''}`}>
-      {/* Controls Panel */}
-  <div className="absolute top-4 left-4 z-10 bg-black/70 text-white p-4 rounded-lg space-y-3">
-        <h3 className="text-lg font-bold">🌍 NASA Solar System Demo</h3>
+    <div className={`container-fluid py-3 py-lg-4 ${className || ''}`}>
+      <div className="row g-3 mb-3">
+        <div className="col-12 col-lg-6 col-xxl-4">
+          <div className="app-card p-3 p-lg-4 h-100 text-white">
+            <h3 className="h6 mb-3">NASA Solar System Demo</h3>
+            <div className="d-grid gap-3">
+              <label className="d-flex align-items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={useNasaData}
+                  onChange={(e) => setUseNasaData(e.target.checked)}
+                  className="form-check-input m-0"
+                />
+                <span>Use NASA JPL Data</span>
+              </label>
 
-        <div className="space-y-2">
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={useNasaData}
-              onChange={(e) => setUseNasaData(e.target.checked)}
-              className="rounded"
-            />
-            <span>🛰️ Use NASA JPL Data</span>
-          </label>
+              <label className="d-flex align-items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={showOrbits}
+                  onChange={(e) => setShowOrbits(e.target.checked)}
+                  className="form-check-input m-0"
+                />
+                <span>Show Orbital Paths</span>
+              </label>
 
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={showOrbits}
-              onChange={(e) => setShowOrbits(e.target.checked)}
-              className="rounded"
-            />
-            <span>🌌 Show Orbital Paths</span>
-          </label>
-        </div>
-
-        <div className="space-y-2">
-          <p className="text-sm font-semibold">Camera Center:</p>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setCenterOn('SUN')}
-              className={`px-2 py-1 rounded text-sm ${
-                centerOn === 'SUN'
-                  ? 'bg-yellow-600 text-white'
-                  : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-              }`}
-            >
-              ☀️ Sun
-            </button>
-            <button
-              onClick={() => setCenterOn('EARTH')}
-              className={`px-2 py-1 rounded text-sm ${
-                centerOn === 'EARTH'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
-              }`}
-            >
-              🌍 Earth
-            </button>
+              <div>
+                <p className="form-label mb-2">Camera Center</p>
+                <div className="d-flex flex-wrap gap-2">
+                  <button
+                    onClick={() => setCenterOn('SUN')}
+                    className={`btn touch-target ${centerOn === 'SUN' ? 'btn-warning' : 'btn-outline-secondary'}`}
+                  >
+                    Sun
+                  </button>
+                  <button
+                    onClick={() => setCenterOn('EARTH')}
+                    className={`btn touch-target ${centerOn === 'EARTH' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                  >
+                    Earth
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="text-xs text-gray-300 border-t border-gray-600 pt-2">
-          <p>• NASA data updates hourly</p>
-          <p>• Fallback to calculated positions if NASA unavailable</p>
-          <p>• Real astronomical positions and orbital mechanics</p>
-          <p>• Scale: 1 unit ≈ 1e6 km (1 AU ≈ 149.6 units)</p>
+        <div className="col-12 col-lg-6 col-xxl-4">
+          <div className="app-card p-3 p-lg-4 h-100 text-white small">
+            <h3 className="h6 mb-3">Status</h3>
+            <div className="text-body-secondary">
+              <div>Mode: {useNasaData ? 'NASA JPL Horizons' : 'Calculated Orbits'}</div>
+              <div>Center: {centerOn === 'SUN' ? 'Heliocentric' : 'Geocentric'}</div>
+              <div>Orbits: {showOrbits ? 'Visible' : 'Hidden'}</div>
+            </div>
+            <div className="mt-3 text-body-secondary">
+              <div className="fw-semibold text-white mb-1">Notes</div>
+              <div>NASA data updates hourly.</div>
+              <div>Fallback positions load when NASA is unavailable.</div>
+              <div>Scale: 1 unit ≈ 1e6 km (1 AU ≈ 149.6 units).</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-xxl-4">
+          <div className="app-card p-3 p-lg-4 h-100 text-white small">
+            <h3 className="h6 mb-3">Controls</h3>
+            <div>Left click + drag: Rotate</div>
+            <div>Right click + drag: Pan</div>
+            <div>Scroll: Zoom in/out</div>
+            <div className="mt-2">Toggle NASA data to compare.</div>
+          </div>
         </div>
       </div>
 
-      {/* 3D Scene */}
-      <Canvas
-        camera={{
-          position: [50, 30, 50],
-          fov: 60,
-          near: 0.1,
-          far: 20000
-        }}
-        gl={{ antialias: true }}
-        shadows
-      >
-        <color attach="background" args={['#000011']} />
+      <div className="app-surface overflow-hidden p-2 p-md-3">
+        <Canvas
+          camera={{
+            position: [50, 30, 50],
+            fov: 60,
+            near: 0.1,
+            far: 20000
+          }}
+          gl={{ antialias: true }}
+          shadows
+          style={{ minHeight: '70vh' }}
+        >
+          <color attach="background" args={['#000011']} />
 
-        {/* Lighting */}
-  <ambientLight intensity={0.15} />
-  <pointLight position={[0, 0, 0]} intensity={12} decay={2} color="#ffffff" castShadow shadow-mapSize={[2048,2048]} />
+          <ambientLight intensity={0.15} />
+          <pointLight position={[0, 0, 0]} intensity={12} decay={2} color="#ffffff" castShadow shadow-mapSize={[2048, 2048]} />
 
-        {/* Solar System */}
-        {useNasaData ? (
-          <NasaSolarSystem
-            showOrbits={showOrbits}
-            centerOn={centerOn}
-            useNasaData={true}
+          {useNasaData ? (
+            <NasaSolarSystem
+              showOrbits={showOrbits}
+              centerOn={centerOn}
+              useNasaData={true}
+            />
+          ) : (
+            <SolarSystem
+              showOrbits={showOrbits}
+              missionTime={Date.now() / 1000}
+              centerOn={centerOn}
+            />
+          )}
+
+          <OrbitControls
+            enablePan={true}
+            enableZoom={true}
+            enableRotate={true}
+            minDistance={cameraConfig.minDistance}
+            maxDistance={centerOn === 'SUN' ? 12000 : cameraConfig.maxDistance}
+            target={cameraConfig.target}
           />
-        ) : (
-          <SolarSystem
-            showOrbits={showOrbits}
-            missionTime={Date.now() / 1000}
-            centerOn={centerOn}
-          />
-        )}
 
-        {/* Controls */}
-        <OrbitControls
-          enablePan={true}
-          enableZoom={true}
-          enableRotate={true}
-          minDistance={cameraConfig.minDistance}
-          maxDistance={centerOn === 'SUN' ? 12000 : cameraConfig.maxDistance}
-          target={cameraConfig.target}
-        />
-
-        {/* Performance Stats */}
-        {process.env.NODE_ENV === 'development' && <Stats />}
-      </Canvas>
-
-      {/* Data Status Panel */}
-      <div className="absolute bottom-4 left-4 z-10 bg-black/70 text-white p-3 rounded-lg text-sm">
-        <p className="font-semibold">Status:</p>
-        <p>Mode: {useNasaData ? '🛰️ NASA JPL Horizons' : '🧮 Calculated Orbits'}</p>
-        <p>Center: {centerOn === 'SUN' ? '☀️ Heliocentric' : '🌍 Geocentric'}</p>
-        <p>Orbits: {showOrbits ? '✅ Visible' : '❌ Hidden'}</p>
-      </div>
-
-      {/* Instructions */}
-      <div className="absolute bottom-4 right-4 z-10 bg-black/70 text-white p-3 rounded-lg text-xs">
-        <p className="font-semibold mb-1">Controls:</p>
-        <p>• Left click + drag: Rotate</p>
-        <p>• Right click + drag: Pan</p>
-        <p>• Scroll: Zoom in/out</p>
-        <p>• Toggle NASA data to compare</p>
+          {process.env.NODE_ENV === 'development' && <Stats />}
+        </Canvas>
       </div>
     </div>
-  );
+  )
 }
 
-export default NasaDemo;
+export default NasaDemo

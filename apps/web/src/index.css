@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@import "bootstrap/dist/css/bootstrap.min.css";
-
 :root {
   color-scheme: dark;
   --app-bg: #070b14;
