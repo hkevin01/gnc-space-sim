@@ -28,7 +28,7 @@ export interface PlanetPosition {
 const DEFAULT_CONFIG: PlanetaryPositionConfig = {
   useNasaData: true,
   fallbackToCalculated: true,
-  scaleFactorAU: 1, // Scale factor: 1 scene unit = 1 million km (matches our new distance scale)
+  scaleFactorAU: 18.7, // Condensed whole-system visual scale; 1 AU ≈ 18.7 scene units
   cacheTimeout: 1000 * 60 * 60, // 1 hour
 };
 
@@ -198,18 +198,20 @@ export class PlanetaryPositionService {
     const timeInDays = currentTime * 0.01; // Scale factor for visualization
 
     // Orbital parameters (simplified but realistic)
-    // Distances in scene units assuming 1 AU ≈ 149.6 units (1 unit = 1e6 km)
+    const auSceneDistance = this.config.scaleFactorAU
+
+    // Distances in condensed scene units to keep the whole system explorable.
     const orbitalData: Record<PlanetName, { distance: number; period: number; inclination: number; initialPhase: number }> = {
       SUN: { distance: 0, period: 0, inclination: 0, initialPhase: 0 },
-      MERCURY: { distance: 0.387 * 149.6, period: 88, inclination: 7.0, initialPhase: 0.5 },
-      VENUS: { distance: 0.723 * 149.6, period: 225, inclination: 3.4, initialPhase: 1.8 },
-      EARTH: { distance: 1.0 * 149.6, period: 365, inclination: 0.0, initialPhase: 0.0 },
+      MERCURY: { distance: 0.387 * auSceneDistance, period: 88, inclination: 7.0, initialPhase: 0.5 },
+      VENUS: { distance: 0.723 * auSceneDistance, period: 225, inclination: 3.4, initialPhase: 1.8 },
+      EARTH: { distance: 1.0 * auSceneDistance, period: 365, inclination: 0.0, initialPhase: 0.0 },
       MOON: { distance: (384400 / 1_000_000), period: 27, inclination: 5.1, initialPhase: 2.1 }, // 0.3844 units around Earth
-      MARS: { distance: 1.524 * 149.6, period: 687, inclination: 1.8, initialPhase: 3.8 },
-      JUPITER: { distance: 5.204 * 149.6, period: 4333, inclination: 1.3, initialPhase: 2.3 },
-      SATURN: { distance: 9.582 * 149.6, period: 10759, inclination: 2.5, initialPhase: 4.7 },
-      URANUS: { distance: 19.201 * 149.6, period: 30687, inclination: 0.8, initialPhase: 1.2 },
-      NEPTUNE: { distance: 30.047 * 149.6, period: 60190, inclination: 1.8, initialPhase: 5.5 },
+      MARS: { distance: 1.524 * auSceneDistance, period: 687, inclination: 1.8, initialPhase: 3.8 },
+      JUPITER: { distance: 5.204 * auSceneDistance, period: 4333, inclination: 1.3, initialPhase: 2.3 },
+      SATURN: { distance: 9.582 * auSceneDistance, period: 10759, inclination: 2.5, initialPhase: 4.7 },
+      URANUS: { distance: 19.201 * auSceneDistance, period: 30687, inclination: 0.8, initialPhase: 1.2 },
+      NEPTUNE: { distance: 30.047 * auSceneDistance, period: 60190, inclination: 1.8, initialPhase: 5.5 },
     };
 
     const planetOrbit = orbitalData[planetName];

@@ -197,15 +197,16 @@ function OrbitLine({ radius, color = '#ffffff', opacity = 0.5 }: { radius: numbe
  * ACCURATE SOLAR SYSTEM IMPLEMENTATION
  * ====================================
  *
- * Distance Scale: 1 scene unit = 1 million km (UPDATED FOR BETTER VISIBILITY)
- * - Mercury: 57.91 scene units (57.91 million km)
- * - Venus: 108.21 scene units (108.21 million km)
- * - Earth: 149.60 scene units (149.60 million km = 1 AU)
- * - Mars: 227.92 scene units (227.92 million km)
- * - Jupiter: 778.57 scene units (778.57 million km)
- * - Saturn: 1433.53 scene units (1433.53 million km)
- * - Uranus: 2872.46 scene units (2872.46 million km)
- * - Neptune: 4495.06 scene units (4495.06 million km)
+ * Distance Scale: heliocentric distances are visually condensed for readability
+ * while local body relationships (like Earth-Moon) remain separately tuned.
+ * - Mercury: ~7.24 scene units
+ * - Venus: ~13.53 scene units
+ * - Earth: ~18.70 scene units
+ * - Mars: ~28.49 scene units
+ * - Jupiter: ~97.32 scene units
+ * - Saturn: ~179.19 scene units
+ * - Uranus: ~359.06 scene units
+ * - Neptune: ~561.88 scene units
  *
  * Size Scale: radius / 10 for visibility while maintaining proportions (INCREASED FROM /200)
  * - Inner planets scaled by 0.5x for better visibility
@@ -241,9 +242,10 @@ interface PlanetData {
 
 // Solar system data with accurate NASA measurements and proper scaling
 // Base scale: 1 scene unit = 1 million km for distances
-const DISTANCE_SCALE = 1; // 1 scene unit = 1 million km
+const HELIOCENTRIC_DISTANCE_SCALE = 8; // Condense interplanetary paths for whole-system readability
+const LUNAR_DISTANCE_SCALE = 1; // Preserve local Earth-Moon readability
 // Convert radii (km) into scene units using the same base as distances (km → scene units)
-const KM_PER_SCENE_UNIT = 1_000_000 * DISTANCE_SCALE; // 1e6 km per unit
+const KM_PER_SCENE_UNIT = 1_000_000 * HELIOCENTRIC_DISTANCE_SCALE;
 const RADIUS_SCENE_CONVERSION = 1 / KM_PER_SCENE_UNIT; // multiply by this to go from km → scene units
 // Visibility multipliers keep bodies visible without breaking distances; tuned to avoid overlap with orbits
 const SIZE_MULT = {
@@ -270,7 +272,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   MERCURY: {
     radius: 2439.7, // km - NASA accurate
     sceneRadius: 2439.7 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER,
-    orbitRadius: 57.91 / DISTANCE_SCALE, // 57.91 million km / scale = 57.91 scene units
+    orbitRadius: 57.91 / HELIOCENTRIC_DISTANCE_SCALE,
     color: '#8C7853',
     rotationSpeed: 0.004,
     orbitSpeed: 0.088,
@@ -285,7 +287,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   VENUS: {
     radius: 6051.8, // km - NASA accurate
     sceneRadius: 6051.8 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER,
-    orbitRadius: 108.21 / DISTANCE_SCALE, // 108.21 million km / scale = 108.21 scene units
+    orbitRadius: 108.21 / HELIOCENTRIC_DISTANCE_SCALE,
     color: '#FFC649',
     rotationSpeed: -0.0018,
     orbitSpeed: 0.062,
@@ -300,7 +302,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   EARTH: {
     radius: 6371.0, // km - NASA accurate mean radius
     sceneRadius: 6371.0 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER, // ~0.255 units; Moon orbit 0.3844 units stays clear
-    orbitRadius: 149.60 / DISTANCE_SCALE, // 149.60 million km (1 AU) / scale = 149.6 scene units
+    orbitRadius: 149.60 / HELIOCENTRIC_DISTANCE_SCALE,
     color: '#6B93D6',
     rotationSpeed: 0.01,
     orbitSpeed: 0.027,
@@ -315,7 +317,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   MARS: {
     radius: 3389.5, // km - NASA accurate mean radius
     sceneRadius: 3389.5 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER,
-    orbitRadius: 227.92 / DISTANCE_SCALE, // 227.92 million km / scale = 227.92 scene units
+    orbitRadius: 227.92 / HELIOCENTRIC_DISTANCE_SCALE,
     color: '#CD5C5C',
     rotationSpeed: 0.0097,
     orbitSpeed: 0.024,
@@ -330,7 +332,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   JUPITER: {
     radius: 69911, // km - NASA accurate mean radius
     sceneRadius: 69911 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
-    orbitRadius: 778.57 / DISTANCE_SCALE, // 778.57 million km / scale = 778.57 scene units
+    orbitRadius: 778.57 / HELIOCENTRIC_DISTANCE_SCALE,
     color: '#D8CA9D',
     rotationSpeed: 0.024,
     orbitSpeed: 0.013,
@@ -345,7 +347,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   SATURN: {
     radius: 58232, // km - NASA accurate mean radius
     sceneRadius: 58232 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
-    orbitRadius: 1433.53 / DISTANCE_SCALE, // 1433.53 million km / scale = 1433.53 scene units
+    orbitRadius: 1433.53 / HELIOCENTRIC_DISTANCE_SCALE,
     color: '#FAD5A5',
     rotationSpeed: 0.022,
     orbitSpeed: 0.009,
@@ -361,7 +363,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   URANUS: {
     radius: 25362, // km - NASA accurate mean radius
     sceneRadius: 25362 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
-    orbitRadius: 2872.46 / DISTANCE_SCALE, // 2872.46 million km / scale = 2872.46 scene units
+    orbitRadius: 2872.46 / HELIOCENTRIC_DISTANCE_SCALE,
     color: '#4FD0E3',
     rotationSpeed: -0.014,
     orbitSpeed: 0.0068,
@@ -376,7 +378,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   NEPTUNE: {
     radius: 24622, // km - NASA accurate mean radius
     sceneRadius: 24622 * RADIUS_SCENE_CONVERSION * SIZE_MULT.GAS,
-    orbitRadius: 4495.06 / DISTANCE_SCALE, // 4495.06 million km / scale = 4495.06 scene units
+    orbitRadius: 4495.06 / HELIOCENTRIC_DISTANCE_SCALE,
     color: '#4B70DD',
     rotationSpeed: 0.016,
     orbitSpeed: 0.0054,
@@ -391,9 +393,9 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   MOON: {
     radius: 1737.4, // km - NASA accurate mean radius
     sceneRadius: 1737.4 * RADIUS_SCENE_CONVERSION * SIZE_MULT.MOON,
-    // 384,400 km = 0.3844 million km → 0.3844 scene units at DISTANCE_SCALE=1
-    orbitRadius: (384400 / 1_000_000) / DISTANCE_SCALE,
-    parentOrbitRadius: 149.60 / DISTANCE_SCALE, // Earth's orbit
+    // Keep the Moon visually separated from Earth even though heliocentric paths are condensed.
+    orbitRadius: (384400 / 1_000_000) / LUNAR_DISTANCE_SCALE,
+    parentOrbitRadius: 149.60 / HELIOCENTRIC_DISTANCE_SCALE,
     color: '#C0C0C0',
     rotationSpeed: 0.0005,
     orbitSpeed: 0.365,
@@ -418,6 +420,28 @@ const REQUIRED_BODIES: Array<keyof typeof SOLAR_SYSTEM_DATA> = [
   'URANUS',
   'NEPTUNE'
 ]
+
+const HELIOCENTRIC_ORBIT_BODIES: Array<keyof typeof SOLAR_SYSTEM_DATA> = [
+  'MERCURY',
+  'VENUS',
+  'EARTH',
+  'MARS',
+  'JUPITER',
+  'SATURN',
+  'URANUS',
+  'NEPTUNE'
+]
+
+const ORBIT_LINE_OPACITY: Record<(typeof HELIOCENTRIC_ORBIT_BODIES)[number], number> = {
+  MERCURY: 0.6,
+  VENUS: 0.6,
+  EARTH: 0.7,
+  MARS: 0.6,
+  JUPITER: 0.5,
+  SATURN: 0.5,
+  URANUS: 0.45,
+  NEPTUNE: 0.45,
+}
 
 export function ensureRenderablePlanetPositions(
   positions: PlanetPosition[],
@@ -597,7 +621,9 @@ interface SolarSystemProps {
   centerOn?: 'SUN' | 'EARTH' | 'MOON'
 }
 
-function getBodyPosition(name: keyof typeof SOLAR_SYSTEM_DATA, missionTime: number): [number, number, number] {
+export type SolarBodyName = keyof typeof SOLAR_SYSTEM_DATA
+
+export function getBodyPosition(name: SolarBodyName, missionTime: number): [number, number, number] {
   if (name === 'SUN') return [0, 0, 0]
 
   const data = SOLAR_SYSTEM_DATA[name]
@@ -648,6 +674,21 @@ function getBodyPosition(name: keyof typeof SOLAR_SYSTEM_DATA, missionTime: numb
   const z = Math.sin(trueAnomaly) * orbitRadius * Math.cos(inclinationRad)
 
   return [x, y, z]
+}
+
+export function getBodyPositionRelativeToCenter(
+  bodyName: SolarBodyName,
+  centerOn: SolarBodyName,
+  missionTime: number
+): [number, number, number] {
+  const bodyPosition = getBodyPosition(bodyName, missionTime)
+  const centerPosition = getBodyPosition(centerOn, missionTime)
+
+  return [
+    bodyPosition[0] - centerPosition[0],
+    bodyPosition[1] - centerPosition[1],
+    bodyPosition[2] - centerPosition[2],
+  ]
 }
 
 export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'SUN' }: SolarSystemProps) {
@@ -867,14 +908,14 @@ export function NasaSolarSystem({ showOrbits = false, centerOn = 'SUN', useNasaD
       {showOrbits && (
         <group position={[-offset[0], -offset[1], -offset[2]]}>
           {/* Thin orbital lines for all planets */}
-          <OrbitLine radius={57.91} color="#ffffff" opacity={0.6} />   {/* Mercury */}
-          <OrbitLine radius={108.21} color="#ffffff" opacity={0.6} />  {/* Venus */}
-          <OrbitLine radius={149.60} color="#ffffff" opacity={0.7} />  {/* Earth */}
-          <OrbitLine radius={227.92} color="#ffffff" opacity={0.6} />  {/* Mars */}
-          <OrbitLine radius={778.57} color="#ffffff" opacity={0.5} />  {/* Jupiter */}
-          <OrbitLine radius={1433.53} color="#ffffff" opacity={0.5} /> {/* Saturn */}
-          <OrbitLine radius={2872.46} color="#ffffff" opacity={0.45} />{/* Uranus */}
-          <OrbitLine radius={4495.06} color="#ffffff" opacity={0.45} />{/* Neptune */}
+          {HELIOCENTRIC_ORBIT_BODIES.map((bodyName) => (
+            <OrbitLine
+              key={bodyName}
+              radius={SOLAR_SYSTEM_DATA[bodyName].orbitRadius!}
+              color="#ffffff"
+              opacity={ORBIT_LINE_OPACITY[bodyName]}
+            />
+          ))}
         </group>
       )}
 

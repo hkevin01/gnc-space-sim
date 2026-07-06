@@ -22,6 +22,7 @@ import { useCallback, useRef, useState } from 'react'
 import { LaunchDemo } from './LaunchDemo'
 import { MissionEvent } from './MissionTypes'
 import * as THREE from 'three'
+import { getBodyPositionRelativeToCenter, type SolarBodyName } from './SolarSystem'
 
 interface LaunchSimulationProps {
   selectedMission: string
@@ -46,6 +47,20 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls> | null>(null)
   const [cameraMode, setCameraMode] = useState<'follow' | 'free'>('follow')
 
+  const getPlanetView = useCallback((bodyName: SolarBodyName) => {
+    const target = getBodyPositionRelativeToCenter(bodyName, 'EARTH', 0)
+    const radialDistance = Math.max(2.5, Math.hypot(target[0], target[1], target[2]) * 0.35)
+
+    return {
+      target,
+      position: [
+        target[0] + radialDistance,
+        target[1] + radialDistance * 0.3,
+        target[2] + radialDistance,
+      ] as [number, number, number],
+    }
+  }, [])
+
   const setView = useCallback((position: [number, number, number], target: [number, number, number]) => {
     if (!cameraRef.current || !orbitControlsRef.current) return
 
@@ -62,8 +77,14 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
 
   const snapSolarView = useCallback(() => {
     setCameraMode('free')
-    setView([240, 70, 240], [0, 0, 0])
+    setView([1200, 320, 1200], [0, 0, 0])
   }, [setView])
+
+  const snapPlanet = useCallback((bodyName: SolarBodyName) => {
+    setCameraMode('free')
+    const view = getPlanetView(bodyName)
+    setView(view.position, view.target)
+  }, [getPlanetView, setView])
 
   return (
     <div className="app-surface overflow-hidden p-2 p-md-3 d-flex flex-column flex-grow-1 scene-surface">
@@ -79,6 +100,10 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
           <div className="d-flex flex-wrap gap-2">
             <button onClick={snapHome} className="btn btn-outline-light btn-sm touch-target">Home</button>
             <button onClick={snapSolarView} className="btn btn-outline-info btn-sm touch-target">Solar View</button>
+            <button onClick={() => snapPlanet('SUN')} className="btn btn-outline-warning btn-sm touch-target">Sun</button>
+            <button onClick={() => snapPlanet('EARTH')} className="btn btn-outline-primary btn-sm touch-target">Earth</button>
+            <button onClick={() => snapPlanet('MARS')} className="btn btn-outline-danger btn-sm touch-target">Mars</button>
+            <button onClick={() => snapPlanet('JUPITER')} className="btn btn-outline-secondary btn-sm touch-target">Jupiter</button>
             <button
               onClick={() => setCameraMode((mode) => (mode === 'free' ? 'follow' : 'free'))}
               className={`btn btn-sm touch-target ${cameraMode === 'free' ? 'btn-warning' : 'btn-outline-secondary'}`}

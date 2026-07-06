@@ -523,7 +523,7 @@ export function LaunchDemo({
         panSpeed={0.8}
         rotateSpeed={0.5}
         minDistance={0.02}
-        maxDistance={6000}  // Allow zooming out to see the wider solar system
+        maxDistance={15000}  // Allow exploring out past the full outer-planet extent
       />
     </group>
   );
