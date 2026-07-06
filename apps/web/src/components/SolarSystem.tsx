@@ -822,7 +822,6 @@ export function NasaSolarSystem({ showOrbits = false, centerOn = 'SUN', useNasaD
         position={[-offset[0], -offset[1], -offset[2]]}
         intensity={2}
         color="#ffffff"
-        castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-near={1}
         shadow-camera-far={1000}
@@ -889,7 +888,7 @@ export function NasaSolarSystem({ showOrbits = false, centerOn = 'SUN', useNasaD
       ))}
 
       {/* Asteroid belt */}
-      <AsteroidBelt showAsteroids={true} asteroidCount={300} />
+      <AsteroidBelt showAsteroids={true} asteroidCount={120} />
     </group>
   );
 }
@@ -1029,7 +1028,7 @@ function Asteroid({ position, size, rotationSpeed }: AsteroidProps) {
   })
 
   return (
-    <mesh ref={meshRef} position={position} castShadow>
+    <mesh ref={meshRef} position={position}>
       <sphereGeometry args={[size, 8, 6]} />
       <meshStandardMaterial
         color={new THREE.Color().setHSL(0.08, 0.3, Math.random() * 0.3 + 0.4)}

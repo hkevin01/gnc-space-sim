@@ -512,11 +512,13 @@ export function LaunchDemo({
         enablePan={true}
         enableZoom={true}
         enableRotate={true}
+        enableDamping={true}
+        dampingFactor={0.08}
         zoomSpeed={1.5}
         panSpeed={0.8}
         rotateSpeed={0.5}
         minDistance={0.02}
-        maxDistance={20}  // Limit max zoom out to keep Earth visible
+        maxDistance={6000}  // Allow zooming out to see the wider solar system
       />
     </group>
   );

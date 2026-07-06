@@ -17,7 +17,6 @@
  * References: LaunchDemo.tsx SSIM-LAUNCHDEMO-001; SolarSystem.tsx SSIM-SOLARSYS-001.
  */
 import { Canvas } from '@react-three/fiber'
-import * as THREE from 'three'
 import { LaunchDemo } from './LaunchDemo'
 import { MissionEvent } from './MissionTypes'
 
@@ -65,10 +64,9 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
         style={{ background: '#000011', width: '100%', height: '100%' }}
         className="scene-canvas"
         onCreated={({ gl }) => {
-          // Configure WebGL context for better stability
-          gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-          gl.shadowMap.enabled = true
-          gl.shadowMap.type = THREE.PCFSoftShadowMap
+          // Favor interaction smoothness over expensive high-DPI/shadow rendering.
+          gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.25))
+          gl.shadowMap.enabled = false
 
           // Add context loss handling
           gl.domElement.addEventListener('webglcontextlost', (event) => {

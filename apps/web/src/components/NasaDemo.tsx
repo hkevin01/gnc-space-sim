@@ -121,6 +121,10 @@ export function NasaDemo({ className }: NasaDemoProps) {
           shadows
           style={{ width: '100%', height: '100%' }}
           className="scene-canvas"
+          onCreated={({ gl }) => {
+            gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.25))
+            gl.shadowMap.enabled = false
+          }}
         >
           <color attach="background" args={['#000011']} />
 
