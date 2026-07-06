@@ -247,7 +247,7 @@ const KM_PER_SCENE_UNIT = 1_000_000 * DISTANCE_SCALE; // 1e6 km per unit
 const RADIUS_SCENE_CONVERSION = 1 / KM_PER_SCENE_UNIT; // multiply by this to go from km → scene units
 // Visibility multipliers keep bodies visible without breaking distances; tuned to avoid overlap with orbits
 const SIZE_MULT = {
-  SUN: 80,
+  SUN: 40,
   INNER: 25, // Mercury, Venus, Earth, Mars
   MOON: 25,
   GAS: 35 // Jupiter, Saturn, Uranus, Neptune
@@ -256,7 +256,7 @@ const SIZE_MULT = {
 const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   SUN: {
     radius: 695700, // km - NASA accurate
-    sceneRadius: 695700 * RADIUS_SCENE_CONVERSION * SIZE_MULT.SUN, // ~8.35 units; << Mercury orbit (57.9)
+    sceneRadius: 695700 * RADIUS_SCENE_CONVERSION * SIZE_MULT.SUN, // ~4.17 units; still visible without dominating Earth-centered views
     color: '#FFD700',
     rotationSpeed: 0.01,
     orbitSpeed: 0,

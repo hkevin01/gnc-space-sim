@@ -8,6 +8,7 @@ import {
 } from '@gnc/core';
 import { OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
+import type { ComponentRef, RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useLaunchControl } from '../state/launchControlStore';
@@ -38,15 +39,17 @@ import {
 export function LaunchDemo({
   timeMultiplier = 50, // Increased default for better visual pacing
   showTrajectory = true,
+  cameraMode = 'follow',
   onCameraRef,
 }: {
   timeMultiplier?: number;
   showTrajectory?: boolean;
-  onCameraRef?: (ref: React.RefObject<typeof OrbitControls | null>) => void;
+  cameraMode?: 'follow' | 'free';
+  onCameraRef?: (ref: RefObject<ComponentRef<typeof OrbitControls> | null>) => void;
 }) {
   // Camera follow state
   const { camera } = useThree();
-  const controlsRef = useRef<React.ComponentRef<typeof OrbitControls> | null>(null);
+  const controlsRef = useRef<ComponentRef<typeof OrbitControls> | null>(null);
   const lastUserInteraction = useRef(Date.now());
   const snapBackTimeout = useRef<number | null>(null);
   const hasZoomedToRocket = useRef(false);
@@ -86,7 +89,7 @@ export function LaunchDemo({
 
   useEffect(() => {
     if (onCameraRef) {
-      onCameraRef(controlsRef as unknown as React.RefObject<typeof OrbitControls | null>);
+      onCameraRef(controlsRef);
     }
   }, [onCameraRef]);
 
@@ -162,6 +165,8 @@ export function LaunchDemo({
 
   // Camera follow logic - zoom in when launch starts (skip when user is interacting)
   useFrame(() => {
+    if (cameraMode === 'free') return
+
     // Skip camera follow if user is actively using OrbitControls
     if (isUserInteracting.current) return;
 
