@@ -13,7 +13,7 @@
  * References: NASA JPL Planetary Fact Sheets; physics.info astronomical data.
  */
 
-import { Component, ReactNode, useRef, useMemo, Suspense } from 'react'
+import { Component, ReactNode, useEffect, useRef, useMemo, Suspense } from 'react'
 import { useFrame, useLoader } from '@react-three/fiber'
 import {
   generateAsteroidBelt
@@ -24,6 +24,12 @@ import { StarField } from './StarField'
 import { useNasaPositions } from '../hooks/useNasaPositions'
 import { Html, Line } from '@react-three/drei'
 import { PlanetPosition } from '../services/planetaryPositionService'
+import {
+  buildBodyLookup,
+  getBodyPositionInReferenceFrame,
+  translateToReferenceFrame,
+  type Vec3,
+} from '../utils/orbitalReferenceFrame'
 
 /**
  * ID: SSIM-SOLARSYS-002
@@ -623,6 +629,14 @@ interface SolarSystemProps {
 
 export type SolarBodyName = keyof typeof SOLAR_SYSTEM_DATA
 
+export function getBodySceneRadius(name: SolarBodyName): number {
+  return SOLAR_SYSTEM_DATA[name].sceneRadius
+}
+
+export function getMaxHeliocentricOrbitRadius(): number {
+  return Math.max(...HELIOCENTRIC_ORBIT_BODIES.map((bodyName) => SOLAR_SYSTEM_DATA[bodyName].orbitRadius || 0))
+}
+
 export function getBodyPosition(name: SolarBodyName, missionTime: number): [number, number, number] {
   if (name === 'SUN') return [0, 0, 0]
 
@@ -681,14 +695,11 @@ export function getBodyPositionRelativeToCenter(
   centerOn: SolarBodyName,
   missionTime: number
 ): [number, number, number] {
-  const bodyPosition = getBodyPosition(bodyName, missionTime)
-  const centerPosition = getBodyPosition(centerOn, missionTime)
+  const bodies = buildBodyLookup(
+    REQUIRED_BODIES.map((name) => ({ name, position: getBodyPosition(name, missionTime) }))
+  )
 
-  return [
-    bodyPosition[0] - centerPosition[0],
-    bodyPosition[1] - centerPosition[1],
-    bodyPosition[2] - centerPosition[2],
-  ]
+  return getBodyPositionInReferenceFrame(bodyName, centerOn, bodies) || [0, 0, 0]
 }
 
 export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'SUN' }: SolarSystemProps) {
@@ -762,11 +773,7 @@ function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
   }
 
   // Calculate position with offset
-  const adjustedPosition: [number, number, number] = [
-    position[0] - offset[0],
-    position[1] - offset[1],
-    position[2] - offset[2]
-  ];
+  const adjustedPosition = translateToReferenceFrame(position as Vec3, offset as Vec3)
 
   return (
     <group position={adjustedPosition}>
@@ -824,7 +831,20 @@ function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
 }
 
 // NASA-enhanced Solar System component with real-time planetary positions
-export function NasaSolarSystem({ showOrbits = false, centerOn = 'SUN', useNasaData = true }: SolarSystemProps & { useNasaData?: boolean }) {
+export function NasaSolarSystem({
+  showOrbits = false,
+  centerOn = 'SUN',
+  useNasaData = true,
+  onReferenceFrameChange,
+}: SolarSystemProps & {
+  useNasaData?: boolean
+  onReferenceFrameChange?: (payload: {
+    positions: PlanetPosition[]
+    centerOn: SolarBodyName
+    dataSource: 'nasa' | 'calculated' | 'mixed'
+    loading: boolean
+  }) => void
+}) {
   // Get NASA planetary positions
   const { positions, loading, error, dataSource } = useNasaPositions({
     config: {
@@ -851,6 +871,15 @@ export function NasaSolarSystem({ showOrbits = false, centerOn = 'SUN', useNasaD
   }, [centerOn, renderPositions]);
 
   const offset: [number, number, number] = [centerPos[0], centerPos[1], centerPos[2]];
+
+  useEffect(() => {
+    onReferenceFrameChange?.({
+      positions: renderPositions,
+      centerOn,
+      dataSource,
+      loading,
+    })
+  }, [centerOn, dataSource, loading, onReferenceFrameChange, renderPositions])
 
   return (
     <group>
