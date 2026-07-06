@@ -109,7 +109,7 @@ export function NasaDemo({ className }: NasaDemoProps) {
         </div>
       </div>
 
-      <div className="app-surface overflow-hidden p-2 p-md-3">
+      <div className="app-surface overflow-hidden p-2 p-md-3 scene-surface">
         <Canvas
           camera={{
             position: [50, 30, 50],
@@ -119,7 +119,8 @@ export function NasaDemo({ className }: NasaDemoProps) {
           }}
           gl={{ antialias: true }}
           shadows
-          style={{ minHeight: '70vh' }}
+          style={{ width: '100%', height: '100%' }}
+          className="scene-canvas"
         >
           <color attach="background" args={['#000011']} />
 

@@ -41,7 +41,7 @@ interface LaunchSimulationProps {
  */
 export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimulationProps) {
   return (
-    <div className="app-surface overflow-hidden p-2 p-md-3">
+    <div className="app-surface overflow-hidden p-2 p-md-3 d-flex flex-column flex-grow-1 scene-surface">
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-start gap-2 px-2 pb-3 text-white small">
         <div>
           <div className="fw-semibold">Launch Simulation</div>
@@ -62,7 +62,8 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
           near: 0.0001,
           far: 50000
         }}
-        style={{ background: '#000011', width: '100%', minHeight: '72vh' }}
+        style={{ background: '#000011', width: '100%', height: '100%' }}
+        className="scene-canvas"
         onCreated={({ gl }) => {
           // Configure WebGL context for better stability
           gl.setPixelRatio(Math.min(window.devicePixelRatio, 2))

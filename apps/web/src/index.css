@@ -72,7 +72,39 @@ body {
   min-height: 70vh;
 }
 
+.app-main-row {
+  min-height: calc(100vh - 2rem);
+}
+
+.scene-surface {
+  height: calc(100vh - 2rem);
+}
+
+.scene-canvas {
+  height: calc(100vh - 8rem);
+  flex: 1 1 auto;
+  display: block;
+}
+
+.scene-canvas canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
 @media (max-width: 991.98px) {
+  .app-main-row {
+    min-height: auto;
+  }
+
+  .scene-surface {
+    height: auto;
+  }
+
+  .scene-canvas {
+    height: 65vh;
+  }
+
   .scene-panel {
     min-height: 60vh;
   }
