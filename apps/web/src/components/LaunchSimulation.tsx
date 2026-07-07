@@ -18,7 +18,7 @@
  */
 import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LaunchDemo } from './LaunchDemo'
 import { MissionEvent } from './MissionTypes'
 import * as THREE from 'three'
@@ -30,11 +30,10 @@ import {
 } from './SolarSystem'
 import {
   buildBodyLookup,
-  computeSolarOverviewPose,
-  computePlanetOverviewPose,
   getBodyPositionInReferenceFrame,
   type Vec3,
 } from '../utils/orbitalReferenceFrame'
+import { useLaunchControl } from '../state/launchControlStore'
 
 type LaunchViewTarget = 'HOME' | 'SOLAR_VIEW' | 'SUN' | 'EARTH' | 'MARS' | 'JUPITER'
 
@@ -114,6 +113,13 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
   const [cameraMode, setCameraMode] = useState<'follow' | 'free'>('free')
   const [selectedTarget, setSelectedTarget] = useState<LaunchViewTarget>('SOLAR_VIEW')
   const [referenceFrame, setReferenceFrame] = useState<LiveReferenceFrame | null>(null)
+  const isLaunched = useLaunchControl((state) => state.isLaunched)
+
+  useEffect(() => {
+    if (isLaunched) {
+      setCameraMode('follow')
+    }
+  }, [isLaunched])
 
   const getPlanetView = useCallback((bodyName: SolarBodyName) => {
     const liveFrame = referenceFrame
@@ -275,6 +281,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
         <pointLight position={[-10, -10, -10]} intensity={0.5} />
 
         <LaunchDemo
+          selectedMission={selectedMission}
           timeMultiplier={100}
           showTrajectory={true}
           cameraMode={cameraMode}

@@ -39,7 +39,7 @@ describe('SolarSystem scale constants', () => {
   it('uses an Earth-centered render profile that favors local bodies over the Sun', () => {
     expect(getRenderRadius('SUN', 'EARTH')).toBeLessThan(getBodySceneRadius('SUN') * 0.2)
     expect(getRenderRadius('EARTH', 'EARTH')).toBeGreaterThan(getBodySceneRadius('EARTH'))
-    expect(getRenderRadius('MOON', 'EARTH')).toBeGreaterThan(getBodySceneRadius('MOON'))
+    expect(getRenderRadius('MOON', 'EARTH')).toBeCloseTo(getBodySceneRadius('MOON'), 6)
     expect(getRenderRadius('MOON', 'EARTH')).toBeLessThan(getRenderRadius('EARTH', 'EARTH') * 0.25)
   })
 
@@ -52,7 +52,7 @@ describe('SolarSystem scale constants', () => {
       moon[2] - earth[2],
     )
 
-    expect(earthMoonDistance).toBeGreaterThan(getRenderRadius('EARTH', 'EARTH') * 2)
+    expect(earthMoonDistance).toBeGreaterThan(getRenderRadius('EARTH', 'EARTH') * 2.5)
   })
 
   it('Earth scene radius is approximately 0.159 scene units', () => {

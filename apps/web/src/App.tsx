@@ -6,6 +6,7 @@ import { useLaunchControl } from './state/launchControlStore'
 import { useMissionStore, type MissionState } from './state/missionStore'
 import { GNCPanel } from './components/GNCPanel'
 import { LaunchPhase, type LaunchState } from '@gnc/core'
+import { buildCompressedMissionTimeline, getCompressedMissionPhase } from './utils/missionTimeline'
 
 const EnhancedOrbitalDemo = lazy(async () => {
   const module = await import('./components/EnhancedOrbitalDemo')
@@ -33,7 +34,7 @@ export default function App() {
   const [demoMode, setDemoMode] = useState<'main' | 'orbital' | 'nasa'>('main')
 
   // Launch control state
-  const { launchTime, initiateLaunch, resetLaunch, isLaunched } = useLaunchControl()
+  const { launchTime, initiateLaunch, resetLaunch, isLaunched, currentState } = useLaunchControl()
   const launchTelemetryState: LaunchState = {
     r: [6371000, 0, 50000],
     v: [0, 1500, 200],
@@ -60,6 +61,7 @@ export default function App() {
 
   const currentMission = MISSION_SCENARIOS[selectedMission]
   const missionPhases = useMemo(() => currentMission?.phases || [], [currentMission])
+  const compressedMissionPhases = useMemo(() => buildCompressedMissionTimeline(missionPhases), [missionPhases])
   const phaseItems = useMemo(() => missionPhases.map(p => ({ key: p.name, label: p.name })), [missionPhases])
 
   // Keep sidebar selected phase relevant to selected mission
@@ -130,31 +132,12 @@ export default function App() {
 
   // Calculate current mission phase based on launch time
   const getCurrentMissionPhase = () => {
-    if (!isLaunched || launchTime < 0 || missionPhases.length === 0) return null
-
-    let accumulatedTime = 0
-    for (const phase of missionPhases) {
-      if (launchTime <= accumulatedTime + phase.duration) {
-        return {
-          ...phase,
-          progress: Math.min((launchTime - accumulatedTime) / phase.duration, 1),
-          timeInPhase: launchTime - accumulatedTime
-        }
-      }
-      accumulatedTime += phase.duration
-    }
-
-    // Mission completed - return final phase with completed status
-    const finalPhase = missionPhases[missionPhases.length - 1]
-    return {
-      ...finalPhase,
-      progress: 1,
-      timeInPhase: finalPhase.duration,
-      completed: true
-    }
+    if (!isLaunched || launchTime < 0) return null
+    return getCompressedMissionPhase(compressedMissionPhases, Math.max(0, launchTime))
   }
 
   const currentPhase = getCurrentMissionPhase()
+  const liveTelemetryState = currentState ?? launchTelemetryState
 
   return (
     <ErrorBoundary>
@@ -210,7 +193,7 @@ export default function App() {
                   </div>
                 )}
                 <div className="d-grid">
-                  {launchTime < 0 ? (
+                  {!isLaunched ? (
                     <button onClick={initiateLaunch} className="btn btn-danger touch-target fw-bold">
                       INITIATE LAUNCH
                     </button>
@@ -241,10 +224,9 @@ export default function App() {
                 <h2 className="h6 mb-3 text-info">Mission Phases</h2>
                 <div className="d-grid gap-2">
                   {missionPhases.map((missionPhase, index) => {
-                    let accumulatedTime = 0
-                    for (let i = 0; i < index; i++) accumulatedTime += missionPhases[i].duration
+                    const compressedPhase = compressedMissionPhases[index]
                     const isActive = currentPhase?.name === missionPhase.name
-                    const isCompleted = launchTime > accumulatedTime + missionPhase.duration
+                    const isCompleted = launchTime > (compressedPhase?.endTime ?? 0)
 
                     return (
                       <div
@@ -261,13 +243,16 @@ export default function App() {
                           {isCompleted ? '✅' : isActive ? '🔄' : '⏳'} {missionPhase.name}
                         </div>
                         <div className="mt-1">{missionPhase.description}</div>
+                        <div className="small mt-1 text-body-secondary">
+                          Timeline slot: {Math.round(compressedPhase?.compressedDuration ?? 0)}s
+                        </div>
                         {isActive && currentPhase && (
                           <div className="mt-2">
                             <div className="progress" role="progressbar" aria-valuenow={currentPhase.progress * 100} aria-valuemin={0} aria-valuemax={100}>
                               <div className="progress-bar" style={{ width: `${currentPhase.progress * 100}%` }} />
                             </div>
                             <div className="small mt-1">
-                              {Math.round(currentPhase.timeInPhase)}s / {missionPhase.duration}s
+                              {Math.round(currentPhase.timeInPhase)}s / {Math.round((currentPhase as typeof currentPhase & { compressedDuration?: number })?.compressedDuration ?? 0)}s
                             </div>
                           </div>
                         )}
@@ -311,7 +296,7 @@ export default function App() {
 
                 <div className="col-12 col-xxl-9 d-flex">
                   <GNCPanel
-                    launchState={launchTelemetryState}
+                    launchState={liveTelemetryState}
                     selectedMission={selectedMission}
                     currentPhase={currentPhase}
                   />

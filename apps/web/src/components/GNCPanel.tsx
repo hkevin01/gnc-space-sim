@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { LaunchState } from '@gnc/core'
+import { LaunchPhase, LaunchState } from '@gnc/core'
 import { MissionEvent } from './MissionTypes'
 
 interface GNCPanelProps {
@@ -21,6 +21,16 @@ interface GNCPanelProps {
 export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPanelProps) {
   const [activeTab, setActiveTab] = useState<'guidance' | 'navigation' | 'control' | 'mission'>('mission')
 
+  const launchPhaseLabelMap: Partial<Record<LaunchPhase, string>> = {
+    [LaunchPhase.PRELAUNCH]: 'Countdown',
+    [LaunchPhase.STAGE1_BURN]: 'Core Ascent',
+    [LaunchPhase.STAGE1_SEPARATION]: 'Booster Separation',
+    [LaunchPhase.STAGE2_IGNITION]: 'Upper Stage Ignition',
+    [LaunchPhase.STAGE2_BURN]: 'Orbital Burn',
+    [LaunchPhase.FAIRING_JETTISON]: 'Fairing Jettison',
+    [LaunchPhase.ORBITAL_INSERTION]: 'Parking Orbit',
+  }
+
   const velocityKms = (launchState.velocity_magnitude / 1000).toFixed(2)
   const altitudeKm = (launchState.altitude / 1000).toFixed(1)
   const speedKms = (Math.hypot(...launchState.v) / 1000).toFixed(2)
@@ -32,6 +42,10 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
   const velocityErrorKms = (targetVelocityKms - launchState.velocity_magnitude / 1000).toFixed(2)
   const massTons = (launchState.mass / 1000).toFixed(1)
   const throttlePct = ((launchState.guidance?.throttle || 0) * 100).toFixed(1)
+  const missionClock = launchState.mission_time < 0
+    ? `T${launchState.mission_time.toFixed(0)}s`
+    : `T+${launchState.mission_time.toFixed(1)}s`
+  const launchStage = launchPhaseLabelMap[launchState.phase] || 'Mission Flight'
 
   const tabs = [
     { id: 'mission' as const, icon: '🚀', label: 'MISSION', color: 'text-orange-400' },
@@ -66,6 +80,12 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
       <div className="flex-1 overflow-y-auto p-4">
         {activeTab === 'mission' && (
           <div className="space-y-4">
+            <div className="bg-zinc-800/60 border border-zinc-700 rounded p-3 text-xs text-zinc-300">
+              <div className="font-semibold text-orange-300 mb-1">Launch Timeline</div>
+              <div>Mission clock: {missionClock}</div>
+              <div>Vehicle stage: {launchStage}</div>
+            </div>
+
             <div className="text-orange-400 font-bold text-xs md:text-sm mb-3">MISSION STATUS</div>
             <div className="space-y-2 text-xs md:text-sm">
               <div className="flex justify-between gap-2 whitespace-nowrap">
@@ -121,6 +141,12 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
 
         {activeTab === 'guidance' && (
           <div className="space-y-4">
+            <div className="bg-zinc-800/60 border border-zinc-700 rounded p-3 text-xs text-zinc-300">
+              <div className="font-semibold text-cyan-300 mb-1">Guidance Stage</div>
+              <div>{launchStage}</div>
+              <div>Mission clock: {missionClock}</div>
+            </div>
+
             <div className="text-cyan-400 font-bold text-sm mb-3">TARGET PARAMETERS</div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -176,6 +202,12 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
 
         {activeTab === 'navigation' && (
           <div className="space-y-4">
+            <div className="bg-zinc-800/60 border border-zinc-700 rounded p-3 text-xs text-zinc-300">
+              <div className="font-semibold text-green-300 mb-1">Navigation Stage</div>
+              <div>{launchStage}</div>
+              <div>Mission clock: {missionClock}</div>
+            </div>
+
             <div className="text-green-400 font-bold text-sm mb-3">POSITION & VELOCITY</div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -235,6 +267,12 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
 
         {activeTab === 'control' && (
           <div className="space-y-4">
+            <div className="bg-zinc-800/60 border border-zinc-700 rounded p-3 text-xs text-zinc-300">
+              <div className="font-semibold text-yellow-300 mb-1">Control Stage</div>
+              <div>{launchStage}</div>
+              <div>Mission clock: {missionClock}</div>
+            </div>
+
             <div className="text-yellow-400 font-bold text-sm mb-3">VEHICLE SYSTEMS</div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">

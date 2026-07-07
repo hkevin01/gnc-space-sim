@@ -6,13 +6,13 @@ import {
   LaunchPhase,
   LaunchState,
 } from '@gnc/core';
-import { OrbitControls } from '@react-three/drei';
+import { Line, OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import type { ComponentRef, RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useLaunchControl } from '../state/launchControlStore';
-import { SolarSystem } from './SolarSystem';
+import { getBodyPositionRelativeToCenter, SolarSystem } from './SolarSystem';
 import {
   EARTH_RADIUS_SCENE,
   ROCKET_VISUAL_SCALE,
@@ -37,11 +37,13 @@ import {
  */
 
 export function LaunchDemo({
+  selectedMission,
   timeMultiplier = 50, // Increased default for better visual pacing
   showTrajectory = true,
   cameraMode = 'follow',
   onCameraRef,
 }: {
+  selectedMission?: string;
   timeMultiplier?: number;
   showTrajectory?: boolean;
   cameraMode?: 'follow' | 'free';
@@ -86,6 +88,29 @@ export function LaunchDemo({
   const guidance = useMemo(() => {
     return new GravityTurnGuidance(400000, (28.5 * Math.PI) / 180);
   }, []);
+
+  const lunarTransferPreview = useMemo(() => {
+    if (selectedMission !== 'lunarMission') return null;
+
+    const moon = getBodyPositionRelativeToCenter('MOON', 'EARTH', 0);
+    const earth = new THREE.Vector3(0, 0, 0);
+    const moonPoint = new THREE.Vector3(moon[0], moon[1], moon[2]);
+    const outbound = new THREE.QuadraticBezierCurve3(
+      earth,
+      new THREE.Vector3(moonPoint.x * 0.45, 0.18, moonPoint.z * 0.18),
+      moonPoint,
+    );
+    const inbound = new THREE.QuadraticBezierCurve3(
+      moonPoint,
+      new THREE.Vector3(moonPoint.x * 0.55, -0.2, -moonPoint.z * 0.22),
+      earth,
+    );
+
+    return [
+      ...outbound.getPoints(64).map((point) => [point.x, point.y, point.z] as [number, number, number]),
+      ...inbound.getPoints(64).slice(1).map((point) => [point.x, point.y, point.z] as [number, number, number]),
+    ];
+  }, [selectedMission]);
 
   useEffect(() => {
     if (onCameraRef) {
@@ -269,7 +294,7 @@ export function LaunchDemo({
     }
 
     const dt = Math.min(deltaTime * adaptiveMultiplier, 0.1);
-    const nextTime = launchTime + dt;
+    const nextTime = launchTime + deltaTime;
 
     try {
       const nextState = integrateLaunchTrajectory(stateRef.current, LAUNCH_VEHICLES.FALCON_9, guidance, dt);
@@ -510,6 +535,19 @@ export function LaunchDemo({
       </group>
 
       {trajectoryRef.current && <primitive object={trajectoryRef.current} />}
+
+      {lunarTransferPreview && (
+        <Line
+          points={lunarTransferPreview}
+          color="#7dd3fc"
+          lineWidth={1.5}
+          transparent
+          opacity={0.75}
+          dashed
+          dashSize={0.3}
+          gapSize={0.2}
+        />
+      )}
 
       {/* OrbitControls for user interaction - camera follow managed in useFrame */}
       <OrbitControls

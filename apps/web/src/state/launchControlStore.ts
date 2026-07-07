@@ -85,7 +85,7 @@ export const useLaunchControl = create<LaunchControlState>((set) => ({
           }
         }
       })
-    }, 100) // Update every 100ms for smooth countdown
+    }, 1000) // Real-time countdown so launch remains readable
   },
   resetLaunch: () => {
 

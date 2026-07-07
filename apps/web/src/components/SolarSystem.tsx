@@ -248,7 +248,7 @@ interface PlanetData {
 // Solar system data with accurate NASA measurements and proper scaling
 // Base scale: 1 scene unit = 1 million km for distances
 const HELIOCENTRIC_DISTANCE_SCALE = 8; // Condense interplanetary paths for whole-system readability
-const LUNAR_DISTANCE_SCALE = 0.8; // Slightly widen Earth-Moon separation for the launch view
+const LUNAR_DISTANCE_SCALE = 0.65; // Widen Earth-Moon separation further for the launch view
 // Convert radii (km) into scene units using the launch/local-body scale.
 // Heliocentric distances are condensed, but body sizes stay on the uncondensed base
 // so Earth, Moon, and the rocket remain visually consistent in Earth-centered views.
@@ -482,7 +482,7 @@ export function getRenderRadius(name: SolarBodyName, centerOn: 'SUN' | 'EARTH' |
   if (centerOn === 'EARTH') {
     if (name === 'SUN') return baseRadius * 0.12
     if (name === 'EARTH') return baseRadius * 1.4
-    if (name === 'MOON') return baseRadius * 1.05
+    if (name === 'MOON') return baseRadius
   }
 
   return baseRadius
