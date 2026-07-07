@@ -249,8 +249,10 @@ interface PlanetData {
 // Base scale: 1 scene unit = 1 million km for distances
 const HELIOCENTRIC_DISTANCE_SCALE = 8; // Condense interplanetary paths for whole-system readability
 const LUNAR_DISTANCE_SCALE = 1; // Preserve local Earth-Moon readability
-// Convert radii (km) into scene units using the same base as distances (km → scene units)
-const KM_PER_SCENE_UNIT = 1_000_000 * HELIOCENTRIC_DISTANCE_SCALE;
+// Convert radii (km) into scene units using the launch/local-body scale.
+// Heliocentric distances are condensed, but body sizes stay on the uncondensed base
+// so Earth, Moon, and the rocket remain visually consistent in Earth-centered views.
+const KM_PER_SCENE_UNIT = 1_000_000;
 const RADIUS_SCENE_CONVERSION = 1 / KM_PER_SCENE_UNIT; // multiply by this to go from km → scene units
 // Visibility multipliers keep bodies visible without breaking distances; tuned to avoid overlap with orbits
 const SIZE_MULT = {
@@ -306,7 +308,7 @@ const SOLAR_SYSTEM_DATA: Record<string, PlanetData> = {
   },
   EARTH: {
     radius: 6371.0, // km - NASA accurate mean radius
-    sceneRadius: 6371.0 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER, // ~0.255 units; Moon orbit 0.3844 units stays clear
+    sceneRadius: 6371.0 * RADIUS_SCENE_CONVERSION * SIZE_MULT.INNER, // ~0.159 units; Moon orbit 0.3844 units stays clear
     orbitRadius: 149.60 / HELIOCENTRIC_DISTANCE_SCALE,
     color: '#6B93D6',
     rotationSpeed: 0.01,
@@ -471,9 +473,22 @@ interface PlanetProps {
   showOrbit?: boolean
   missionTime?: number
   offset?: [number, number, number]
+  renderRadius: number
 }
 
-export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 0, 0] }: PlanetProps) {
+export function getRenderRadius(name: SolarBodyName, centerOn: 'SUN' | 'EARTH' | 'MOON' = 'SUN'): number {
+  const baseRadius = SOLAR_SYSTEM_DATA[name].sceneRadius
+
+  if (centerOn === 'EARTH') {
+    if (name === 'SUN') return baseRadius * 0.12
+    if (name === 'EARTH') return baseRadius * 1.4
+    if (name === 'MOON') return baseRadius * 1.6
+  }
+
+  return baseRadius
+}
+
+export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 0, 0], renderRadius }: PlanetProps) {
   const data = SOLAR_SYSTEM_DATA[name]
 
   // Check if this planet has a texture URL
@@ -584,7 +599,7 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
           <group ref={meshRef as unknown as React.RefObject<THREE.Group>}>
             <SafeTexturedSphere
               textureUrl={TEXTURE_URLS[name]}
-              radius={data.sceneRadius}
+              radius={renderRadius}
               color={data.color}
               emissive={name === 'SUN' ? data.color : undefined}
               emissiveIntensity={name === 'SUN' ? 0.12 : 0}
@@ -592,7 +607,7 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
           </group>
         ) : (
           <mesh ref={meshRef} castShadow receiveShadow>
-            <sphereGeometry args={[data.sceneRadius, 32, 32]} />
+            <sphereGeometry args={[renderRadius, 32, 32]} />
             <meshStandardMaterial
               color={data.color}
               roughness={name === 'SUN' ? 0 : 0.6}
@@ -606,7 +621,7 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
         {/* Saturn's rings */}
         {name === 'SATURN' && data.hasRings && (
           <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[data.sceneRadius * 1.2, data.sceneRadius * 2.2, 64]} />
+            <ringGeometry args={[renderRadius * 1.2, renderRadius * 2.2, 64]} />
             <meshStandardMaterial
               color="#C4A875"
               transparent
@@ -726,17 +741,17 @@ export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'S
       <ambientLight intensity={0.2} />
 
       {/* All solar system bodies */}
-      <Planet name="SUN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-      <Planet name="MERCURY" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-      <Planet name="VENUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-      <Planet name="EARTH" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-      <Planet name="MOON" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-      <Planet name="MARS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+      <Planet name="SUN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('SUN', centerOn)} />
+      <Planet name="MERCURY" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('MERCURY', centerOn)} />
+      <Planet name="VENUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('VENUS', centerOn)} />
+      <Planet name="EARTH" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('EARTH', centerOn)} />
+      <Planet name="MOON" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('MOON', centerOn)} />
+      <Planet name="MARS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('MARS', centerOn)} />
       <AsteroidBelt showAsteroids={true} asteroidCount={120} />
-      <Planet name="JUPITER" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-      <Planet name="SATURN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-      <Planet name="URANUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-      <Planet name="NEPTUNE" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
+      <Planet name="JUPITER" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('JUPITER', centerOn)} />
+      <Planet name="SATURN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('SATURN', centerOn)} />
+      <Planet name="URANUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('URANUS', centerOn)} />
+      <Planet name="NEPTUNE" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('NEPTUNE', centerOn)} />
     </group>
   )
 }
@@ -773,6 +788,7 @@ function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
 
   // Calculate position with offset
   const adjustedPosition = translateToReferenceFrame(position as Vec3, offset as Vec3)
+  const renderRadius = getRenderRadius(name as SolarBodyName, offset[0] === 0 && offset[1] === 0 && offset[2] === 0 ? 'SUN' : 'EARTH')
 
   return (
     <group position={adjustedPosition}>
@@ -781,7 +797,7 @@ function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
         <group ref={meshRef as unknown as React.RefObject<THREE.Group>}>
           <SafeTexturedSphere
             textureUrl={TEXTURE_URLS[name]}
-            radius={planetData.sceneRadius}
+            radius={renderRadius}
             color={planetData.color}
             emissive={name === 'SUN' ? planetData.color : undefined}
             emissiveIntensity={name === 'SUN' ? 0.12 : 0}
@@ -789,7 +805,7 @@ function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
         </group>
       ) : (
         <mesh ref={meshRef}>
-          <sphereGeometry args={[planetData.sceneRadius, 32, 32]} />
+          <sphereGeometry args={[renderRadius, 32, 32]} />
           <meshStandardMaterial
             color={planetData.color}
             roughness={name === 'SUN' ? 0 : 0.8}
@@ -808,19 +824,19 @@ function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
         <group>
           {/* Main ring system */}
           <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[planetData.sceneRadius * 1.5, planetData.sceneRadius * 2.5, 64]} />
+            <ringGeometry args={[renderRadius * 1.5, renderRadius * 2.5, 64]} />
             <meshBasicMaterial color="#C4A875" opacity={0.8} transparent side={THREE.DoubleSide} />
           </mesh>
 
           {/* Inner ring detail */}
           <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[planetData.sceneRadius * 1.2, planetData.sceneRadius * 1.4, 32]} />
+            <ringGeometry args={[renderRadius * 1.2, renderRadius * 1.4, 32]} />
             <meshBasicMaterial color="#F4E99B" opacity={0.9} transparent side={THREE.DoubleSide} />
           </mesh>
 
           {/* Outer ring detail */}
           <mesh rotation={[Math.PI / 2, 0, 0]}>
-            <ringGeometry args={[planetData.sceneRadius * 2.6, planetData.sceneRadius * 3.0, 32]} />
+            <ringGeometry args={[renderRadius * 2.6, renderRadius * 3.0, 32]} />
             <meshBasicMaterial color="#DEB887" opacity={0.7} transparent side={THREE.DoubleSide} />
           </mesh>
         </group>

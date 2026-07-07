@@ -160,7 +160,14 @@ export default function App() {
     <ErrorBoundary>
       <div className="app-shell container-fluid py-3 py-lg-4 px-3 px-lg-4">
         <div className="row g-3 align-items-stretch app-main-row">
-          <aside className="col-12 col-xl-3 d-flex flex-column gap-3">
+          <main className="col-12 col-xl-8 d-flex order-1">
+            <LaunchSimulation
+              selectedMission={selectedMission}
+              currentPhase={currentPhase}
+            />
+          </main>
+
+          <aside className="col-12 col-xl-4 d-flex flex-column gap-3 order-2">
             <div className="app-surface p-3 p-lg-4">
               <h1 className="h4 mb-2">GNC Space Simulation</h1>
               <p className="app-muted mb-0">Responsive mission control, 3D launch view, and telemetry cards.</p>
@@ -285,30 +292,33 @@ export default function App() {
               </div>
             </div>
           </aside>
+        </div>
 
-          <main className="col-12 col-xl-6 d-flex">
-            <LaunchSimulation
-              selectedMission={selectedMission}
-              currentPhase={currentPhase}
-            />
-          </main>
-
-          <aside className="col-12 col-xl-3 d-flex flex-column gap-3">
+        <div className="row g-3 mt-0 align-items-stretch">
+          <div className="col-12">
             <div className="app-card p-3 p-lg-4">
-              <h2 className="h6 mb-3 text-success">Flight Status</h2>
-              <div className="small text-secondary">
-                <div>T{launchTime < 0 ? launchTime.toFixed(1) : `+${launchTime.toFixed(1)}`}s</div>
-                <div>Mission: {currentMission.name}</div>
-                <div>Phase: {currentPhase?.name || 'Pre-Launch'}</div>
+              <div className="row g-3 align-items-stretch">
+                <div className="col-12 col-xxl-3 d-flex">
+                  <div className="app-card app-card-inset p-3 w-100">
+                    <h2 className="h6 mb-3 text-success">Flight Status</h2>
+                    <div className="small text-secondary">
+                      <div>T{launchTime < 0 ? launchTime.toFixed(1) : `+${launchTime.toFixed(1)}`}s</div>
+                      <div>Mission: {currentMission.name}</div>
+                      <div>Phase: {currentPhase?.name || 'Pre-Launch'}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="col-12 col-xxl-9 d-flex">
+                  <GNCPanel
+                    launchState={launchTelemetryState}
+                    selectedMission={selectedMission}
+                    currentPhase={currentPhase}
+                  />
+                </div>
               </div>
             </div>
-
-            <GNCPanel
-              launchState={launchTelemetryState}
-              selectedMission={selectedMission}
-              currentPhase={currentPhase}
-            />
-          </aside>
+          </div>
         </div>
       </div>
     </ErrorBoundary>

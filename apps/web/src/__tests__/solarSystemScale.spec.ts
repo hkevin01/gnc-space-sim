@@ -9,8 +9,10 @@
 
 import { describe, it, expect } from 'vitest'
 import {
+  getBodySceneRadius,
   getBodyPosition,
   getBodyPositionRelativeToCenter,
+  getRenderRadius,
 } from '../components/SolarSystem'
 
 // ---- Replicate scale constants from SolarSystem.tsx ----
@@ -30,6 +32,16 @@ const SIZE_MULT_LAUNCH = 25
 const LAUNCH_EARTH_SCENE_RADIUS = (EARTH_RADIUS_KM / KM_PER_SCENE_LAUNCH) * SIZE_MULT_LAUNCH
 
 describe('SolarSystem scale constants', () => {
+  it('exported Earth scene radius remains close to launch scale expectations', () => {
+    expect(getBodySceneRadius('EARTH')).toBeCloseTo(0.159, 3)
+  })
+
+  it('uses an Earth-centered render profile that favors local bodies over the Sun', () => {
+    expect(getRenderRadius('SUN', 'EARTH')).toBeLessThan(getBodySceneRadius('SUN') * 0.2)
+    expect(getRenderRadius('EARTH', 'EARTH')).toBeGreaterThan(getBodySceneRadius('EARTH'))
+    expect(getRenderRadius('MOON', 'EARTH')).toBeGreaterThan(getBodySceneRadius('MOON'))
+  })
+
   it('Earth scene radius is approximately 0.159 scene units', () => {
     expect(EARTH_SCENE_RADIUS).toBeCloseTo(0.159, 3)
   })

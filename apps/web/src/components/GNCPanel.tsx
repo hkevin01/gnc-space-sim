@@ -34,27 +34,30 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
   const throttlePct = ((launchState.guidance?.throttle || 0) * 100).toFixed(1)
 
   const tabs = [
-    { id: 'mission' as const, label: '🚀 MISSION', color: 'text-orange-400' },
-    { id: 'guidance' as const, label: '🎯 GUIDANCE', color: 'text-cyan-400' },
-    { id: 'navigation' as const, label: '🧭 NAVIGATION', color: 'text-green-400' },
-    { id: 'control' as const, label: '⚡ CONTROL', color: 'text-yellow-400' }
+    { id: 'mission' as const, icon: '🚀', label: 'MISSION', color: 'text-orange-400' },
+    { id: 'guidance' as const, icon: '🎯', label: 'GUIDANCE', color: 'text-cyan-400' },
+    { id: 'navigation' as const, icon: '🧭', label: 'NAVIGATION', color: 'text-green-400' },
+    { id: 'control' as const, icon: '⚡', label: 'CONTROL', color: 'text-yellow-400' }
   ]
 
   return (
-    <div className="bg-black/90 backdrop-blur-sm border border-zinc-600 rounded-lg h-full flex flex-col">
+    <div className="bg-black/90 backdrop-blur-sm border border-zinc-600 rounded-lg h-full w-100 flex flex-col">
       {/* Tab Headers */}
-      <div className="grid grid-cols-2 md:grid-cols-4 border-b border-zinc-600">
+      <div className="grid grid-cols-2 lg:grid-cols-4 border-b border-zinc-600">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`min-w-0 px-1.5 py-2 text-[10px] md:text-[11px] font-bold leading-none text-center whitespace-nowrap transition-colors ${
+            className={`min-w-0 px-2 py-2 text-[10px] sm:text-[11px] font-bold leading-tight text-center transition-colors ${
               activeTab === tab.id
                 ? `${tab.color} bg-zinc-800 border-b-2 border-current`
                 : 'text-zinc-400 hover:text-zinc-300'
             }`}
           >
-            {tab.label}
+            <span className="flex flex-col sm:flex-row items-center justify-center gap-1 whitespace-normal break-words text-center">
+              <span aria-hidden="true">{tab.icon}</span>
+              <span>{tab.label}</span>
+            </span>
           </button>
         ))}
       </div>
