@@ -251,7 +251,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
           near: 0.0001,
           far: 50000
         }}
-        style={{ background: '#000011', width: '100%', height: '100%' }}
+        style={{ background: '#000000', width: '100%', height: '100%' }}
         className="scene-canvas"
         onCreated={({ gl, camera }) => {
           // Favor interaction smoothness over expensive high-DPI/shadow rendering.

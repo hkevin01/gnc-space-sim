@@ -27,18 +27,18 @@ export function StarField({ count = 8000, radius = 4000 }: StarFieldProps) {
       // Star colors
       const brightness = 0.7 + Math.random() * 0.3
       const colorType = Math.random()
-      
-      if (colorType < 0.6) {
+
+      if (colorType < 0.72) {
         // White
         colors[i * 3] = brightness
         colors[i * 3 + 1] = brightness
         colors[i * 3 + 2] = brightness
-      } else if (colorType < 0.8) {
-        // Blue-white
-        colors[i * 3] = brightness * 0.8
-        colors[i * 3 + 1] = brightness * 0.9
+      } else if (colorType < 0.82) {
+        // Very slight cool-white tint
+        colors[i * 3] = brightness * 0.92
+        colors[i * 3 + 1] = brightness * 0.95
         colors[i * 3 + 2] = brightness
-      } else if (colorType < 0.95) {
+      } else if (colorType < 0.96) {
         // Yellow
         colors[i * 3] = brightness
         colors[i * 3 + 1] = brightness * 0.9

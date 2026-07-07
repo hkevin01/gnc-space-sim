@@ -40,6 +40,19 @@ describe('SolarSystem scale constants', () => {
     expect(getRenderRadius('SUN', 'EARTH')).toBeLessThan(getBodySceneRadius('SUN') * 0.2)
     expect(getRenderRadius('EARTH', 'EARTH')).toBeGreaterThan(getBodySceneRadius('EARTH'))
     expect(getRenderRadius('MOON', 'EARTH')).toBeGreaterThan(getBodySceneRadius('MOON'))
+    expect(getRenderRadius('MOON', 'EARTH')).toBeLessThan(getRenderRadius('EARTH', 'EARTH') * 0.25)
+  })
+
+  it('keeps the Moon visually separated from Earth in the Earth-centered frame', () => {
+    const earth = getBodyPositionRelativeToCenter('EARTH', 'EARTH', 0)
+    const moon = getBodyPositionRelativeToCenter('MOON', 'EARTH', 0)
+    const earthMoonDistance = Math.hypot(
+      moon[0] - earth[0],
+      moon[1] - earth[1],
+      moon[2] - earth[2],
+    )
+
+    expect(earthMoonDistance).toBeGreaterThan(getRenderRadius('EARTH', 'EARTH') * 2)
   })
 
   it('Earth scene radius is approximately 0.159 scene units', () => {
