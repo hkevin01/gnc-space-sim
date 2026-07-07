@@ -12,7 +12,7 @@ import type { ComponentRef, RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useLaunchControl } from '../state/launchControlStore';
-import { NasaSolarSystem } from './SolarSystem';
+import { SolarSystem } from './SolarSystem';
 import {
   EARTH_RADIUS_SCENE,
   ROCKET_VISUAL_SCALE,
@@ -42,14 +42,12 @@ export function LaunchDemo({
   cameraMode = 'follow',
   orbitScale = 18.7,
   onCameraRef,
-  onReferenceFrameChange,
 }: {
   timeMultiplier?: number;
   showTrajectory?: boolean;
   cameraMode?: 'follow' | 'free';
   orbitScale?: number;
   onCameraRef?: (ref: RefObject<ComponentRef<typeof OrbitControls> | null>) => void;
-  onReferenceFrameChange?: Parameters<typeof NasaSolarSystem>[0]['onReferenceFrameChange'];
 }) {
   // Camera follow state
   const { camera } = useThree();
@@ -387,12 +385,10 @@ export function LaunchDemo({
 
   return (
     <group ref={groupRef}>
-      <NasaSolarSystem
+      <SolarSystem
         centerOn="EARTH"
         showOrbits={true}
-        useNasaData={true}
-        scaleFactorAU={orbitScale}
-        onReferenceFrameChange={onReferenceFrameChange}
+        missionTime={launchTime}
       />
 
       {/* Rocket Vehicle Group - visible scale */}

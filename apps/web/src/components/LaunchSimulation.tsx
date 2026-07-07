@@ -42,7 +42,7 @@ const READABLE_SOLAR_DISTANCE_SCALE = 8
 
 function computeLaunchSolarOverviewPose() {
   const condensedMaxOrbitRadius = getMaxHeliocentricOrbitRadius() / READABLE_SOLAR_DISTANCE_SCALE
-  const distance = Math.max(condensedMaxOrbitRadius * 1.3, 90)
+  const distance = Math.max(condensedMaxOrbitRadius * 0.85, 55)
 
   return {
     target: [0, 0, 0] as [number, number, number],
@@ -98,7 +98,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
           liveTarget[1],
           liveTarget[2],
         ]
-        return computeBodySnapPose(readableTarget, getBodySceneRadius(bodyName))
+        return computeBodySnapPose(readableTarget, Math.max(getBodySceneRadius(bodyName) * 0.5, 0.2))
       }
     }
 
@@ -108,7 +108,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
       target[1] / READABLE_SOLAR_DISTANCE_SCALE,
       target[2] / READABLE_SOLAR_DISTANCE_SCALE,
     ]
-    return computeBodySnapPose(readableTarget, getBodySceneRadius(bodyName))
+    return computeBodySnapPose(readableTarget, Math.max(getBodySceneRadius(bodyName) * 0.5, 0.2))
   }, [referenceFrame])
 
   const selectedTelemetry = useMemo(() => {
@@ -203,7 +203,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
         className="scene-canvas"
         onCreated={({ gl, camera }) => {
           // Favor interaction smoothness over expensive high-DPI/shadow rendering.
-          gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.25))
+          gl.setPixelRatio(Math.min(window.devicePixelRatio, 1))
           gl.shadowMap.enabled = false
           cameraRef.current = camera as THREE.PerspectiveCamera
 
@@ -230,7 +230,6 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
             orbitControlsRef.current = ref.current
           }}
           orbitScale={READABLE_SOLAR_DISTANCE_SCALE}
-          onReferenceFrameChange={setReferenceFrame}
         />
 
         {/* OrbitControls is managed inside LaunchDemo for camera follow */}

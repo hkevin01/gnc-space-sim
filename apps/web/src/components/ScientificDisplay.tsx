@@ -17,12 +17,12 @@ export function ScientificDisplay({
   return (
     <div className="space-y-4">
       {/* Tab Navigation */}
-      <div className="flex flex-wrap gap-1 bg-zinc-800 rounded p-1">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 bg-zinc-800 rounded p-1">
         {(['formulas', 'guidance', 'navigation', 'control'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-2 py-1 text-[11px] rounded capitalize whitespace-normal leading-tight ${
+            className={`px-2 py-2 text-[11px] rounded capitalize whitespace-normal leading-tight text-center break-words ${
               activeTab === tab
                 ? 'bg-zinc-600 text-white'
                 : 'text-zinc-400 hover:text-white'
@@ -137,6 +137,9 @@ function FormulasPanel({ launchState }: { launchState: LaunchState | null }) {
 function GuidancePanel({ launchState }: { launchState: LaunchState | null }) {
   if (!launchState) return null
 
+  const altitudeKm = (launchState.altitude / 1000).toFixed(1)
+  const velocityKms = (launchState.velocity_magnitude / 1000).toFixed(2)
+
   return (
     <div className="space-y-4 font-mono">
       <div className="bg-green-900/30 p-3 rounded border border-green-600">
@@ -157,6 +160,11 @@ function GuidancePanel({ launchState }: { launchState: LaunchState | null }) {
             <div className="ml-2">γ = arcsin((r⃗ · v⃗) / (|r⃗| × |v⃗|))</div>
             <div className="ml-2 text-gray-400">Current: {(launchState.flight_path_angle * 180 / Math.PI).toFixed(1)}°</div>
           </div>
+          <div>
+            <div className="text-green-200 font-semibold">Altitude Error:</div>
+            <div className="ml-2">Δh = h_target - h_current</div>
+            <div className="ml-2 text-gray-400">Current: {(200 - launchState.altitude / 1000).toFixed(1)} km</div>
+          </div>
         </div>
       </div>
 
@@ -175,6 +183,19 @@ function GuidancePanel({ launchState }: { launchState: LaunchState | null }) {
             <div className="text-yellow-200 font-semibold">Steering Losses:</div>
             <div className="ml-2">Δv_steer = ∫ (T/m) × (1 - cos(α)) dt</div>
           </div>
+          <div>
+            <div className="text-yellow-200 font-semibold">Insertion Margin:</div>
+            <div className="ml-2">Δv_margin = v_current - v_target</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-green-950/30 p-3 rounded border border-green-700">
+        <h4 className="text-green-300 font-bold mb-2">🛰️ GUIDANCE STATUS</h4>
+        <div className="space-y-2 text-xs text-gray-300">
+          <div>Altitude: {altitudeKm} km</div>
+          <div>Velocity: {velocityKms} km/s</div>
+          <div>Throttle: {((launchState.guidance?.throttle || 0) * 100).toFixed(1)}%</div>
         </div>
       </div>
     </div>
@@ -186,6 +207,10 @@ function GuidancePanel({ launchState }: { launchState: LaunchState | null }) {
  */
 function NavigationPanel({ launchState }: { launchState: LaunchState | null }) {
   if (!launchState) return null
+
+  const altitudeKm = (launchState.altitude / 1000).toFixed(1)
+  const velocityKms = (launchState.velocity_magnitude / 1000).toFixed(2)
+  const dynamicPressureKpa = (0.5 * launchState.atmosphere.density * launchState.velocity_magnitude * launchState.velocity_magnitude / 1000).toFixed(1)
 
   return (
     <div className="space-y-4 font-mono">
@@ -206,6 +231,10 @@ function NavigationPanel({ launchState }: { launchState: LaunchState | null }) {
             <div className="text-cyan-200 font-semibold">Specific Force:</div>
             <div className="ml-2">f⃗ = a⃗_measured - g⃗</div>
           </div>
+          <div>
+            <div className="text-cyan-200 font-semibold">State Vector:</div>
+            <div className="ml-2">[{(launchState.r[0]/1000).toFixed(0)}, {(launchState.r[1]/1000).toFixed(0)}, {(launchState.r[2]/1000).toFixed(0)}] km</div>
+          </div>
         </div>
       </div>
 
@@ -223,6 +252,10 @@ function NavigationPanel({ launchState }: { launchState: LaunchState | null }) {
           <div>
             <div className="text-indigo-200 font-semibold">Dilution of Precision:</div>
             <div className="ml-2">GDOP = √(trace(H^T H)^-1)</div>
+          </div>
+          <div>
+            <div className="text-indigo-200 font-semibold">Velocity Fix:</div>
+            <div className="ml-2">{velocityKms} km/s along ascent corridor</div>
           </div>
         </div>
       </div>
@@ -242,6 +275,19 @@ function NavigationPanel({ launchState }: { launchState: LaunchState | null }) {
             <div className="text-pink-200 font-semibold">Kalman Gain:</div>
             <div className="ml-2">K = P × H^T × (H × P × H^T + R)^-1</div>
           </div>
+          <div>
+            <div className="text-pink-200 font-semibold">Filter Health:</div>
+            <div className="ml-2">Converged on position and velocity state</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-cyan-950/30 p-3 rounded border border-cyan-700">
+        <h4 className="text-cyan-300 font-bold mb-2">🧭 NAVIGATION SUMMARY</h4>
+        <div className="space-y-2 text-xs text-gray-300">
+          <div>Altitude: {altitudeKm} km</div>
+          <div>Velocity: {velocityKms} km/s</div>
+          <div>Dynamic pressure: {dynamicPressureKpa} kPa</div>
         </div>
       </div>
     </div>
@@ -253,6 +299,9 @@ function NavigationPanel({ launchState }: { launchState: LaunchState | null }) {
  */
 function ControlPanel({ launchState }: { launchState: LaunchState | null }) {
   if (!launchState) return null
+
+  const thrustKn = (Math.hypot(...launchState.thrust) / 1000).toFixed(0)
+  const dragKn = (Math.hypot(...launchState.drag) / 1000).toFixed(1)
 
   return (
     <div className="space-y-4 font-mono">
@@ -270,6 +319,10 @@ function ControlPanel({ launchState }: { launchState: LaunchState | null }) {
           <div>
             <div className="text-red-200 font-semibold">Angular Momentum:</div>
             <div className="ml-2">H⃗ = I × ω⃗</div>
+          </div>
+          <div>
+            <div className="text-red-200 font-semibold">Attitude Error:</div>
+            <div className="ml-2">δ = desired - measured</div>
           </div>
         </div>
       </div>
@@ -290,6 +343,10 @@ function ControlPanel({ launchState }: { launchState: LaunchState | null }) {
             <div className="text-emerald-200 font-semibold">Mixture Ratio:</div>
             <div className="ml-2">MR = ṁ_oxidizer / ṁ_fuel</div>
           </div>
+          <div>
+            <div className="text-emerald-200 font-semibold">Thrust:</div>
+            <div className="ml-2">{thrustKn} kN commanded</div>
+          </div>
         </div>
       </div>
 
@@ -308,6 +365,19 @@ function ControlPanel({ launchState }: { launchState: LaunchState | null }) {
             <div className="text-violet-200 font-semibold">Bang-Bang Control:</div>
             <div className="ml-2">u = sign(error) × u_max</div>
           </div>
+          <div>
+            <div className="text-violet-200 font-semibold">Drag:</div>
+            <div className="ml-2">{dragKn} kN current load</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-red-950/30 p-3 rounded border border-red-700">
+        <h4 className="text-red-300 font-bold mb-2">🛠️ CONTROL SUMMARY</h4>
+        <div className="space-y-2 text-xs text-gray-300">
+          <div>Throttle command: {((launchState.guidance?.throttle || 0) * 100).toFixed(1)}%</div>
+          <div>Thrust: {thrustKn} kN</div>
+          <div>Drag load: {dragKn} kN</div>
         </div>
       </div>
     </div>

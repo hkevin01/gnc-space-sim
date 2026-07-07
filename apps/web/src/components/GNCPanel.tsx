@@ -21,6 +21,18 @@ interface GNCPanelProps {
 export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPanelProps) {
   const [activeTab, setActiveTab] = useState<'guidance' | 'navigation' | 'control' | 'mission'>('mission')
 
+  const velocityKms = (launchState.velocity_magnitude / 1000).toFixed(2)
+  const altitudeKm = (launchState.altitude / 1000).toFixed(1)
+  const speedKms = (Math.hypot(...launchState.v) / 1000).toFixed(2)
+  const thrustKn = (Math.hypot(...launchState.thrust) / 1000).toFixed(0)
+  const dragKn = (Math.hypot(...launchState.drag) / 1000).toFixed(1)
+  const targetAltitudeKm = 200
+  const targetVelocityKms = 7.8
+  const altitudeErrorKm = (targetAltitudeKm - launchState.altitude / 1000).toFixed(1)
+  const velocityErrorKms = (targetVelocityKms - launchState.velocity_magnitude / 1000).toFixed(2)
+  const massTons = (launchState.mass / 1000).toFixed(1)
+  const throttlePct = ((launchState.guidance?.throttle || 0) * 100).toFixed(1)
+
   const tabs = [
     { id: 'mission' as const, label: '🚀 MISSION', color: 'text-orange-400' },
     { id: 'guidance' as const, label: '🎯 GUIDANCE', color: 'text-cyan-400' },
@@ -31,12 +43,12 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
   return (
     <div className="bg-black/90 backdrop-blur-sm border border-zinc-600 rounded-lg h-full flex flex-col">
       {/* Tab Headers */}
-      <div className="flex flex-wrap border-b border-zinc-600">
+      <div className="grid grid-cols-2 md:grid-cols-4 border-b border-zinc-600">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 min-w-0 px-2 py-2 text-[11px] font-bold leading-tight text-center whitespace-normal transition-colors ${
+            className={`min-w-0 px-2 py-2 text-[11px] font-bold leading-tight text-center whitespace-normal break-words transition-colors ${
               activeTab === tab.id
                 ? `${tab.color} bg-zinc-800 border-b-2 border-current`
                 : 'text-zinc-400 hover:text-zinc-300'
@@ -120,6 +132,14 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
                 <span className="text-zinc-400">Target Inclination:</span>
                 <span className="text-cyan-400">28.5°</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Altitude Error:</span>
+                <span className="text-cyan-400">{altitudeErrorKm} km</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Velocity Error:</span>
+                <span className="text-cyan-400">{velocityErrorKms} km/s</span>
+              </div>
             </div>
 
             <div className="text-cyan-400 font-bold text-sm mb-3 mt-6">CURRENT GUIDANCE</div>
@@ -134,8 +154,19 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-400">Throttle:</span>
-                <span className="text-cyan-400">{((launchState.guidance?.throttle || 0) * 100).toFixed(1)}%</span>
+                <span className="text-cyan-400">{throttlePct}%</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">T/W Estimate:</span>
+                <span className="text-cyan-400">{(Math.hypot(...launchState.thrust) / Math.max(launchState.mass * 9.80665, 1)).toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div className="bg-zinc-800/60 border border-zinc-700 rounded p-3 text-xs text-zinc-300">
+              <div className="font-semibold text-cyan-300 mb-1">Guidance Notes</div>
+              <div>Hold pitch within the gravity-turn corridor until staging.</div>
+              <div>Use throttle to manage dynamic pressure near max-Q.</div>
+              <div>Target climb: {targetAltitudeKm} km, {targetVelocityKms} km/s insertion.</div>
             </div>
           </div>
         )}
@@ -146,11 +177,11 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-zinc-400">Altitude:</span>
-                <span className="text-green-400">{(launchState.altitude / 1000).toFixed(1)} km</span>
+                <span className="text-green-400">{altitudeKm} km</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-400">Velocity:</span>
-                <span className="text-green-400">{(launchState.velocity_magnitude / 1000).toFixed(2)} km/s</span>
+                <span className="text-green-400">{velocityKms} km/s</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-400">Flight Path Angle:</span>
@@ -159,6 +190,14 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
               <div className="flex justify-between">
                 <span className="text-zinc-400">Heading:</span>
                 <span className="text-green-400">{(launchState.heading * (180 / Math.PI)).toFixed(1)}°</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">State Vector X:</span>
+                <span className="text-green-400">{(launchState.r[0] / 1000).toFixed(0)} km</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Speed Magnitude:</span>
+                <span className="text-green-400">{speedKms} km/s</span>
               </div>
             </div>
 
@@ -176,6 +215,17 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
                 <span className="text-zinc-400">Kalman Filter:</span>
                 <span className="text-green-400">Converged</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Reference Frame:</span>
+                <span className="text-green-400">Earth-centered inertial</span>
+              </div>
+            </div>
+
+            <div className="bg-zinc-800/60 border border-zinc-700 rounded p-3 text-xs text-zinc-300">
+              <div className="font-semibold text-green-300 mb-1">Navigation Notes</div>
+              <div>Monitor altitude and velocity against the 200 km / 7.8 km/s target band.</div>
+              <div>Use heading hold to keep the ascent corridor stable through staging.</div>
+              <div>Current radial position: [{(launchState.r[0] / 1000).toFixed(0)}, {(launchState.r[1] / 1000).toFixed(0)}, {(launchState.r[2] / 1000).toFixed(0)}] km.</div>
             </div>
           </div>
         )}
@@ -186,7 +236,7 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-zinc-400">Mass:</span>
-                <span className="text-yellow-400">{(launchState.mass / 1000).toFixed(1)} t</span>
+                <span className="text-yellow-400">{massTons} t</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-400">Thrust:</span>
@@ -194,7 +244,15 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-400">Throttle:</span>
-                <span className="text-yellow-400">{((launchState.guidance?.throttle || 0) * 100).toFixed(1)}%</span>
+                <span className="text-yellow-400">{throttlePct}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Drag:</span>
+                <span className="text-yellow-400">{dragKn} kN</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Dynamic Pressure:</span>
+                <span className="text-yellow-400">{(0.5 * launchState.atmosphere.density * launchState.velocity_magnitude * launchState.velocity_magnitude / 1000).toFixed(1)} kPa</span>
               </div>
             </div>
 
@@ -212,6 +270,10 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
                 <span className="text-zinc-400">TV Control:</span>
                 <span className="text-yellow-400">Active</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Telemetry Link:</span>
+                <span className="text-yellow-400">Nominal</span>
+              </div>
             </div>
 
             <div className="text-yellow-400 font-bold text-sm mb-3 mt-6">ATMOSPHERIC</div>
@@ -228,6 +290,13 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
                 <span className="text-zinc-400">Temperature:</span>
                 <span className="text-yellow-400">{launchState.atmosphere.temperature} K</span>
               </div>
+            </div>
+
+            <div className="bg-zinc-800/60 border border-zinc-700 rounded p-3 text-xs text-zinc-300">
+              <div className="font-semibold text-yellow-300 mb-1">Control Notes</div>
+              <div>Use gimbal control to keep lateral acceleration within limits.</div>
+              <div>Throttle down through max-Q, then return to ascent thrust as density drops.</div>
+              <div>Fuel state: {throttlePct}% commanded throttle at {thrustKn} kN thrust.</div>
             </div>
           </div>
         )}
