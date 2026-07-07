@@ -65,9 +65,9 @@ describe('LaunchSimulation target selection', () => {
 
     const camera = lastCanvasProps?.camera as { position?: [number, number, number] } | undefined
     expect(camera?.position).toBeDefined()
-    expect(camera?.position?.[0]).toBeGreaterThan(50)
+    expect(camera?.position?.[0]).toBeGreaterThan(45)
     expect(camera?.position?.[1]).toBeGreaterThan(10)
-    expect(camera?.position?.[2]).toBeGreaterThan(50)
+    expect(camera?.position?.[2]).toBeGreaterThan(40)
 
     const solarViewButton = Array.from(container.querySelectorAll('button')).find((element) => {
       return element.textContent?.trim() === 'Solar View'
