@@ -12,7 +12,7 @@ import type { ComponentRef, RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useLaunchControl } from '../state/launchControlStore';
-import { getBodyPositionRelativeToCenter, getBodySceneRadius, SolarSystem } from './SolarSystem';
+import { getBodyPositionRelativeToCenter, getBodySceneRadius, getRenderRadius, SolarSystem, type SolarBodyName } from './SolarSystem';
 import { MISSION_SCENARIOS } from './MissionTypes';
 import {
   EARTH_RADIUS_SCENE,
@@ -23,6 +23,7 @@ import {
   rocketScenePositionFromR,
 } from '../utils/launchVisualBehavior';
 import { buildCompressedMissionTimeline, getCompressedMissionPhase, getLunarMissionTrailProgress } from '../utils/missionTimeline';
+import { buildSceneBodyBoundaries, constrainPointToBoundaries } from '../utils/sceneBoundaries';
 
 /**
  * ID: SSIM-LAUNCH-001
@@ -164,6 +165,10 @@ export function LaunchDemo({
     const targetCount = Math.max(2, Math.ceil((points.length - 1) * progress) + 1);
     return points.slice(0, targetCount);
   }, []);
+
+  const protectedBodies = useMemo(() => {
+    return buildSceneBodyBoundaries(launchTime, 'EARTH')
+  }, [launchTime])
 
   useEffect(() => {
     if (onCameraRef) {
@@ -406,13 +411,23 @@ export function LaunchDemo({
         // The NasaSolarSystem offsets Earth to world-origin so (r - Earth_centre) * posScale
         // gives the displacement from Earth's visual centre in scene units.
         const p = rocketScenePositionFromR(nextState.r as [number, number, number], undefined, nextTime);
-        const newPos = new THREE.Vector3(p[0], p[1], p[2]);
+        const clamped = constrainPointToBoundaries(p, protectedBodies)
+        const newPos = new THREE.Vector3(clamped[0], clamped[1], clamped[2]);
 
         // Validate position before setting (max ~10 scene units = lunar distance range)
         if (newPos.length() < 10) {
           vehicleRef.current.position.copy(newPos);
 
-          if (isFiniteArray(nextState.v)) {
+          const altitudeKm = nextState.altitude / 1000
+          const localUp = new THREE.Vector3(capeFrame.up[0], capeFrame.up[1], capeFrame.up[2]).normalize()
+
+          if (altitudeKm < 25) {
+            const launchQuaternion = new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(1, 0, 0),
+              localUp,
+            )
+            vehicleRef.current.quaternion.copy(launchQuaternion)
+          } else if (isFiniteArray(nextState.v)) {
             const worldVelocity = launchSiteSceneVectorFromLocalFrame(
               nextState.v[0] * 1e-9,
               nextState.v[1] * 1e-9,
@@ -421,11 +436,14 @@ export function LaunchDemo({
             );
             const vel = new THREE.Vector3(worldVelocity[0], worldVelocity[1], worldVelocity[2]);
             if (vel.length() > 0) {
-              vehicleRef.current.lookAt(
-                vehicleRef.current.position.x + vel.x,
-                vehicleRef.current.position.y + vel.y,
-                vehicleRef.current.position.z + vel.z
-              );
+              const desiredDirection = vel.normalize()
+              const blend = Math.min(Math.max((altitudeKm - 25) / 75, 0), 1)
+              desiredDirection.lerp(localUp, 1 - blend).normalize()
+              const flightQuaternion = new THREE.Quaternion().setFromUnitVectors(
+                new THREE.Vector3(1, 0, 0),
+                desiredDirection,
+              )
+              vehicleRef.current.quaternion.copy(flightQuaternion)
             }
           }
         }

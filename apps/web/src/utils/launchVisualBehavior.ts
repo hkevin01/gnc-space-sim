@@ -35,6 +35,10 @@ function add(a: Vec3, b: Vec3): Vec3 {
   return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
 }
 
+function subtract(a: Vec3, b: Vec3): Vec3 {
+  return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
+}
+
 function rotateAroundY(v: Vec3, angle: number): Vec3 {
   const cos = Math.cos(angle)
   const sin = Math.sin(angle)
@@ -157,6 +161,16 @@ export function isValidRocketScenePosition(v: Vec3, maxDistance = 10): boolean {
   if (!isFiniteVec3(v)) return false
   const mag = Math.hypot(v[0], v[1], v[2])
   return mag < maxDistance
+}
+
+export function clampPointOutsideSphere(point: Vec3, center: Vec3, minimumDistance: number): Vec3 {
+  const delta = subtract(point, center)
+  const distance = Math.hypot(delta[0], delta[1], delta[2])
+
+  if (distance >= minimumDistance) return point
+
+  const direction = distance > 1e-9 ? normalize(delta) : [1, 0, 0] as Vec3
+  return add(center, scale(direction, minimumDistance))
 }
 
 export function cameraDistanceForAltitudeKm(altitudeKm: number): number {
