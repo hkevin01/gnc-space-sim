@@ -35,6 +35,8 @@ import {
 
 type LaunchViewTarget = 'HOME' | 'SOLAR_VIEW' | 'SUN' | 'EARTH' | 'MARS' | 'JUPITER'
 
+const READABLE_SOLAR_DISTANCE_SCALE = 18.7
+
 const INITIAL_SOLAR_VIEW = computeSolarOverviewPose(getMaxHeliocentricOrbitRadius())
 
 interface LaunchSimulationProps {
@@ -63,7 +65,12 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
 
   const getPlanetView = useCallback((bodyName: SolarBodyName) => {
     const target = getBodyPositionRelativeToCenter(bodyName, 'EARTH', 0)
-    return computeBodySnapPose(target, getBodySceneRadius(bodyName))
+    const readableTarget: [number, number, number] = [
+      target[0] / READABLE_SOLAR_DISTANCE_SCALE,
+      target[1] / READABLE_SOLAR_DISTANCE_SCALE,
+      target[2] / READABLE_SOLAR_DISTANCE_SCALE,
+    ]
+    return computeBodySnapPose(readableTarget, getBodySceneRadius(bodyName))
   }, [])
 
   const selectedTelemetry = useMemo(() => {
@@ -100,8 +107,8 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
   const snapSolarView = useCallback(() => {
     setCameraMode('free')
     setSelectedTarget('SOLAR_VIEW')
-    const pose = computeSolarOverviewPose(getMaxHeliocentricOrbitRadius())
-    setView(pose.position, pose.target)
+    const pose = computeSolarOverviewPose(getMaxHeliocentricOrbitRadius() / READABLE_SOLAR_DISTANCE_SCALE)
+    setView(pose.position, [0, 0, 0])
   }, [setView])
 
   const snapPlanet = useCallback((bodyName: SolarBodyName) => {
@@ -148,9 +155,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
 
       <Canvas
         camera={{
-          // EARTH_RADIUS_SCENE ≈ 0.159 units (visual Earth sphere radius).
-          // Camera positioned radially outward from Earth surface where rocket starts.
-          // x=0.35 is just outside Earth visual sphere; y/z offset gives oblique view.
+          // Tilted overview gives a city-view style oblique read on the solar system.
           position: INITIAL_SOLAR_VIEW.position,
           fov: 60,
           near: 0.0001,
@@ -186,6 +191,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
           onCameraRef={(ref) => {
             orbitControlsRef.current = ref.current
           }}
+          orbitScale={READABLE_SOLAR_DISTANCE_SCALE}
         />
 
         {/* OrbitControls is managed inside LaunchDemo for camera follow */}

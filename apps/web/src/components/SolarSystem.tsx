@@ -835,9 +835,11 @@ export function NasaSolarSystem({
   showOrbits = false,
   centerOn = 'SUN',
   useNasaData = true,
+  scaleFactorAU = 149.6,
   onReferenceFrameChange,
 }: SolarSystemProps & {
   useNasaData?: boolean
+  scaleFactorAU?: number
   onReferenceFrameChange?: (payload: {
     positions: PlanetPosition[]
     centerOn: SolarBodyName
@@ -850,8 +852,8 @@ export function NasaSolarSystem({
     config: {
       useNasaData,
       fallbackToCalculated: true,
-      // Match the scene scale where 1 unit = 1e6 km → 1 AU ≈ 149.6 units
-      scaleFactorAU: 149.6,
+      // Match the current scene scale; launch view uses a more condensed AU scale.
+      scaleFactorAU,
     },
     autoRefresh: true,
     refreshInterval: 60 * 60 * 1000, // Refresh every hour
