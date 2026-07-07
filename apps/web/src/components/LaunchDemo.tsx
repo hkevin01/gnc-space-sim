@@ -15,6 +15,7 @@ import { useLaunchControl } from '../state/launchControlStore';
 import { getBodyPositionRelativeToCenter, getBodySceneRadius, SolarSystem } from './SolarSystem';
 import { MISSION_SCENARIOS } from './MissionTypes';
 import {
+  CAPE_CANAVERAL_SURFACE_POSITION,
   EARTH_RADIUS_SCENE,
   ROCKET_VISUAL_SCALE,
   followCameraTarget,
@@ -79,12 +80,20 @@ export function LaunchDemo({
   // Set initial rocket position at Earth's visual surface
   useEffect(() => {
     if (vehicleRef.current && !isLaunched) {
-      vehicleRef.current.position.set(EARTH_RADIUS_SCENE, 0, 0);
+      vehicleRef.current.position.set(
+        CAPE_CANAVERAL_SURFACE_POSITION[0],
+        CAPE_CANAVERAL_SURFACE_POSITION[1],
+        CAPE_CANAVERAL_SURFACE_POSITION[2],
+      );
     }
   }, [isLaunched]);
 
   const [trajectory, setTrajectory] = useState<THREE.Vector3[]>(() => [
-    new THREE.Vector3(EARTH_RADIUS_SCENE, 0, 0),
+    new THREE.Vector3(
+      CAPE_CANAVERAL_SURFACE_POSITION[0],
+      CAPE_CANAVERAL_SURFACE_POSITION[1],
+      CAPE_CANAVERAL_SURFACE_POSITION[2],
+    ),
   ]);
 
   const guidance = useMemo(() => {
@@ -240,7 +249,11 @@ export function LaunchDemo({
 
       // If rocket position is at origin, use Earth visual surface position
       const actualRocketPos = rocketPos.length() < 0.01
-        ? new THREE.Vector3(EARTH_RADIUS_SCENE, 0, 0)
+        ? new THREE.Vector3(
+            CAPE_CANAVERAL_SURFACE_POSITION[0],
+            CAPE_CANAVERAL_SURFACE_POSITION[1],
+            CAPE_CANAVERAL_SURFACE_POSITION[2],
+          )
         : rocketPos;
 
       // Always follow the rocket during launch
@@ -477,6 +490,43 @@ export function LaunchDemo({
         showOrbits={true}
         missionTime={launchTime}
       />
+
+      <group>
+        <mesh>
+          <sphereGeometry args={[EARTH_RADIUS_SCENE * 1.035, 48, 48]} />
+          <meshBasicMaterial
+            color="#6ec1ff"
+            transparent
+            opacity={0.08}
+            side={THREE.BackSide}
+            depthWrite={false}
+          />
+        </mesh>
+        <mesh>
+          <sphereGeometry args={[EARTH_RADIUS_SCENE * 1.07, 32, 32]} />
+          <meshBasicMaterial
+            color="#38bdf8"
+            transparent
+            opacity={0.035}
+            side={THREE.BackSide}
+            depthWrite={false}
+          />
+        </mesh>
+        <mesh position={CAPE_CANAVERAL_SURFACE_POSITION}>
+          <sphereGeometry args={[EARTH_RADIUS_SCENE * 0.028, 12, 12]} />
+          <meshBasicMaterial color="#f97316" depthTest={false} />
+        </mesh>
+        <Html
+          position={[
+            CAPE_CANAVERAL_SURFACE_POSITION[0] * 1.08,
+            CAPE_CANAVERAL_SURFACE_POSITION[1] * 1.08,
+            CAPE_CANAVERAL_SURFACE_POSITION[2] * 1.08,
+          ]}
+          center
+        >
+          <div style={labelStyle}>CAPE CANAVERAL</div>
+        </Html>
+      </group>
 
       {/* Rocket Vehicle Group - visible scale */}
       <group ref={vehicleRef}>

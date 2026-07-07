@@ -8,6 +8,7 @@ import {
 import { describe, expect, it } from 'vitest'
 
 import {
+  CAPE_CANAVERAL_SURFACE_POSITION,
   EARTH_RADIUS_SCENE,
   cameraDistanceForAltitudeKm,
   followCameraTarget,
@@ -101,5 +102,29 @@ describe('Launch visual behavior harness', () => {
 
     expect(state.mission_time).toBeGreaterThan(600)
     expect(state.velocity_magnitude).toBeGreaterThan(1000)
+  })
+
+  it('starts the launch vehicle on the Cape Canaveral surface vector', () => {
+    const state: LaunchState = {
+      r: [6371000, 0, 0],
+      v: [0, 0, 0],
+      phase: LaunchPhase.PRELAUNCH,
+      mission_time: 0,
+      altitude: 0,
+      velocity_magnitude: 0,
+      flight_path_angle: 0,
+      heading: Math.PI / 2,
+      mass: 1,
+      thrust: [0, 0, 0],
+      drag: [0, 0, 0],
+      atmosphere: { pressure: 101325, density: 1.225, temperature: 288.15 },
+      guidance: { pitch_program: 0, yaw_program: Math.PI / 2, throttle: 0 },
+    }
+
+    const rocketPos = rocketScenePositionFromState(state)
+    expect(rocketPos[0]).toBeCloseTo(CAPE_CANAVERAL_SURFACE_POSITION[0], 5)
+    expect(rocketPos[1]).toBeCloseTo(CAPE_CANAVERAL_SURFACE_POSITION[1], 5)
+    expect(rocketPos[2]).toBeCloseTo(CAPE_CANAVERAL_SURFACE_POSITION[2], 5)
+    expect(Math.hypot(...rocketPos)).toBeCloseTo(EARTH_RADIUS_SCENE, 5)
   })
 })
