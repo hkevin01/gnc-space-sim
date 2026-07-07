@@ -6,19 +6,21 @@ import {
   LaunchPhase,
   LaunchState,
 } from '@gnc/core';
-import { Line, OrbitControls } from '@react-three/drei';
+import { Html, Line, OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import type { ComponentRef, RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useLaunchControl } from '../state/launchControlStore';
-import { getBodyPositionRelativeToCenter, SolarSystem } from './SolarSystem';
+import { getBodyPositionRelativeToCenter, getBodySceneRadius, SolarSystem } from './SolarSystem';
+import { MISSION_SCENARIOS } from './MissionTypes';
 import {
   EARTH_RADIUS_SCENE,
   ROCKET_VISUAL_SCALE,
   followCameraTarget,
   rocketScenePositionFromR,
 } from '../utils/launchVisualBehavior';
+import { buildCompressedMissionTimeline, getCompressedMissionPhase, getLunarMissionTrailProgress } from '../utils/missionTimeline';
 
 /**
  * ID: SSIM-LAUNCH-001
@@ -89,28 +91,64 @@ export function LaunchDemo({
     return new GravityTurnGuidance(400000, (28.5 * Math.PI) / 180);
   }, []);
 
+  const lunarTimeline = useMemo(() => {
+    if (selectedMission !== 'lunarMission') return []
+    return buildCompressedMissionTimeline(MISSION_SCENARIOS.lunarMission.phases)
+  }, [selectedMission])
+
+  const activeMissionPhase = useMemo(() => {
+    if (selectedMission !== 'lunarMission' || launchTime < 0) return null
+    return getCompressedMissionPhase(lunarTimeline, launchTime)
+  }, [launchTime, lunarTimeline, selectedMission])
+
+  const lunarTrailProgress = useMemo(() => {
+    if (selectedMission !== 'lunarMission') {
+      return { outbound: 0, operations: 0, returnLeg: 0 }
+    }
+    return getLunarMissionTrailProgress(lunarTimeline, Math.max(0, launchTime))
+  }, [launchTime, lunarTimeline, selectedMission])
+
   const lunarTransferPreview = useMemo(() => {
     if (selectedMission !== 'lunarMission') return null;
 
     const moon = getBodyPositionRelativeToCenter('MOON', 'EARTH', 0);
     const earth = new THREE.Vector3(0, 0, 0);
     const moonPoint = new THREE.Vector3(moon[0], moon[1], moon[2]);
+    const moonOpsRadius = getBodySceneRadius('MOON') * 3.5;
     const outbound = new THREE.QuadraticBezierCurve3(
       earth,
       new THREE.Vector3(moonPoint.x * 0.45, 0.18, moonPoint.z * 0.18),
       moonPoint,
     );
+    const lunarOps: Array<[number, number, number]> = [];
+    for (let index = 0; index <= 48; index += 1) {
+      const angle = (index / 48) * Math.PI * 2;
+      lunarOps.push([
+        moonPoint.x + Math.cos(angle) * moonOpsRadius,
+        moonPoint.y + Math.sin(angle) * moonOpsRadius * 0.25,
+        moonPoint.z + Math.sin(angle) * moonOpsRadius,
+      ]);
+    }
     const inbound = new THREE.QuadraticBezierCurve3(
       moonPoint,
       new THREE.Vector3(moonPoint.x * 0.55, -0.2, -moonPoint.z * 0.22),
       earth,
     );
 
-    return [
-      ...outbound.getPoints(64).map((point) => [point.x, point.y, point.z] as [number, number, number]),
-      ...inbound.getPoints(64).slice(1).map((point) => [point.x, point.y, point.z] as [number, number, number]),
-    ];
+    return {
+      moonPoint,
+      outbound: outbound.getPoints(64).map((point) => [point.x, point.y, point.z] as [number, number, number]),
+      lunarOps,
+      inbound: inbound.getPoints(64).map((point) => [point.x, point.y, point.z] as [number, number, number]),
+    };
   }, [selectedMission]);
+
+  const slicePoints = useCallback((points: Array<[number, number, number]>, progress: number) => {
+    if (points.length < 2 || progress <= 0) return null;
+    if (progress >= 1) return points;
+    const targetCount = Math.max(2, Math.ceil((points.length - 1) * progress) + 1);
+    return points.slice(0, targetCount);
+  }, []);
 
   useEffect(() => {
     if (onCameraRef) {
@@ -191,6 +229,7 @@ export function LaunchDemo({
   // Camera follow logic - zoom in when launch starts (skip when user is interacting)
   useFrame(() => {
     if (cameraMode === 'free') return
+    if (!isLaunched || launchTime < 0) return
 
     // Skip camera follow if user is actively using OrbitControls
     if (isUserInteracting.current) return;
@@ -259,8 +298,16 @@ export function LaunchDemo({
   useEffect(() => {
     if (!trajectoryRef.current) {
       const geom = new THREE.BufferGeometry().setFromPoints(trajectory);
-      const mat = new THREE.LineBasicMaterial({ color: 0x6b7280, linewidth: 2 });
+      const mat = new THREE.LineBasicMaterial({
+        color: 0x7dd3fc,
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.95,
+        depthTest: false,
+        depthWrite: false,
+      });
       const line = new THREE.Line(geom, mat);
+      line.renderOrder = 20;
       trajectoryGeomRef.current = geom;
       trajectoryMatRef.current = mat;
       trajectoryRef.current = line;
@@ -276,7 +323,7 @@ export function LaunchDemo({
   }
 
   useFrame((state, deltaTime) => {
-    if (!isLaunched) return;
+    if (!isLaunched || launchTime < 0) return;
 
     // Adaptive time scaling based on mission phase for visual appeal
     let adaptiveMultiplier = timeMultiplier;
@@ -405,6 +452,23 @@ export function LaunchDemo({
   const showCoreSeparation = phase === LaunchPhase.STAGE2_IGNITION;
   const showAttachedIcps = !phaseAfterIcpsSep;
   const showIcpsSeparation = phaseAfterIcpsSep;
+  const showOrbitalInsertionLabel = phase === LaunchPhase.ORBITAL_INSERTION;
+  const showEarthReturnLabel = activeMissionPhase?.name === 'Earth Return';
+  const outboundPoints = lunarTransferPreview ? slicePoints(lunarTransferPreview.outbound, lunarTrailProgress.outbound) : null;
+  const lunarOpsPoints = lunarTransferPreview ? slicePoints(lunarTransferPreview.lunarOps, lunarTrailProgress.operations) : null;
+  const returnPoints = lunarTransferPreview ? slicePoints(lunarTransferPreview.inbound, lunarTrailProgress.returnLeg) : null;
+
+  const labelStyle: React.CSSProperties = {
+    background: 'rgba(2, 6, 23, 0.82)',
+    border: '1px solid rgba(125, 211, 252, 0.45)',
+    borderRadius: '999px',
+    color: '#e2e8f0',
+    fontSize: '11px',
+    fontWeight: 700,
+    letterSpacing: '0.04em',
+    padding: '0.35rem 0.6rem',
+    whiteSpace: 'nowrap',
+  };
 
   return (
     <group ref={groupRef}>
@@ -500,6 +564,9 @@ export function LaunchDemo({
               <cylinderGeometry args={[ROCKET_VISUAL_SCALE * 0.15, ROCKET_VISUAL_SCALE * 0.15, ROCKET_VISUAL_SCALE * 3.5, 12]} />
               <meshStandardMaterial color="#CCCCCC" metalness={0.6} roughness={0.4} />
             </mesh>
+            <Html position={[0, ROCKET_VISUAL_SCALE * 2.1, 0]} center>
+              <div style={labelStyle}>BOOSTER SEPARATION</div>
+            </Html>
           </group>
         )}
 
@@ -519,6 +586,12 @@ export function LaunchDemo({
           </mesh>
         )}
 
+        {showOrbitalInsertionLabel && (
+          <Html position={[ROCKET_VISUAL_SCALE * 1.6, ROCKET_VISUAL_SCALE * 1.8, 0]} center>
+            <div style={labelStyle}>ORBITAL INSERTION</div>
+          </Html>
+        )}
+
         {/* Fairing jettison visualization */}
         {currentState?.phase === LaunchPhase.FAIRING_JETTISON && (
           <>
@@ -536,17 +609,46 @@ export function LaunchDemo({
 
       {trajectoryRef.current && <primitive object={trajectoryRef.current} />}
 
-      {lunarTransferPreview && (
+      {outboundPoints && (
         <Line
-          points={lunarTransferPreview}
+          points={outboundPoints}
           color="#7dd3fc"
-          lineWidth={1.5}
+          lineWidth={2}
+          renderOrder={12}
           transparent
-          opacity={0.75}
-          dashed
-          dashSize={0.3}
-          gapSize={0.2}
+          opacity={0.9}
+          depthTest={false}
         />
+      )}
+
+      {lunarOpsPoints && (
+        <Line
+          points={lunarOpsPoints}
+          color="#fde68a"
+          lineWidth={1.8}
+          renderOrder={12}
+          transparent
+          opacity={0.9}
+          depthTest={false}
+        />
+      )}
+
+      {returnPoints && (
+        <Line
+          points={returnPoints}
+          color="#fca5a5"
+          lineWidth={2}
+          renderOrder={12}
+          transparent
+          opacity={0.9}
+          depthTest={false}
+        />
+      )}
+
+      {showEarthReturnLabel && lunarTransferPreview && (
+        <Html position={[lunarTransferPreview.moonPoint.x * 0.45, 0.14, lunarTransferPreview.moonPoint.z * -0.08]} center>
+          <div style={labelStyle}>EARTH RETURN CORRIDOR</div>
+        </Html>
       )}
 
       {/* OrbitControls for user interaction - camera follow managed in useFrame */}

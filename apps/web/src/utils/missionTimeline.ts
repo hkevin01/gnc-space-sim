@@ -6,6 +6,12 @@ export interface CompressedMissionPhase extends MissionPhase {
   endTime: number
 }
 
+export interface LunarTrailProgress {
+  outbound: number
+  operations: number
+  returnLeg: number
+}
+
 const COMPRESSED_LAUNCH_SECONDS = 60
 const COMPRESSED_REMAINDER_SECONDS = 600
 
@@ -74,4 +80,27 @@ export function getCompressedMissionPhase(
     timeInPhase: finalPhase.compressedDuration,
     completed: true,
   }
+}
+
+export function getLunarMissionTrailProgress(
+  phases: CompressedMissionPhase[],
+  elapsedSeconds: number,
+): LunarTrailProgress {
+  if (phases.length < 4 || elapsedSeconds <= 0) {
+    return { outbound: 0, operations: 0, returnLeg: 0 }
+  }
+
+  const transitEnd = phases[1].endTime
+  const operationsPhase = phases[2]
+  const returnPhase = phases[3]
+
+  const outbound = Math.min(elapsedSeconds / transitEnd, 1)
+  const operations = elapsedSeconds <= operationsPhase.startTime
+    ? 0
+    : Math.min((elapsedSeconds - operationsPhase.startTime) / operationsPhase.compressedDuration, 1)
+  const returnLeg = elapsedSeconds <= returnPhase.startTime
+    ? 0
+    : Math.min((elapsedSeconds - returnPhase.startTime) / returnPhase.compressedDuration, 1)
+
+  return { outbound, operations, returnLeg }
 }
