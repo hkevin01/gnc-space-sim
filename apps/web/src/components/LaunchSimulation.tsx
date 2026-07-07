@@ -40,7 +40,18 @@ type LaunchViewTarget = 'HOME' | 'SOLAR_VIEW' | 'SUN' | 'EARTH' | 'MARS' | 'JUPI
 
 const READABLE_SOLAR_DISTANCE_SCALE = 8
 
-const INITIAL_SOLAR_VIEW = computeSolarOverviewPose(getMaxHeliocentricOrbitRadius())
+function computeLaunchSolarOverviewPose() {
+  const condensedMaxOrbitRadius = getMaxHeliocentricOrbitRadius() / READABLE_SOLAR_DISTANCE_SCALE
+  const distance = Math.max(condensedMaxOrbitRadius * 1.3, 90)
+
+  return {
+    target: [0, 0, 0] as [number, number, number],
+    distance,
+    position: [distance, distance * 0.27, distance] as [number, number, number],
+  }
+}
+
+const INITIAL_SOLAR_VIEW = computeLaunchSolarOverviewPose()
 
 interface LiveReferenceFrame {
   positions: Array<{ name: SolarBodyName; position: Vec3 }>
@@ -134,8 +145,8 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
   const snapSolarView = useCallback(() => {
     setCameraMode('free')
     setSelectedTarget('SOLAR_VIEW')
-    const pose = computeSolarOverviewPose(getMaxHeliocentricOrbitRadius() / READABLE_SOLAR_DISTANCE_SCALE)
-    setView(pose.position, [0, 0, 0])
+    const pose = computeLaunchSolarOverviewPose()
+    setView(pose.position, pose.target)
   }, [setView])
 
   const snapPlanet = useCallback((bodyName: SolarBodyName) => {
