@@ -15,8 +15,8 @@ import { useLaunchControl } from '../state/launchControlStore';
 import { getBodyPositionRelativeToCenter, getBodySceneRadius, SolarSystem } from './SolarSystem';
 import { MISSION_SCENARIOS } from './MissionTypes';
 import {
-  CAPE_CANAVERAL_SURFACE_POSITION,
   EARTH_RADIUS_SCENE,
+  getCapeCanaveralWorldFrame,
   ROCKET_VISUAL_SCALE,
   followCameraTarget,
   rocketScenePositionFromR,
@@ -68,6 +68,8 @@ export function LaunchDemo({
   const resetLaunch = useLaunchControl((state) => state.resetLaunch);
   const isLaunched = useLaunchControl((state) => state.isLaunched);
 
+  const capeFrame = useMemo(() => getCapeCanaveralWorldFrame(launchTime), [launchTime]);
+
   const trajectoryRef = useRef<THREE.Line | null>(null);
   const trajectoryGeomRef = useRef<THREE.BufferGeometry | null>(null);
   const trajectoryMatRef = useRef<THREE.LineBasicMaterial | null>(null);
@@ -77,22 +79,21 @@ export function LaunchDemo({
 
   const invalidStateCount = useRef(0);
 
-  // Set initial rocket position at Earth's visual surface
   useEffect(() => {
     if (vehicleRef.current && !isLaunched) {
       vehicleRef.current.position.set(
-        CAPE_CANAVERAL_SURFACE_POSITION[0],
-        CAPE_CANAVERAL_SURFACE_POSITION[1],
-        CAPE_CANAVERAL_SURFACE_POSITION[2],
+        capeFrame.surface[0],
+        capeFrame.surface[1],
+        capeFrame.surface[2],
       );
     }
-  }, [isLaunched]);
+  }, [capeFrame.surface, isLaunched]);
 
   const [trajectory, setTrajectory] = useState<THREE.Vector3[]>(() => [
     new THREE.Vector3(
-      CAPE_CANAVERAL_SURFACE_POSITION[0],
-      CAPE_CANAVERAL_SURFACE_POSITION[1],
-      CAPE_CANAVERAL_SURFACE_POSITION[2],
+      capeFrame.surface[0],
+      capeFrame.surface[1],
+      capeFrame.surface[2],
     ),
   ]);
 
@@ -250,9 +251,9 @@ export function LaunchDemo({
       // If rocket position is at origin, use Earth visual surface position
       const actualRocketPos = rocketPos.length() < 0.01
         ? new THREE.Vector3(
-            CAPE_CANAVERAL_SURFACE_POSITION[0],
-            CAPE_CANAVERAL_SURFACE_POSITION[1],
-            CAPE_CANAVERAL_SURFACE_POSITION[2],
+            capeFrame.surface[0],
+            capeFrame.surface[1],
+            capeFrame.surface[2],
           )
         : rocketPos;
 
@@ -282,7 +283,8 @@ export function LaunchDemo({
         const altitude = stateRef.current.altitude / 1000; // km
         const cam = followCameraTarget(
           [actualRocketPos.x, actualRocketPos.y, actualRocketPos.z],
-          altitude
+          altitude,
+          launchTime,
         );
         const targetCamPos = new THREE.Vector3(cam.position[0], cam.position[1], cam.position[2]);
         if (!isFiniteVector3(targetCamPos)) return;
@@ -398,7 +400,7 @@ export function LaunchDemo({
         // This keeps the rocket at the correct physical position relative to Earth origin.
         // The NasaSolarSystem offsets Earth to world-origin so (r - Earth_centre) * posScale
         // gives the displacement from Earth's visual centre in scene units.
-        const p = rocketScenePositionFromR(nextState.r as [number, number, number]);
+        const p = rocketScenePositionFromR(nextState.r as [number, number, number], undefined, nextTime);
         const newPos = new THREE.Vector3(p[0], p[1], p[2]);
 
         // Validate position before setting (max ~10 scene units = lunar distance range)
@@ -419,7 +421,7 @@ export function LaunchDemo({
       }
 
       if (showTrajectory && isFiniteArray(nextState.r)) {
-        const p = rocketScenePositionFromR(nextState.r as [number, number, number]);
+        const p = rocketScenePositionFromR(nextState.r as [number, number, number], undefined, nextTime);
         const newPoint = new THREE.Vector3(p[0], p[1], p[2]);
 
         // Throttle trajectory updates - only add point every 10 frames to reduce re-renders
@@ -512,20 +514,10 @@ export function LaunchDemo({
             depthWrite={false}
           />
         </mesh>
-        <mesh position={CAPE_CANAVERAL_SURFACE_POSITION}>
+        <mesh position={capeFrame.surface}>
           <sphereGeometry args={[EARTH_RADIUS_SCENE * 0.028, 12, 12]} />
           <meshBasicMaterial color="#f97316" depthTest={false} />
         </mesh>
-        <Html
-          position={[
-            CAPE_CANAVERAL_SURFACE_POSITION[0] * 1.08,
-            CAPE_CANAVERAL_SURFACE_POSITION[1] * 1.08,
-            CAPE_CANAVERAL_SURFACE_POSITION[2] * 1.08,
-          ]}
-          center
-        >
-          <div style={labelStyle}>CAPE CANAVERAL</div>
-        </Html>
       </group>
 
       {/* Rocket Vehicle Group - visible scale */}

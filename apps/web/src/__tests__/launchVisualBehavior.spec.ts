@@ -8,10 +8,10 @@ import {
 import { describe, expect, it } from 'vitest'
 
 import {
-  CAPE_CANAVERAL_SURFACE_POSITION,
   EARTH_RADIUS_SCENE,
   cameraDistanceForAltitudeKm,
   followCameraTarget,
+  getCapeCanaveralWorldFrame,
   isFiniteVec3,
   isValidRocketScenePosition,
   rocketScenePositionFromState,
@@ -122,9 +122,10 @@ describe('Launch visual behavior harness', () => {
     }
 
     const rocketPos = rocketScenePositionFromState(state)
-    expect(rocketPos[0]).toBeCloseTo(CAPE_CANAVERAL_SURFACE_POSITION[0], 5)
-    expect(rocketPos[1]).toBeCloseTo(CAPE_CANAVERAL_SURFACE_POSITION[1], 5)
-    expect(rocketPos[2]).toBeCloseTo(CAPE_CANAVERAL_SURFACE_POSITION[2], 5)
+    const capeFrame = getCapeCanaveralWorldFrame(0)
+    expect(rocketPos[0]).toBeCloseTo(capeFrame.surface[0], 5)
+    expect(rocketPos[1]).toBeCloseTo(capeFrame.surface[1], 5)
+    expect(rocketPos[2]).toBeCloseTo(capeFrame.surface[2], 5)
     expect(Math.hypot(...rocketPos)).toBeCloseTo(EARTH_RADIUS_SCENE, 5)
   })
 })

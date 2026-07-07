@@ -152,11 +152,15 @@ export function cameraDistanceForAltitudeKm(altitudeKm: number): number {
   return EARTH_RADIUS_SCENE * 6.0
 }
 
-export function followCameraTarget(rocketPos: Vec3, altitudeKm: number): {
+export function followCameraTarget(
+  rocketPos: Vec3,
+  altitudeKm: number,
+  missionTime: number = 0,
+): {
   distance: number
   position: Vec3
   lookAt: Vec3
-}, missionTime: number = 0) {
+} {
   const d = cameraDistanceForAltitudeKm(altitudeKm)
   const frame = getCapeCanaveralWorldFrame(missionTime)
   const position = add(
