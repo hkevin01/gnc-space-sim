@@ -1023,9 +1023,6 @@ export function EnhancedEarthVisual() {
 export function EnhancedMarsVisual() {
   const ref = useRef<THREE.Mesh>(null)
 
-  // Use direct texture loading with useLoader
-  const marsColor = useLoader(TextureLoader, '/assets/mars/mars_color.jpg')
-
   useFrame(() => {
     if (ref.current) {
       ref.current.rotation.y += 0.0097
@@ -1035,7 +1032,11 @@ export function EnhancedMarsVisual() {
   return (
     <mesh ref={ref}>
       <sphereGeometry args={[SOLAR_SYSTEM_DATA.MARS.sceneRadius, 32, 32]} />
-      <meshStandardMaterial map={marsColor} />
+      <meshStandardMaterial
+        color={SOLAR_SYSTEM_DATA.MARS.color}
+        roughness={0.8}
+        metalness={0.05}
+      />
     </mesh>
   )
 }

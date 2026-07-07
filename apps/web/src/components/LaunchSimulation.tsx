@@ -40,14 +40,44 @@ type LaunchViewTarget = 'HOME' | 'SOLAR_VIEW' | 'SUN' | 'EARTH' | 'MARS' | 'JUPI
 
 const READABLE_SOLAR_DISTANCE_SCALE = 8
 
+const OUTER_PLANET_LEGEND = [
+  { name: 'Mars', color: '#c85d4b' },
+  { name: 'Jupiter', color: '#d9b38c' },
+  { name: 'Saturn', color: '#e9d39a' },
+  { name: 'Uranus', color: '#7dd3fc' },
+  { name: 'Neptune', color: '#60a5fa' },
+]
+
+function computeLaunchHomePose() {
+  return {
+    target: [0, 0, 0] as [number, number, number],
+    distance: 0.48,
+    position: [0.42, 0.08, 0.22] as [number, number, number],
+  }
+}
+
 function computeLaunchSolarOverviewPose() {
   const condensedMaxOrbitRadius = getMaxHeliocentricOrbitRadius() / READABLE_SOLAR_DISTANCE_SCALE
-  const distance = Math.max(condensedMaxOrbitRadius * 0.85, 55)
+  const distance = Math.max(condensedMaxOrbitRadius * 0.72, 48)
 
   return {
     target: [0, 0, 0] as [number, number, number],
     distance,
-    position: [distance, distance * 0.27, distance] as [number, number, number],
+    position: [distance, distance * 0.24, distance * 0.92] as [number, number, number],
+  }
+}
+
+function computeLaunchPlanetOverviewPose(target: [number, number, number], sceneRadius: number, orbitSpan: number) {
+  const distance = Math.max(sceneRadius * 24, orbitSpan * 0.26, 7)
+
+  return {
+    target,
+    distance,
+    position: [
+      target[0] + distance * 0.58,
+      target[1] + distance * 0.24,
+      target[2] + distance * 0.9,
+    ] as [number, number, number],
   }
 }
 
@@ -98,7 +128,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
           liveTarget[1],
           liveTarget[2],
         ]
-        return computePlanetOverviewPose(
+        return computeLaunchPlanetOverviewPose(
           readableTarget,
           getBodySceneRadius(bodyName),
           getMaxHeliocentricOrbitRadius() / READABLE_SOLAR_DISTANCE_SCALE,
@@ -112,7 +142,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
       target[1] / READABLE_SOLAR_DISTANCE_SCALE,
       target[2] / READABLE_SOLAR_DISTANCE_SCALE,
     ]
-    return computePlanetOverviewPose(
+    return computeLaunchPlanetOverviewPose(
       readableTarget,
       getBodySceneRadius(bodyName),
       getMaxHeliocentricOrbitRadius() / READABLE_SOLAR_DISTANCE_SCALE,
@@ -147,7 +177,8 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
   const snapHome = useCallback(() => {
     setCameraMode('free')
     setSelectedTarget('HOME')
-    setView([0.35, 0.05, 0.15], [0, 0, 0])
+    const pose = computeLaunchHomePose()
+    setView(pose.position, pose.target)
   }, [setView])
 
   const snapSolarView = useCallback(() => {
@@ -195,6 +226,19 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
             >
               {cameraMode === 'free' ? 'Follow Launch' : 'Free Explore'}
             </button>
+          </div>
+          <div className="d-flex flex-wrap align-items-center gap-2 rounded-3 border border-white border-opacity-10 bg-dark bg-opacity-25 px-2 py-1 text-body-secondary small">
+            <span className="text-uppercase fw-semibold text-white-50">Outer planet index</span>
+            {OUTER_PLANET_LEGEND.map((planet) => (
+              <span key={planet.name} className="d-inline-flex align-items-center gap-1">
+                <span
+                  aria-hidden="true"
+                  className="d-inline-block rounded-circle"
+                  style={{ width: '0.55rem', height: '0.55rem', backgroundColor: planet.color }}
+                />
+                <span>{planet.name}</span>
+              </span>
+            ))}
           </div>
         </div>
       </div>
