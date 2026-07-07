@@ -17,12 +17,12 @@ export function ScientificDisplay({
   return (
     <div className="space-y-4">
       {/* Tab Navigation */}
-      <div className="flex gap-1 bg-zinc-800 rounded p-1">
+      <div className="flex flex-wrap gap-1 bg-zinc-800 rounded p-1">
         {(['formulas', 'guidance', 'navigation', 'control'] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-3 py-1 text-xs rounded capitalize ${
+            className={`px-2 py-1 text-[11px] rounded capitalize whitespace-normal leading-tight ${
               activeTab === tab
                 ? 'bg-zinc-600 text-white'
                 : 'text-zinc-400 hover:text-white'

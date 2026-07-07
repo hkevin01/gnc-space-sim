@@ -31,12 +31,12 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
   return (
     <div className="bg-black/90 backdrop-blur-sm border border-zinc-600 rounded-lg h-full flex flex-col">
       {/* Tab Headers */}
-      <div className="flex border-b border-zinc-600">
+      <div className="flex flex-wrap border-b border-zinc-600">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 px-3 py-2 text-xs font-bold transition-colors ${
+            className={`flex-1 min-w-0 px-2 py-2 text-[11px] font-bold leading-tight text-center whitespace-normal transition-colors ${
               activeTab === tab.id
                 ? `${tab.color} bg-zinc-800 border-b-2 border-current`
                 : 'text-zinc-400 hover:text-zinc-300'

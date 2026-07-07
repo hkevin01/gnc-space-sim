@@ -18,11 +18,24 @@
  */
 import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { LaunchDemo } from './LaunchDemo'
 import { MissionEvent } from './MissionTypes'
 import * as THREE from 'three'
-import { getBodyPositionRelativeToCenter, type SolarBodyName } from './SolarSystem'
+import {
+  getBodyPositionRelativeToCenter,
+  getBodySceneRadius,
+  getMaxHeliocentricOrbitRadius,
+  type SolarBodyName,
+} from './SolarSystem'
+import {
+  computeBodySnapPose,
+  computeSolarOverviewPose,
+} from '../utils/orbitalReferenceFrame'
+
+type LaunchViewTarget = 'HOME' | 'SOLAR_VIEW' | 'SUN' | 'EARTH' | 'MARS' | 'JUPITER'
+
+const INITIAL_SOLAR_VIEW = computeSolarOverviewPose(getMaxHeliocentricOrbitRadius())
 
 interface LaunchSimulationProps {
   selectedMission: string
@@ -45,21 +58,29 @@ interface LaunchSimulationProps {
 export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimulationProps) {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls> | null>(null)
-  const [cameraMode, setCameraMode] = useState<'follow' | 'free'>('follow')
+  const [cameraMode, setCameraMode] = useState<'follow' | 'free'>('free')
+  const [selectedTarget, setSelectedTarget] = useState<LaunchViewTarget>('SOLAR_VIEW')
 
   const getPlanetView = useCallback((bodyName: SolarBodyName) => {
     const target = getBodyPositionRelativeToCenter(bodyName, 'EARTH', 0)
-    const radialDistance = Math.max(2.5, Math.hypot(target[0], target[1], target[2]) * 0.35)
+    return computeBodySnapPose(target, getBodySceneRadius(bodyName))
+  }, [])
+
+  const selectedTelemetry = useMemo(() => {
+    if (selectedTarget === 'HOME') {
+      return { label: 'Home', dataSource: 'launch frame', target: [0, 0, 0] as [number, number, number] }
+    }
+
+    if (selectedTarget === 'SOLAR_VIEW') {
+      return { label: 'Solar View', dataSource: 'condensed orbital model', target: [0, 0, 0] as [number, number, number] }
+    }
 
     return {
-      target,
-      position: [
-        target[0] + radialDistance,
-        target[1] + radialDistance * 0.3,
-        target[2] + radialDistance,
-      ] as [number, number, number],
+      label: selectedTarget,
+      dataSource: 'condensed orbital model',
+      target: getBodyPositionRelativeToCenter(selectedTarget, 'EARTH', 0),
     }
-  }, [])
+  }, [selectedTarget])
 
   const setView = useCallback((position: [number, number, number], target: [number, number, number]) => {
     if (!cameraRef.current || !orbitControlsRef.current) return
@@ -72,19 +93,27 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
 
   const snapHome = useCallback(() => {
     setCameraMode('free')
+    setSelectedTarget('HOME')
     setView([0.35, 0.05, 0.15], [0, 0, 0])
   }, [setView])
 
   const snapSolarView = useCallback(() => {
     setCameraMode('free')
-    setView([1200, 320, 1200], [0, 0, 0])
+    setSelectedTarget('SOLAR_VIEW')
+    const pose = computeSolarOverviewPose(getMaxHeliocentricOrbitRadius())
+    setView(pose.position, pose.target)
   }, [setView])
 
   const snapPlanet = useCallback((bodyName: SolarBodyName) => {
     setCameraMode('free')
+    setSelectedTarget(bodyName as LaunchViewTarget)
     const view = getPlanetView(bodyName)
     setView(view.position, view.target)
   }, [getPlanetView, setView])
+
+  const getTargetButtonClass = useCallback((target: LaunchViewTarget, activeClass: string, inactiveClass: string) => {
+    return `btn btn-sm touch-target ${selectedTarget === target ? activeClass : inactiveClass}`
+  }, [selectedTarget])
 
   return (
     <div className="app-surface overflow-hidden p-2 p-md-3 d-flex flex-column flex-grow-1 scene-surface">
@@ -97,13 +126,16 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
           <div className="text-body-secondary">
             Phase: {currentPhase?.name || 'Pre-Launch'}
           </div>
+          <div className="text-body-secondary small">
+            View: {selectedTelemetry.label} · Source: {selectedTelemetry.dataSource} · Target: {selectedTelemetry.target.map((value) => value.toFixed(2)).join(', ')}
+          </div>
           <div className="d-flex flex-wrap gap-2">
-            <button onClick={snapHome} className="btn btn-outline-light btn-sm touch-target">Home</button>
-            <button onClick={snapSolarView} className="btn btn-outline-info btn-sm touch-target">Solar View</button>
-            <button onClick={() => snapPlanet('SUN')} className="btn btn-outline-warning btn-sm touch-target">Sun</button>
-            <button onClick={() => snapPlanet('EARTH')} className="btn btn-outline-primary btn-sm touch-target">Earth</button>
-            <button onClick={() => snapPlanet('MARS')} className="btn btn-outline-danger btn-sm touch-target">Mars</button>
-            <button onClick={() => snapPlanet('JUPITER')} className="btn btn-outline-secondary btn-sm touch-target">Jupiter</button>
+            <button onClick={snapHome} className={getTargetButtonClass('HOME', 'btn-light', 'btn-outline-light')}>Home</button>
+            <button onClick={snapSolarView} className={getTargetButtonClass('SOLAR_VIEW', 'btn-info', 'btn-outline-info')}>Solar View</button>
+            <button onClick={() => snapPlanet('SUN')} className={getTargetButtonClass('SUN', 'btn-warning', 'btn-outline-warning')}>Sun</button>
+            <button onClick={() => snapPlanet('EARTH')} className={getTargetButtonClass('EARTH', 'btn-primary', 'btn-outline-primary')}>Earth</button>
+            <button onClick={() => snapPlanet('MARS')} className={getTargetButtonClass('MARS', 'btn-danger', 'btn-outline-danger')}>Mars</button>
+            <button onClick={() => snapPlanet('JUPITER')} className={getTargetButtonClass('JUPITER', 'btn-secondary', 'btn-outline-secondary')}>Jupiter</button>
             <button
               onClick={() => setCameraMode((mode) => (mode === 'free' ? 'follow' : 'free'))}
               className={`btn btn-sm touch-target ${cameraMode === 'free' ? 'btn-warning' : 'btn-outline-secondary'}`}
@@ -119,7 +151,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
           // EARTH_RADIUS_SCENE ≈ 0.159 units (visual Earth sphere radius).
           // Camera positioned radially outward from Earth surface where rocket starts.
           // x=0.35 is just outside Earth visual sphere; y/z offset gives oblique view.
-          position: [0.35, 0.05, 0.15],
+          position: INITIAL_SOLAR_VIEW.position,
           fov: 60,
           near: 0.0001,
           far: 50000

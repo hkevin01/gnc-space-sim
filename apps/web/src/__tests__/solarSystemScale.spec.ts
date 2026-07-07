@@ -8,6 +8,10 @@
  */
 
 import { describe, it, expect } from 'vitest'
+import {
+  getBodyPosition,
+  getBodyPositionRelativeToCenter,
+} from '../components/SolarSystem'
 
 // ---- Replicate scale constants from SolarSystem.tsx ----
 const DISTANCE_SCALE = 1   // 1 scene unit = 1 million km
@@ -89,5 +93,30 @@ describe('SLS mission scenarios - scale sanity', () => {
     const posX = (rocketR - earthCentreM) * ROCKET_POS_SCALE + LAUNCH_EARTH_SCENE_RADIUS
     // Should be within reasonable camera view distance
     expect(posX).toBeLessThan(LAUNCH_EARTH_SCENE_RADIUS * 10)
+  })
+})
+
+describe('Reference-frame helper behavior', () => {
+  it('returns origin for a body relative to itself', () => {
+    const earthRelativeEarth = getBodyPositionRelativeToCenter('EARTH', 'EARTH', 0)
+    expect(earthRelativeEarth[0]).toBeCloseTo(0, 8)
+    expect(earthRelativeEarth[1]).toBeCloseTo(0, 8)
+    expect(earthRelativeEarth[2]).toBeCloseTo(0, 8)
+  })
+
+  it('matches subtraction of absolute body and center positions', () => {
+    const missionTime = 1234
+    const mars = getBodyPosition('MARS', missionTime)
+    const earth = getBodyPosition('EARTH', missionTime)
+    const expected: [number, number, number] = [
+      mars[0] - earth[0],
+      mars[1] - earth[1],
+      mars[2] - earth[2],
+    ]
+
+    const actual = getBodyPositionRelativeToCenter('MARS', 'EARTH', missionTime)
+    expect(actual[0]).toBeCloseTo(expected[0], 8)
+    expect(actual[1]).toBeCloseTo(expected[1], 8)
+    expect(actual[2]).toBeCloseTo(expected[2], 8)
   })
 })
