@@ -10,6 +10,8 @@ const EARTH_CENTER_M = 6.371e6
 const ROCKET_CORE_LENGTH_FACTOR = 4
 const CAPE_CANAVERAL_LAT_DEG = 28.3922
 const CAPE_CANAVERAL_LON_DEG = -80.6077
+const EARTH_AXIAL_TILT_DEG = 23.44
+const EARTH_ROTATION_PERIOD_HOURS = 23.9345
 
 export const EARTH_RADIUS_SCENE = (EARTH_RADIUS_KM / KM_PER_SCENE_UNIT) * SIZE_MULT_INNER
 export const ROCKET_POS_SCALE = 1e-9
@@ -30,6 +32,26 @@ function scale(v: Vec3, factor: number): Vec3 {
 
 function add(a: Vec3, b: Vec3): Vec3 {
   return [a[0] + b[0], a[1] + b[1], a[2] + b[2]]
+}
+
+function rotateAroundY(v: Vec3, angle: number): Vec3 {
+  const cos = Math.cos(angle)
+  const sin = Math.sin(angle)
+  return [
+    v[0] * cos + v[2] * sin,
+    v[1],
+    -v[0] * sin + v[2] * cos,
+  ]
+}
+
+function rotateAroundZ(v: Vec3, angle: number): Vec3 {
+  const cos = Math.cos(angle)
+  const sin = Math.sin(angle)
+  return [
+    v[0] * cos - v[1] * sin,
+    v[0] * sin + v[1] * cos,
+    v[2],
+  ]
 }
 
 const CAPE_LAT_RAD = (CAPE_CANAVERAL_LAT_DEG * Math.PI) / 180
@@ -55,30 +77,61 @@ export const CAPE_CANAVERAL_NORTH: Vec3 = normalize([
 
 export const CAPE_CANAVERAL_SURFACE_POSITION: Vec3 = scale(CAPE_CANAVERAL_UP, EARTH_RADIUS_SCENE)
 
+export function getEarthRotationAngle(missionTime: number): number {
+  const timeInHours = missionTime * 0.01 * 24
+  return (timeInHours / EARTH_ROTATION_PERIOD_HOURS) * 2 * Math.PI
+}
+
+function orientEarthVector(v: Vec3, missionTime: number): Vec3 {
+  const rotated = rotateAroundY(v, getEarthRotationAngle(missionTime))
+  return rotateAroundZ(rotated, (EARTH_AXIAL_TILT_DEG * Math.PI) / 180)
+}
+
+export function getCapeCanaveralWorldFrame(missionTime: number): {
+  surface: Vec3
+  up: Vec3
+  east: Vec3
+  north: Vec3
+} {
+  const up = normalize(orientEarthVector(CAPE_CANAVERAL_UP, missionTime))
+  const east = normalize(orientEarthVector(CAPE_CANAVERAL_EAST, missionTime))
+  const north = normalize(orientEarthVector(CAPE_CANAVERAL_NORTH, missionTime))
+  return {
+    surface: scale(up, EARTH_RADIUS_SCENE),
+    up,
+    east,
+    north,
+  }
+}
+
 export function launchSiteScenePositionFromLocalFrame(
   radialOffsetScene: number,
   eastOffsetScene: number,
   northOffsetScene: number,
+  missionTime: number = 0,
 ): Vec3 {
-  const surface = scale(CAPE_CANAVERAL_UP, EARTH_RADIUS_SCENE + radialOffsetScene)
-  const east = scale(CAPE_CANAVERAL_EAST, eastOffsetScene)
-  const north = scale(CAPE_CANAVERAL_NORTH, northOffsetScene)
+  const frame = getCapeCanaveralWorldFrame(missionTime)
+  const surface = scale(frame.up, EARTH_RADIUS_SCENE + radialOffsetScene)
+  const east = scale(frame.east, eastOffsetScene)
+  const north = scale(frame.north, northOffsetScene)
   return add(add(surface, east), north)
 }
 
 export function rocketScenePositionFromR(
   r: Vec3,
-  earthCenterM: number = EARTH_CENTER_M
+  earthCenterM: number = EARTH_CENTER_M,
+  missionTime: number = 0,
 ): Vec3 {
   return launchSiteScenePositionFromLocalFrame(
     (r[0] - earthCenterM) * ROCKET_POS_SCALE,
     r[1] * ROCKET_POS_SCALE,
     r[2] * ROCKET_POS_SCALE,
+    missionTime,
   )
 }
 
 export function rocketScenePositionFromState(state: LaunchState): Vec3 {
-  return rocketScenePositionFromR(state.r as Vec3)
+  return rocketScenePositionFromR(state.r as Vec3, EARTH_CENTER_M, state.mission_time)
 }
 
 export function isFiniteVec3(v: Vec3): boolean {
@@ -103,14 +156,15 @@ export function followCameraTarget(rocketPos: Vec3, altitudeKm: number): {
   distance: number
   position: Vec3
   lookAt: Vec3
-} {
+}, missionTime: number = 0) {
   const d = cameraDistanceForAltitudeKm(altitudeKm)
+  const frame = getCapeCanaveralWorldFrame(missionTime)
   const position = add(
     add(
-      add(rocketPos, scale(CAPE_CANAVERAL_EAST, d * 0.75)),
-      scale(CAPE_CANAVERAL_NORTH, d * 0.18),
+      add(rocketPos, scale(frame.east, d * 0.75)),
+      scale(frame.north, d * 0.18),
     ),
-    scale(CAPE_CANAVERAL_UP, d * 0.38),
+    scale(frame.up, d * 0.38),
   )
   return { distance: d, position, lookAt: rocketPos }
 }
