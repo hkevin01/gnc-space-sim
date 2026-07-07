@@ -17,6 +17,7 @@ import { MISSION_SCENARIOS } from './MissionTypes';
 import {
   EARTH_RADIUS_SCENE,
   getCapeCanaveralWorldFrame,
+  launchSiteSceneVectorFromLocalFrame,
   ROCKET_VISUAL_SCALE,
   followCameraTarget,
   rocketScenePositionFromR,
@@ -85,6 +86,10 @@ export function LaunchDemo({
         capeFrame.surface[0],
         capeFrame.surface[1],
         capeFrame.surface[2],
+      );
+      vehicleRef.current.quaternion.setFromUnitVectors(
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(capeFrame.up[0], capeFrame.up[1], capeFrame.up[2]),
       );
     }
   }, [capeFrame.surface, isLaunched]);
@@ -408,7 +413,13 @@ export function LaunchDemo({
           vehicleRef.current.position.copy(newPos);
 
           if (isFiniteArray(nextState.v)) {
-            const vel = new THREE.Vector3(nextState.v[0], nextState.v[1], nextState.v[2]);
+            const worldVelocity = launchSiteSceneVectorFromLocalFrame(
+              nextState.v[0] * 1e-9,
+              nextState.v[1] * 1e-9,
+              nextState.v[2] * 1e-9,
+              nextTime,
+            );
+            const vel = new THREE.Vector3(worldVelocity[0], worldVelocity[1], worldVelocity[2]);
             if (vel.length() > 0) {
               vehicleRef.current.lookAt(
                 vehicleRef.current.position.x + vel.x,
@@ -513,10 +524,6 @@ export function LaunchDemo({
             side={THREE.BackSide}
             depthWrite={false}
           />
-        </mesh>
-        <mesh position={capeFrame.surface}>
-          <sphereGeometry args={[EARTH_RADIUS_SCENE * 0.028, 12, 12]} />
-          <meshBasicMaterial color="#f97316" depthTest={false} />
         </mesh>
       </group>
 

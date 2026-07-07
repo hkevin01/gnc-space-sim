@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   EARTH_RADIUS_SCENE,
+  ROCKET_SURFACE_CLEARANCE_SCENE,
   cameraDistanceForAltitudeKm,
   followCameraTarget,
   getCapeCanaveralWorldFrame,
@@ -123,9 +124,9 @@ describe('Launch visual behavior harness', () => {
 
     const rocketPos = rocketScenePositionFromState(state)
     const capeFrame = getCapeCanaveralWorldFrame(0)
-    expect(rocketPos[0]).toBeCloseTo(capeFrame.surface[0], 5)
-    expect(rocketPos[1]).toBeCloseTo(capeFrame.surface[1], 5)
-    expect(rocketPos[2]).toBeCloseTo(capeFrame.surface[2], 5)
-    expect(Math.hypot(...rocketPos)).toBeCloseTo(EARTH_RADIUS_SCENE, 5)
+    expect(rocketPos[0]).toBeCloseTo(capeFrame.surface[0] + capeFrame.up[0] * ROCKET_SURFACE_CLEARANCE_SCENE, 5)
+    expect(rocketPos[1]).toBeCloseTo(capeFrame.surface[1] + capeFrame.up[1] * ROCKET_SURFACE_CLEARANCE_SCENE, 5)
+    expect(rocketPos[2]).toBeCloseTo(capeFrame.surface[2] + capeFrame.up[2] * ROCKET_SURFACE_CLEARANCE_SCENE, 5)
+    expect(Math.hypot(...rocketPos)).toBeCloseTo(EARTH_RADIUS_SCENE + ROCKET_SURFACE_CLEARANCE_SCENE, 5)
   })
 })

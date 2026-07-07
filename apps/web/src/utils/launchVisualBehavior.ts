@@ -18,6 +18,7 @@ export const ROCKET_POS_SCALE = 1e-9
 const MOON_RADIUS_SCENE = (MOON_RADIUS_KM / KM_PER_SCENE_UNIT) * SIZE_MULT_MOON
 const TARGET_ROCKET_LENGTH_SCENE = MOON_RADIUS_SCENE / 8
 export const ROCKET_VISUAL_SCALE = TARGET_ROCKET_LENGTH_SCENE / ROCKET_CORE_LENGTH_FACTOR
+export const ROCKET_SURFACE_CLEARANCE_SCENE = ROCKET_VISUAL_SCALE * 2.9
 
 export type Vec3 = [number, number, number]
 
@@ -117,13 +118,27 @@ export function launchSiteScenePositionFromLocalFrame(
   return add(add(surface, east), north)
 }
 
+export function launchSiteSceneVectorFromLocalFrame(
+  radialScene: number,
+  eastScene: number,
+  northScene: number,
+  missionTime: number = 0,
+): Vec3 {
+  const frame = getCapeCanaveralWorldFrame(missionTime)
+  return add(
+    add(scale(frame.up, radialScene), scale(frame.east, eastScene)),
+    scale(frame.north, northScene),
+  )
+}
+
 export function rocketScenePositionFromR(
   r: Vec3,
   earthCenterM: number = EARTH_CENTER_M,
   missionTime: number = 0,
 ): Vec3 {
+  const radialOffset = Math.max((r[0] - earthCenterM) * ROCKET_POS_SCALE, ROCKET_SURFACE_CLEARANCE_SCENE)
   return launchSiteScenePositionFromLocalFrame(
-    (r[0] - earthCenterM) * ROCKET_POS_SCALE,
+    radialOffset,
     r[1] * ROCKET_POS_SCALE,
     r[2] * ROCKET_POS_SCALE,
     missionTime,
