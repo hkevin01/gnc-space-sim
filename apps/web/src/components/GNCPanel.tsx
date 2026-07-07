@@ -48,7 +48,7 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`min-w-0 px-2 py-2 text-[11px] font-bold leading-tight text-center whitespace-normal break-words transition-colors ${
+            className={`min-w-0 px-1.5 py-2 text-[10px] md:text-[11px] font-bold leading-none text-center whitespace-nowrap transition-colors ${
               activeTab === tab.id
                 ? `${tab.color} bg-zinc-800 border-b-2 border-current`
                 : 'text-zinc-400 hover:text-zinc-300'
@@ -63,25 +63,25 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
       <div className="flex-1 overflow-y-auto p-4">
         {activeTab === 'mission' && (
           <div className="space-y-4">
-            <div className="text-orange-400 font-bold text-sm mb-3">MISSION STATUS</div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-zinc-400">Mission:</span>
-                <span className="text-orange-400">{selectedMission || 'Not Selected'}</span>
+            <div className="text-orange-400 font-bold text-xs md:text-sm mb-3">MISSION STATUS</div>
+            <div className="space-y-2 text-xs md:text-sm">
+              <div className="flex justify-between gap-2 whitespace-nowrap">
+                <span className="text-zinc-400 shrink-0">Mission:</span>
+                <span className="text-orange-400 truncate text-right min-w-0">{selectedMission || 'Not Selected'}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-zinc-400">Current Phase:</span>
-                <span className="text-orange-400">{currentPhase?.name || 'Pre-Launch'}</span>
+              <div className="flex justify-between gap-2 whitespace-nowrap">
+                <span className="text-zinc-400 shrink-0">Current Phase:</span>
+                <span className="text-orange-400 truncate text-right min-w-0">{currentPhase?.name || 'Pre-Launch'}</span>
               </div>
               {currentPhase && (
                 <>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-400">Phase Progress:</span>
-                    <span className="text-orange-400">{(currentPhase.progress * 100).toFixed(1)}%</span>
+                  <div className="flex justify-between gap-2 whitespace-nowrap">
+                    <span className="text-zinc-400 shrink-0">Phase Progress:</span>
+                    <span className="text-orange-400 text-right">{(currentPhase.progress * 100).toFixed(1)}%</span>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-zinc-400">Time in Phase:</span>
-                    <span className="text-orange-400">{Math.round(currentPhase.timeInPhase)}s</span>
+                  <div className="flex justify-between gap-2 whitespace-nowrap">
+                    <span className="text-zinc-400 shrink-0">Time in Phase:</span>
+                    <span className="text-orange-400 text-right">{Math.round(currentPhase.timeInPhase)}s</span>
                   </div>
                 </>
               )}

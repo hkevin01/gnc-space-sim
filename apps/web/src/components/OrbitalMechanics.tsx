@@ -24,7 +24,6 @@ const TEXTURE_URLS: Record<string, string> = {
   sun: '/assets/sun/sun_color.jpg',
   earth: '/assets/earth/earth_2k.jpg',
   moon: '/assets/moon/moon_2k.jpg',
-  mars: '/assets/mars/mars_color.jpg',
 }
 
 export interface CelestialBodyData {
@@ -193,27 +192,6 @@ function MoonMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledR
   )
 }
 
-function MarsMesh({ position, scaledRadius }: { position: THREE.Vector3; scaledRadius: number }) {
-  const meshRef = useRef<THREE.Mesh>(null)
-  const texture = useLoader(TextureLoader, '/assets/mars/mars_color.jpg')
-  texture.colorSpace = THREE.SRGBColorSpace
-  texture.needsUpdate = true
-
-  useFrame(() => {
-    if (meshRef.current) {
-      meshRef.current.position.copy(position)
-      meshRef.current.rotation.y += 0.002
-    }
-  })
-
-  return (
-    <mesh ref={meshRef}>
-      <sphereGeometry args={[scaledRadius, 64, 64]} />
-      <meshStandardMaterial map={texture} />
-    </mesh>
-  )
-}
-
 function TexturedPlanet({ body, position, scaledRadius }: {
   body: CelestialBodyData
   position: THREE.Vector3
@@ -230,7 +208,7 @@ function TexturedPlanet({ body, position, scaledRadius }: {
     return <MoonMesh position={position} scaledRadius={scaledRadius} />
   }
   if (body.id === 'mars') {
-    return <MarsMesh position={position} scaledRadius={scaledRadius} />
+    return <ColoredPlanet body={body} position={position} scaledRadius={scaledRadius} />
   }
 
   // Fallback for planets without textures

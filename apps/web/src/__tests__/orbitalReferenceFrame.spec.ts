@@ -4,6 +4,7 @@ import {
   buildBodyLookup,
   computeBodyAwareCameraDistance,
   computeBodySnapPose,
+  computePlanetOverviewPose,
   computeSolarOverviewPose,
   getBodyPositionInReferenceFrame,
   translateToReferenceFrame,
@@ -48,6 +49,15 @@ describe('launch camera presets', () => {
     const d = pose.distance
     expect(pose.position).toEqual([10 + d, 2 + d * 0.3, -5 + d])
     expect(d).toBeGreaterThan(0)
+  })
+
+  it('builds a wider planet overview pose that stays outside the selected body', () => {
+    const pose = computePlanetOverviewPose([20, 0, 0], 0.25, 70)
+
+    expect(pose.target).toEqual([20, 0, 0])
+    expect(pose.distance).toBeGreaterThan(20)
+    expect(pose.position[0]).toBeGreaterThan(20)
+    expect(pose.position[2]).toBeGreaterThan(0)
   })
 
   it('computes a solar overview pose that scales with max orbit radius', () => {

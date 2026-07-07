@@ -40,13 +40,11 @@ export function LaunchDemo({
   timeMultiplier = 50, // Increased default for better visual pacing
   showTrajectory = true,
   cameraMode = 'follow',
-  orbitScale = 18.7,
   onCameraRef,
 }: {
   timeMultiplier?: number;
   showTrajectory?: boolean;
   cameraMode?: 'follow' | 'free';
-  orbitScale?: number;
   onCameraRef?: (ref: RefObject<ComponentRef<typeof OrbitControls> | null>) => void;
 }) {
   // Camera follow state

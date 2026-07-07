@@ -30,8 +30,8 @@ import {
 } from './SolarSystem'
 import {
   buildBodyLookup,
-  computeBodySnapPose,
   computeSolarOverviewPose,
+  computePlanetOverviewPose,
   getBodyPositionInReferenceFrame,
   type Vec3,
 } from '../utils/orbitalReferenceFrame'
@@ -98,7 +98,11 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
           liveTarget[1],
           liveTarget[2],
         ]
-        return computeBodySnapPose(readableTarget, Math.max(getBodySceneRadius(bodyName) * 0.5, 0.2))
+        return computePlanetOverviewPose(
+          readableTarget,
+          getBodySceneRadius(bodyName),
+          getMaxHeliocentricOrbitRadius() / READABLE_SOLAR_DISTANCE_SCALE,
+        )
       }
     }
 
@@ -108,7 +112,11 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
       target[1] / READABLE_SOLAR_DISTANCE_SCALE,
       target[2] / READABLE_SOLAR_DISTANCE_SCALE,
     ]
-    return computeBodySnapPose(readableTarget, Math.max(getBodySceneRadius(bodyName) * 0.5, 0.2))
+    return computePlanetOverviewPose(
+      readableTarget,
+      getBodySceneRadius(bodyName),
+      getMaxHeliocentricOrbitRadius() / READABLE_SOLAR_DISTANCE_SCALE,
+    )
   }, [referenceFrame])
 
   const selectedTelemetry = useMemo(() => {
@@ -229,7 +237,6 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
           onCameraRef={(ref) => {
             orbitControlsRef.current = ref.current
           }}
-          orbitScale={READABLE_SOLAR_DISTANCE_SCALE}
         />
 
         {/* OrbitControls is managed inside LaunchDemo for camera follow */}

@@ -22,7 +22,7 @@ export function ScientificDisplay({
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`px-2 py-2 text-[11px] rounded capitalize whitespace-normal leading-tight text-center break-words ${
+            className={`px-1.5 py-2 text-[10px] sm:text-[11px] rounded capitalize whitespace-nowrap leading-none text-center ${
               activeTab === tab
                 ? 'bg-zinc-600 text-white'
                 : 'text-zinc-400 hover:text-white'

@@ -49,9 +49,7 @@ export const PLANETARY_TEXTURES: Record<string, TextureSpec> = {
 
   // Mars texture - LOCAL ASSET
   MARS: {
-    url: [
-      '/assets/mars/mars_color.jpg'
-    ],
+    url: [],
     anisotropy: 16,
     isColor: true,
     fallbackPattern: {

@@ -54,6 +54,20 @@ export function computeBodySnapPose(target: Vec3, sceneRadius: number): CameraPo
   }
 }
 
+export function computePlanetOverviewPose(target: Vec3, sceneRadius: number, orbitSpan: number): CameraPose {
+  const distance = Math.max(sceneRadius * 28, orbitSpan * 0.35, 8)
+
+  return {
+    target,
+    distance,
+    position: [
+      target[0] + distance * 0.55,
+      target[1] + distance * 0.28,
+      target[2] + distance * 0.85,
+    ],
+  }
+}
+
 export function computeSolarOverviewPose(maxOrbitRadius: number): CameraPose {
   const distance = Math.max(maxOrbitRadius * 2.2, 120)
 

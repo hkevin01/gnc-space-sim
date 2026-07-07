@@ -72,7 +72,6 @@ const TEXTURE_URLS: Record<string, string> = {
   SUN: '/assets/sun/sun_color.jpg',
   EARTH: '/assets/earth/earth_2k.jpg',
   MOON: '/assets/moon/moon_2k.jpg',
-  MARS: '/assets/mars/mars_color.jpg',
 }
 
 /**
@@ -733,7 +732,7 @@ export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'S
       <Planet name="EARTH" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
       <Planet name="MOON" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
       <Planet name="MARS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
-      <AsteroidBelt showAsteroids={true} asteroidCount={300} />
+      <AsteroidBelt showAsteroids={true} asteroidCount={120} />
       <Planet name="JUPITER" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
       <Planet name="SATURN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
       <Planet name="URANUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} />
