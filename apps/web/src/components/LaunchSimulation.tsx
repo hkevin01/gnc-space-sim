@@ -29,15 +29,25 @@ import {
   type SolarBodyName,
 } from './SolarSystem'
 import {
+  buildBodyLookup,
   computeBodySnapPose,
   computeSolarOverviewPose,
+  getBodyPositionInReferenceFrame,
+  type Vec3,
 } from '../utils/orbitalReferenceFrame'
 
 type LaunchViewTarget = 'HOME' | 'SOLAR_VIEW' | 'SUN' | 'EARTH' | 'MARS' | 'JUPITER'
 
-const READABLE_SOLAR_DISTANCE_SCALE = 18.7
+const READABLE_SOLAR_DISTANCE_SCALE = 8
 
 const INITIAL_SOLAR_VIEW = computeSolarOverviewPose(getMaxHeliocentricOrbitRadius())
+
+interface LiveReferenceFrame {
+  positions: Array<{ name: SolarBodyName; position: Vec3 }>
+  centerOn: SolarBodyName
+  dataSource: 'nasa' | 'calculated' | 'mixed'
+  loading: boolean
+}
 
 interface LaunchSimulationProps {
   selectedMission: string
@@ -62,8 +72,25 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls> | null>(null)
   const [cameraMode, setCameraMode] = useState<'follow' | 'free'>('free')
   const [selectedTarget, setSelectedTarget] = useState<LaunchViewTarget>('SOLAR_VIEW')
+  const [referenceFrame, setReferenceFrame] = useState<LiveReferenceFrame | null>(null)
 
   const getPlanetView = useCallback((bodyName: SolarBodyName) => {
+    const liveFrame = referenceFrame
+
+    if (liveFrame?.positions.length) {
+      const lookup = buildBodyLookup(liveFrame.positions)
+      const liveTarget = getBodyPositionInReferenceFrame(bodyName, liveFrame.centerOn, lookup)
+
+      if (liveTarget) {
+        const readableTarget: [number, number, number] = [
+          liveTarget[0],
+          liveTarget[1],
+          liveTarget[2],
+        ]
+        return computeBodySnapPose(readableTarget, getBodySceneRadius(bodyName))
+      }
+    }
+
     const target = getBodyPositionRelativeToCenter(bodyName, 'EARTH', 0)
     const readableTarget: [number, number, number] = [
       target[0] / READABLE_SOLAR_DISTANCE_SCALE,
@@ -71,7 +98,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
       target[2] / READABLE_SOLAR_DISTANCE_SCALE,
     ]
     return computeBodySnapPose(readableTarget, getBodySceneRadius(bodyName))
-  }, [])
+  }, [referenceFrame])
 
   const selectedTelemetry = useMemo(() => {
     if (selectedTarget === 'HOME') {
@@ -192,6 +219,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
             orbitControlsRef.current = ref.current
           }}
           orbitScale={READABLE_SOLAR_DISTANCE_SCALE}
+          onReferenceFrameChange={setReferenceFrame}
         />
 
         {/* OrbitControls is managed inside LaunchDemo for camera follow */}

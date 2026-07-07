@@ -42,12 +42,14 @@ export function LaunchDemo({
   cameraMode = 'follow',
   orbitScale = 18.7,
   onCameraRef,
+  onReferenceFrameChange,
 }: {
   timeMultiplier?: number;
   showTrajectory?: boolean;
   cameraMode?: 'follow' | 'free';
   orbitScale?: number;
   onCameraRef?: (ref: RefObject<ComponentRef<typeof OrbitControls> | null>) => void;
+  onReferenceFrameChange?: Parameters<typeof NasaSolarSystem>[0]['onReferenceFrameChange'];
 }) {
   // Camera follow state
   const { camera } = useThree();
@@ -390,6 +392,7 @@ export function LaunchDemo({
         showOrbits={true}
         useNasaData={true}
         scaleFactorAU={orbitScale}
+        onReferenceFrameChange={onReferenceFrameChange}
       />
 
       {/* Rocket Vehicle Group - visible scale */}
