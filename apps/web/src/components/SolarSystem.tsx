@@ -108,11 +108,12 @@ function TexturedSphere({
   texture.colorSpace = THREE.SRGBColorSpace
   texture.needsUpdate = true
 
-  const materialColor = atmosphereGlow ? '#d9ecff' : '#ffffff'
-  const materialEmissive = atmosphereGlow ? '#3f93ff' : (emissive || '#000000')
+  const materialColor = atmosphereGlow ? '#f7fbff' : '#ffffff'
+  const materialEmissive = atmosphereGlow ? '#2c5f99' : (emissive || '#000000')
   const materialEmissiveIntensity = atmosphereGlow
-    ? Math.max(emissiveIntensity, 0.18)
+    ? Math.max(emissiveIntensity, 0.07)
     : emissiveIntensity
+  const materialOpacity = atmosphereGlow ? 0.96 : 1
 
   return (
     <mesh>
@@ -124,6 +125,8 @@ function TexturedSphere({
         metalness={0.04}
         emissive={materialEmissive}
         emissiveIntensity={materialEmissiveIntensity}
+        transparent={atmosphereGlow}
+        opacity={materialOpacity}
       />
     </mesh>
   )
