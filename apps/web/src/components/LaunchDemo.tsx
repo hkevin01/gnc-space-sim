@@ -37,6 +37,8 @@ const EARTH_CAMERA_IDLE_RESNAP_DELAY_MS = 1100
 const EARTH_CAMERA_RESNAP_POSITION_LERP = 0.025
 const EARTH_CAMERA_RESNAP_TARGET_LERP = 0.06
 const IDLE_VISUAL_MISSION_TIME_RATE = 4
+const ROCKET_FORWARD_AXIS = new THREE.Vector3(-1, 0, 0)
+const MISSION_HANDOFF_BLEND_SECONDS = 18
 
 const MIN_EARTH_SAFE_CAMERA_DISTANCE = EARTH_RADIUS_SCENE * 1.15
 
@@ -122,6 +124,8 @@ export function LaunchDemo({
   const [missionTrail, setMissionTrail] = useState<Array<{ point: Vec3; segment: MissionTrailSegment }>>([])
   const previousMissionPointRef = useRef<Vec3 | undefined>(undefined)
   const previousSoiOwnerRef = useRef<MissionSoiOwner>('EARTH')
+  const missionHandoffStartRef = useRef<number | null>(null)
+  const missionHandoffAnchorRef = useRef<Vec3 | null>(null)
 
   const guidance = useMemo(() => {
     return new GravityTurnGuidance(400000, (28.5 * Math.PI) / 180);
@@ -371,6 +375,8 @@ export function LaunchDemo({
       hasZoomedToRocket.current = false;
       previousMissionPointRef.current = undefined
       previousSoiOwnerRef.current = 'EARTH'
+      missionHandoffStartRef.current = null
+      missionHandoffAnchorRef.current = null
       setMissionTelemetry(null)
       setMissionTrail([])
     }
@@ -484,7 +490,30 @@ export function LaunchDemo({
           })
           : null
 
-        const activePoint = missionVehicle?.position ?? launchConstraint.point
+        if (missionVehicle && missionHandoffStartRef.current === null) {
+          missionHandoffStartRef.current = nextTime
+          missionHandoffAnchorRef.current = launchConstraint.point
+        }
+
+        const blendedMissionPoint = (() => {
+          if (!missionVehicle || missionHandoffStartRef.current === null || !missionHandoffAnchorRef.current) {
+            return missionVehicle?.position
+          }
+
+          const t = Math.min(
+            Math.max((nextTime - missionHandoffStartRef.current) / MISSION_HANDOFF_BLEND_SECONDS, 0),
+            1,
+          )
+
+          const anchor = missionHandoffAnchorRef.current
+          return [
+            anchor[0] + (missionVehicle.position[0] - anchor[0]) * t,
+            anchor[1] + (missionVehicle.position[1] - anchor[1]) * t,
+            anchor[2] + (missionVehicle.position[2] - anchor[2]) * t,
+          ] as Vec3
+        })()
+
+        const activePoint = blendedMissionPoint ?? launchConstraint.point
         const activeVelocity = missionVehicle?.velocity
         const newPos = new THREE.Vector3(activePoint[0], activePoint[1], activePoint[2]);
 
@@ -496,7 +525,7 @@ export function LaunchDemo({
 
           if (!shouldUseMissionPropagation && (nextState.altitude / 1000) < 25) {
             const launchQuaternion = new THREE.Quaternion().setFromUnitVectors(
-              new THREE.Vector3(1, 0, 0),
+              ROCKET_FORWARD_AXIS,
               localUp,
             )
             vehicleRef.current.quaternion.copy(launchQuaternion)
@@ -520,7 +549,7 @@ export function LaunchDemo({
                 desiredDirection.lerp(localUp, 1 - blend).normalize()
               }
               const flightQuaternion = new THREE.Quaternion().setFromUnitVectors(
-                new THREE.Vector3(1, 0, 0),
+                ROCKET_FORWARD_AXIS,
                 desiredDirection,
               )
               vehicleRef.current.quaternion.copy(flightQuaternion)
@@ -563,9 +592,8 @@ export function LaunchDemo({
         }
       }
 
-      if (showTrajectory && !shouldUseMissionPropagation && isFiniteArray(nextState.r)) {
-        const p = rocketScenePositionFromR(nextState.r as [number, number, number], undefined, nextTime);
-        const newPoint = new THREE.Vector3(p[0], p[1], p[2]);
+      if (showTrajectory && !shouldUseMissionPropagation && vehicleRef.current) {
+        const newPoint = vehicleRef.current.position.clone();
 
         // Throttle trajectory updates - only add point every 10 frames to reduce re-renders
         if (Number.isFinite(newPoint.x) && Number.isFinite(newPoint.y) && Number.isFinite(newPoint.z)) {
@@ -763,7 +791,7 @@ export function LaunchDemo({
         )}
       </group>
 
-      {trajectoryRef.current && <primitive object={trajectoryRef.current} />}
+      {trajectoryRef.current && missionTrail.length === 0 && <primitive object={trajectoryRef.current} />}
 
       {outboundTrailPoints && (
         <Line
