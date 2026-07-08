@@ -398,6 +398,15 @@ export function LaunchDemo({
   }, [isLaunched, setMissionTelemetry]);
 
   useEffect(() => {
+    if (activeMissionPhase?.completed) {
+      setMissionTrail([])
+      previousMissionPointRef.current = undefined
+      missionHandoffStartRef.current = null
+      missionHandoffAnchorRef.current = null
+    }
+  }, [activeMissionPhase?.completed]);
+
+  useEffect(() => {
     if (!isLaunched || launchTime < 0) return
 
     const altitudeKm = (currentState?.altitude ?? 0) / 1000

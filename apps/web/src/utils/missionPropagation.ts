@@ -137,7 +137,7 @@ function buildLunarPosition(
     return {
       position: [
         moonPos[0] + Math.cos(angle) * opsRadius,
-        moonPos[1] + Math.sin(angle) * opsRadius * 0.24,
+        moonPos[1] + Math.sin(angle) * opsRadius * 0.08,
         moonPos[2] + Math.sin(angle) * opsRadius,
       ],
       segment: 'operations',
