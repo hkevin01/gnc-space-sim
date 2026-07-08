@@ -96,6 +96,68 @@ body {
   display: block;
 }
 
+.scene-heading {
+  font-size: 1rem;
+  letter-spacing: 0.015em;
+}
+
+.scene-subheading {
+  color: #dbe5f3;
+  font-size: 0.925rem;
+  font-weight: 500;
+}
+
+.scene-meta-chip {
+  align-items: center;
+  background: rgba(2, 6, 23, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  border-radius: 0.7rem;
+  color: #f8fafc;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  line-height: 1.35;
+  max-width: 100%;
+  padding: 0.4rem 0.6rem;
+}
+
+.scene-meta-chip-wide {
+  width: 100%;
+}
+
+.scene-meta-label {
+  color: #cbd5e1;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.scene-meta-value {
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.scene-meta-separator {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.scene-legend {
+  color: #e2e8f0;
+  font-size: 0.83rem;
+}
+
+.scene-legend-title {
+  color: #f8fafc;
+  letter-spacing: 0.02em;
+}
+
+.scene-legend-item-label {
+  color: #e2e8f0;
+}
+
 @media (max-width: 991.98px) {
   .app-main-row {
     min-height: auto;
@@ -111,5 +173,9 @@ body {
 
   .scene-panel {
     min-height: 60vh;
+  }
+
+  .scene-meta-chip {
+    width: 100%;
   }
 }

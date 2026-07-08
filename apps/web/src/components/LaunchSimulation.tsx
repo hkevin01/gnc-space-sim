@@ -209,15 +209,23 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
     <div className="app-surface overflow-hidden p-2 p-md-3 d-flex flex-column flex-grow-1 scene-surface">
       <div className="d-flex flex-column flex-lg-row justify-content-between align-items-start gap-3 px-2 pb-3 text-white small">
         <div>
-          <div className="fw-semibold">Launch Simulation</div>
-          <div className="text-body-secondary">Mission: {selectedMission}</div>
+          <div className="fw-semibold scene-heading">Launch Simulation</div>
+          <div className="scene-subheading">Mission: {selectedMission}</div>
         </div>
         <div className="d-flex flex-column align-items-start align-items-lg-end gap-2 w-100 w-lg-auto">
-          <div className="text-body-secondary">
-            Phase: {currentPhase?.name || 'Pre-Launch'}
+          <div className="scene-meta-chip" aria-label="Current mission phase">
+            <span className="scene-meta-label">Phase</span>
+            <span className="scene-meta-value">{currentPhase?.name || 'Pre-Launch'}</span>
           </div>
-          <div className="text-body-secondary small">
-            View: {selectedTelemetry.label} · Source: {selectedTelemetry.dataSource} · Target: {selectedTelemetry.target.map((value) => value.toFixed(2)).join(', ')}
+          <div className="scene-meta-chip scene-meta-chip-wide" aria-label="Current camera frame metadata">
+            <span className="scene-meta-label">View</span>
+            <span className="scene-meta-value">{selectedTelemetry.label}</span>
+            <span className="scene-meta-separator" aria-hidden="true">|</span>
+            <span className="scene-meta-label">Source</span>
+            <span className="scene-meta-value">{selectedTelemetry.dataSource}</span>
+            <span className="scene-meta-separator" aria-hidden="true">|</span>
+            <span className="scene-meta-label">Target</span>
+            <span className="scene-meta-value">{selectedTelemetry.target.map((value) => value.toFixed(2)).join(', ')}</span>
           </div>
           <div className="d-flex flex-wrap gap-2">
             <button onClick={snapHome} className={getTargetButtonClass('HOME', 'btn-light', 'btn-outline-light')}>Home</button>
@@ -233,8 +241,8 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
               {cameraMode === 'free' ? 'Follow Launch' : 'Free Explore'}
             </button>
           </div>
-          <div className="d-flex flex-wrap align-items-center gap-2 rounded-3 border border-white border-opacity-10 bg-dark bg-opacity-25 px-2 py-1 text-body-secondary small">
-            <span className="text-uppercase fw-semibold text-white-50">Outer planet index</span>
+          <div className="d-flex flex-wrap align-items-center gap-2 rounded-3 border border-white border-opacity-25 bg-dark bg-opacity-50 px-2 py-1 scene-legend">
+            <span className="text-uppercase fw-semibold scene-legend-title">Outer planet index</span>
             {OUTER_PLANET_LEGEND.map((planet) => (
               <span key={planet.name} className="d-inline-flex align-items-center gap-1">
                 <span
@@ -242,7 +250,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
                   className="d-inline-block rounded-circle"
                   style={{ width: '0.55rem', height: '0.55rem', backgroundColor: planet.color }}
                 />
-                <span>{planet.name}</span>
+                <span className="scene-legend-item-label">{planet.name}</span>
               </span>
             ))}
           </div>
