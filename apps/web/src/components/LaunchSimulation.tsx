@@ -292,6 +292,7 @@ function RenderHealthProbe() {
 export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimulationProps) {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls> | null>(null)
+  const pendingViewTargetRef = useRef<[number, number, number] | null>(null)
   const [cameraMode, setCameraMode] = useState<'follow' | 'free'>('free')
   const [selectedTarget, setSelectedTarget] = useState<LaunchViewTarget>('HOME')
   const [referenceFrame, setReferenceFrame] = useState<LiveReferenceFrame | null>(null)
@@ -354,13 +355,26 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
   }, [selectedTarget])
 
   const setView = useCallback((position: [number, number, number], target: [number, number, number]) => {
-    if (!cameraRef.current || !orbitControlsRef.current) return
+    if (!cameraRef.current) return
 
     cameraRef.current.position.set(position[0], position[1], position[2])
-    orbitControlsRef.current.target.set(target[0], target[1], target[2])
     cameraRef.current.lookAt(target[0], target[1], target[2])
-    orbitControlsRef.current.update()
+    pendingViewTargetRef.current = target
+
+    if (orbitControlsRef.current) {
+      orbitControlsRef.current.target.set(target[0], target[1], target[2])
+      orbitControlsRef.current.update()
+    }
   }, [])
+
+  useEffect(() => {
+    if (!orbitControlsRef.current || !pendingViewTargetRef.current) return
+
+    const [x, y, z] = pendingViewTargetRef.current
+    orbitControlsRef.current.target.set(x, y, z)
+    orbitControlsRef.current.update()
+    pendingViewTargetRef.current = null
+  })
 
   const snapHome = useCallback(() => {
     setCameraMode('free')
