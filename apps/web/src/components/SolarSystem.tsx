@@ -449,6 +449,9 @@ const ORBIT_LINE_OPACITY: Record<(typeof HELIOCENTRIC_ORBIT_BODIES)[number], num
   NEPTUNE: 0.45,
 }
 
+// Global multiplier for visible planet spin in UI scenes.
+const PLANET_ROTATION_VISUAL_MULTIPLIER = 0.2
+
 export function ensureRenderablePlanetPositions(
   positions: PlanetPosition[],
   missionTime = 0
@@ -563,7 +566,7 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
   const getRealisticRotation = (): number => {
     if (name === 'SUN') return 0
 
-    const timeInHours = missionTime * 0.01 * 24 // Convert to hours for rotation
+    const timeInHours = missionTime * 0.01 * 24 * PLANET_ROTATION_VISUAL_MULTIPLIER
     const rotationsCompleted = timeInHours / data.rotationPeriodHours
     const rotationAngle = (rotationsCompleted * 2 * Math.PI) * data.rotationDirection
 
@@ -780,7 +783,7 @@ function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
   useFrame((state, delta) => {
     if (meshRef.current && planetData) {
       // Realistic rotation based on planet's rotation period
-      const rotationSpeed = (2 * Math.PI) / (planetData.rotationPeriodHours * 3600) * delta * 1000; // Scaled for visualization
+      const rotationSpeed = (2 * Math.PI) / (planetData.rotationPeriodHours * 3600) * delta * 1000 * PLANET_ROTATION_VISUAL_MULTIPLIER; // Scaled for visualization
       meshRef.current.rotation.y += rotationSpeed * planetData.rotationDirection;
     }
   });

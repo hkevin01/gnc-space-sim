@@ -33,6 +33,8 @@ import {
   type MissionTrailSegment,
 } from '../utils/missionPropagation';
 
+const MIN_EARTH_SAFE_CAMERA_DISTANCE = EARTH_RADIUS_SCENE * 1.15
+
 /**
  * ID: SSIM-LAUNCH-001
  * Requirement: Render SLS rocket at Earth's visual surface in the solar
@@ -791,7 +793,7 @@ export function LaunchDemo({
         zoomSpeed={1.5}
         panSpeed={0.8}
         rotateSpeed={0.5}
-        minDistance={0.08}
+        minDistance={MIN_EARTH_SAFE_CAMERA_DISTANCE}
         maxDistance={900}
       />
     </group>
