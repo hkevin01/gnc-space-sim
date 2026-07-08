@@ -37,8 +37,13 @@ const EARTH_CAMERA_IDLE_RESNAP_DELAY_MS = 1100
 const EARTH_CAMERA_RESNAP_POSITION_LERP = 0.025
 const EARTH_CAMERA_RESNAP_TARGET_LERP = 0.06
 const IDLE_VISUAL_MISSION_TIME_RATE = 4
-const ROCKET_FORWARD_AXIS = new THREE.Vector3(-1, 0, 0)
+const ROCKET_FORWARD_AXIS = new THREE.Vector3(1, 0, 0)
 const MISSION_HANDOFF_BLEND_SECONDS = 18
+const BOOSTER_SEPARATION_ALTITUDE_KM = 42
+const CORE_SEPARATION_ALTITUDE_KM = 118
+const BOOSTER_SEPARATION_TIME_S = 125
+const CORE_SEPARATION_TIME_S = 230
+const SEPARATION_EFFECT_DURATION_S = 10
 
 const MIN_EARTH_SAFE_CAMERA_DISTANCE = EARTH_RADIUS_SCENE * 1.15
 
@@ -126,6 +131,8 @@ export function LaunchDemo({
   const previousSoiOwnerRef = useRef<MissionSoiOwner>('EARTH')
   const missionHandoffStartRef = useRef<number | null>(null)
   const missionHandoffAnchorRef = useRef<Vec3 | null>(null)
+  const boosterSeparationTimeRef = useRef<number | null>(null)
+  const coreSeparationTimeRef = useRef<number | null>(null)
 
   const guidance = useMemo(() => {
     return new GravityTurnGuidance(400000, (28.5 * Math.PI) / 180);
@@ -377,10 +384,32 @@ export function LaunchDemo({
       previousSoiOwnerRef.current = 'EARTH'
       missionHandoffStartRef.current = null
       missionHandoffAnchorRef.current = null
+      boosterSeparationTimeRef.current = null
+      coreSeparationTimeRef.current = null
       setMissionTelemetry(null)
       setMissionTrail([])
     }
   }, [isLaunched, setMissionTelemetry]);
+
+  useEffect(() => {
+    if (!isLaunched || launchTime < 0) return
+
+    const altitudeKm = (currentState?.altitude ?? 0) / 1000
+
+    if (
+      boosterSeparationTimeRef.current === null &&
+      (currentState?.phase === LaunchPhase.STAGE1_SEPARATION || altitudeKm >= BOOSTER_SEPARATION_ALTITUDE_KM || launchTime >= BOOSTER_SEPARATION_TIME_S)
+    ) {
+      boosterSeparationTimeRef.current = launchTime
+    }
+
+    if (
+      coreSeparationTimeRef.current === null &&
+      (currentState?.phase === LaunchPhase.STAGE2_IGNITION || altitudeKm >= CORE_SEPARATION_ALTITUDE_KM || launchTime >= CORE_SEPARATION_TIME_S)
+    ) {
+      coreSeparationTimeRef.current = launchTime
+    }
+  }, [currentState?.altitude, currentState?.phase, isLaunched, launchTime])
 
   useEffect(() => {
     if (!trajectoryRef.current) {
@@ -632,10 +661,26 @@ export function LaunchDemo({
   const phaseAfterCoreSep = phase === LaunchPhase.STAGE2_IGNITION || phase === LaunchPhase.STAGE2_BURN || phase === LaunchPhase.FAIRING_JETTISON || phase === LaunchPhase.ORBITAL_INSERTION;
   const phaseAfterIcpsSep = phase === LaunchPhase.ORBITAL_INSERTION;
 
-  const showAttachedBoosters = !phaseAfterBoosterSep;
-  const showBoosterSeparation = phase === LaunchPhase.STAGE1_SEPARATION;
-  const showAttachedCore = !phaseAfterCoreSep;
-  const showCoreSeparation = phase === LaunchPhase.STAGE2_IGNITION;
+  const altitudeKm = (currentState?.altitude ?? 0) / 1000
+  const hasBoosterSeparated = isLaunched && launchTime >= 0 && (
+    phaseAfterBoosterSep ||
+    altitudeKm >= BOOSTER_SEPARATION_ALTITUDE_KM ||
+    launchTime >= BOOSTER_SEPARATION_TIME_S ||
+    boosterSeparationTimeRef.current !== null
+  )
+  const hasCoreSeparated = isLaunched && launchTime >= 0 && (
+    phaseAfterCoreSep ||
+    altitudeKm >= CORE_SEPARATION_ALTITUDE_KM ||
+    launchTime >= CORE_SEPARATION_TIME_S ||
+    coreSeparationTimeRef.current !== null
+  )
+
+  const showAttachedBoosters = !hasBoosterSeparated;
+  const showBoosterSeparation = hasBoosterSeparated && boosterSeparationTimeRef.current !== null
+    && (launchTime - boosterSeparationTimeRef.current) <= SEPARATION_EFFECT_DURATION_S;
+  const showAttachedCore = !hasCoreSeparated;
+  const showCoreSeparation = hasCoreSeparated && coreSeparationTimeRef.current !== null
+    && (launchTime - coreSeparationTimeRef.current) <= SEPARATION_EFFECT_DURATION_S;
   const showAttachedIcps = !phaseAfterIcpsSep;
   const showIcpsSeparation = phaseAfterIcpsSep;
   const showOrbitalInsertionLabel = phase === LaunchPhase.ORBITAL_INSERTION;
