@@ -53,9 +53,9 @@ interface PropagationInput {
 }
 
 const SOI_FACTORS: Record<MissionSoiOwner, number> = {
-  EARTH: 12,
-  MOON: 9,
-  MARS: 10,
+  EARTH: 6,
+  MOON: 1.8,
+  MARS: 2.4,
 }
 
 function lerp(a: Vec3, b: Vec3, t: number): Vec3 {
