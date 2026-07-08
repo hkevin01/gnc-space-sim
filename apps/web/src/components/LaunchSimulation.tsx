@@ -146,9 +146,62 @@ function RenderHealthProbe() {
   const [triangles, setTriangles] = useState(0)
   const [cameraPos, setCameraPos] = useState<[number, number, number]>([0, 0, 0])
   const [originDistance, setOriginDistance] = useState(0)
+  const [visibilityState, setVisibilityState] = useState<string>(document.visibilityState)
+  const [hasFocus, setHasFocus] = useState<boolean>(document.hasFocus())
+  const [contextLost, setContextLost] = useState(false)
+  const [errorCount, setErrorCount] = useState(0)
+  const [lastError, setLastError] = useState<string>('none')
   const [originNdc, setOriginNdc] = useState<{ x: number; y: number; z: number } | null>(null)
   const meshRef = useRef<THREE.Mesh | null>(null)
   const { camera, gl } = useThree()
+
+  useEffect(() => {
+    const onVisibility = () => {
+      setVisibilityState(document.visibilityState)
+      setHasFocus(document.hasFocus())
+    }
+    const onFocus = () => setHasFocus(true)
+    const onBlur = () => setHasFocus(false)
+
+    const onWindowError = (event: ErrorEvent) => {
+      setErrorCount((count) => count + 1)
+      setLastError(event.message || 'window error')
+    }
+
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      setErrorCount((count) => count + 1)
+      const reason = typeof event.reason === 'string'
+        ? event.reason
+        : event.reason?.message || 'unhandled rejection'
+      setLastError(reason)
+    }
+
+    const onContextLost = () => {
+      setContextLost(true)
+    }
+
+    const onContextRestored = () => {
+      setContextLost(false)
+    }
+
+    document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('focus', onFocus)
+    window.addEventListener('blur', onBlur)
+    window.addEventListener('error', onWindowError)
+    window.addEventListener('unhandledrejection', onUnhandledRejection)
+    gl.domElement.addEventListener('webglcontextlost', onContextLost)
+    gl.domElement.addEventListener('webglcontextrestored', onContextRestored)
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('focus', onFocus)
+      window.removeEventListener('blur', onBlur)
+      window.removeEventListener('error', onWindowError)
+      window.removeEventListener('unhandledrejection', onUnhandledRejection)
+      gl.domElement.removeEventListener('webglcontextlost', onContextLost)
+      gl.domElement.removeEventListener('webglcontextrestored', onContextRestored)
+    }
+  }, [gl])
 
   useFrame(() => {
     frameCountRef.current += 1
@@ -208,6 +261,9 @@ function RenderHealthProbe() {
             `canvas: ${gl.domElement.width}x${gl.domElement.height}`,
             `draw calls: ${drawCalls} | triangles: ${triangles}`,
             `fallback mesh visible: ${meshVisible ? 'yes' : 'no'}`,
+            `visibility: ${visibilityState} | focus: ${hasFocus ? 'yes' : 'no'}`,
+            `webgl context lost: ${contextLost ? 'yes' : 'no'}`,
+            `runtime errors: ${errorCount} | last: ${lastError}`,
             `camera pos: ${cameraPos.map((value) => value.toFixed(2)).join(', ')} | |cam|=${originDistance.toFixed(2)}`,
             originNdc
               ? `origin ndc: ${originNdc.x.toFixed(2)}, ${originNdc.y.toFixed(2)}, ${originNdc.z.toFixed(2)}`

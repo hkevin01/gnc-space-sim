@@ -124,7 +124,7 @@ body {
 }
 
 .scene-canvas {
-  height: calc(100vh - 8rem);
+  height: calc(100vh - 6rem);
   flex: 1 1 auto;
   display: block;
 }
@@ -207,7 +207,7 @@ body {
   }
 
   .scene-canvas {
-    height: 65vh;
+    height: 72vh;
   }
 
   .scene-panel {
