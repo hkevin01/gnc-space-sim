@@ -314,7 +314,7 @@ export function LaunchDemo({
         }
       }
     }
-  }, 1);
+  });
 
   // Reset zoom flag when launch is reset
   useEffect(() => {

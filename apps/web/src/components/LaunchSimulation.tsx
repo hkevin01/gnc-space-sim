@@ -294,10 +294,20 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls> | null>(null)
   const pendingViewTargetRef = useRef<[number, number, number] | null>(null)
   const hasLockedInitialViewRef = useRef(false)
+  const contextRecoveryRef = useRef<number | null>(null)
+  const [canvasRecoveryKey, setCanvasRecoveryKey] = useState(0)
   const [cameraMode, setCameraMode] = useState<'follow' | 'free'>('free')
   const [selectedTarget, setSelectedTarget] = useState<LaunchViewTarget>('HOME')
   const [referenceFrame, setReferenceFrame] = useState<LiveReferenceFrame | null>(null)
   const isLaunched = useLaunchControl((state) => state.isLaunched)
+
+  useEffect(() => {
+    return () => {
+      if (contextRecoveryRef.current) {
+        window.clearTimeout(contextRecoveryRef.current)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (isLaunched) {
@@ -470,7 +480,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
       </div>
 
       <Canvas
-        key="launch-sim-canvas-debug-v2"
+        key={`launch-sim-canvas-${canvasRecoveryKey}`}
         frameloop="always"
         gl={(defaults) => {
           // Build renderer with explicit params once so context behavior is stable across reloads.
@@ -491,7 +501,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
           position: INITIAL_LAUNCH_VIEW.position,
           fov: 60,
           near: 0.001,
-          far: 2500
+          far: 12000
         }}
         style={{ background: '#000000', width: '100%', height: '100%' }}
         className="scene-canvas"
@@ -522,10 +532,22 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
           gl.domElement.addEventListener('webglcontextlost', (event) => {
             console.warn('WebGL context lost, preventing default behavior')
             event.preventDefault()
+
+            // Force a full canvas remount so R3F rebuilds scene and renderer state.
+            if (contextRecoveryRef.current) {
+              window.clearTimeout(contextRecoveryRef.current)
+            }
+            contextRecoveryRef.current = window.setTimeout(() => {
+              setCanvasRecoveryKey((value) => value + 1)
+            }, 0)
           })
 
           gl.domElement.addEventListener('webglcontextrestored', () => {
             console.log('WebGL context restored')
+            if (contextRecoveryRef.current) {
+              window.clearTimeout(contextRecoveryRef.current)
+              contextRecoveryRef.current = null
+            }
           })
         }}
       >
