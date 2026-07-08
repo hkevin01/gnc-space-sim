@@ -630,6 +630,40 @@ function moonBounceIntensityForTime(visualMissionTime: number): number {
   )
 }
 
+function moonBounceIntensityFromBodyPositions(positions: PlanetPosition[]): number {
+  const moon = positions.find((p) => p.name === 'MOON')
+  const earth = positions.find((p) => p.name === 'EARTH')
+
+  if (!moon || !earth) {
+    return MOON_BOUNCE_LIGHT_MIN_INTENSITY
+  }
+
+  const moonPos = moon.position as [number, number, number]
+  const earthPos = earth.position as [number, number, number]
+  const sunPos: [number, number, number] = [0, 0, 0]
+
+  const moonToSun = normalize3([
+    sunPos[0] - moonPos[0],
+    sunPos[1] - moonPos[1],
+    sunPos[2] - moonPos[2],
+  ])
+  const moonToEarth = normalize3([
+    earthPos[0] - moonPos[0],
+    earthPos[1] - moonPos[1],
+    earthPos[2] - moonPos[2],
+  ])
+
+  const cosPhaseAngle = THREE.MathUtils.clamp(dot3(moonToSun, moonToEarth), -1, 1)
+  const illuminatedFraction = (1 + cosPhaseAngle) * 0.5
+  const phaseWeight = Math.pow(illuminatedFraction, MOON_PHASE_RESPONSE_GAMMA)
+
+  return THREE.MathUtils.lerp(
+    MOON_BOUNCE_LIGHT_MIN_INTENSITY,
+    MOON_BOUNCE_LIGHT_MAX_INTENSITY,
+    phaseWeight,
+  )
+}
+
 export function ensureRenderablePlanetPositions(
   positions: PlanetPosition[],
   missionTime = 0
@@ -653,6 +687,7 @@ interface PlanetProps {
   showOrbit?: boolean
   missionTime?: number
   offset?: [number, number, number]
+  centerOn?: keyof typeof SOLAR_SYSTEM_DATA
   renderRadius: number
 }
 
@@ -670,7 +705,7 @@ export function getRenderRadius(name: SolarBodyName, centerOn: 'SUN' | 'EARTH' |
   return baseRadius
 }
 
-export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 0, 0], renderRadius }: PlanetProps) {
+export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 0, 0], centerOn, renderRadius }: PlanetProps) {
   const data = SOLAR_SYSTEM_DATA[name]
 
   // Check if this planet has a texture URL
@@ -683,6 +718,11 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
   const resolveVisualMissionTime = (elapsedTime: number): number => {
     if (missionTime > 0) return missionTime
     return elapsedTime * IDLE_VISUAL_MISSION_TIME_RATE
+  }
+
+  const resolveOffsetForTime = (visualMissionTime: number): [number, number, number] => {
+    if (!centerOn || centerOn === 'SUN') return [0, 0, 0]
+    return getBodyPosition(centerOn, visualMissionTime)
   }
 
   // Calculate realistic orbital position based on mission time and astronomical data
@@ -759,6 +799,7 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
 
   useFrame((state) => {
     const visualMissionTime = resolveVisualMissionTime(state.clock.elapsedTime)
+    const frameOffset = resolveOffsetForTime(visualMissionTime)
 
     if (meshRef.current) {
       // Use realistic rotation based on actual planetary rotation periods and directions
@@ -770,7 +811,7 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
     }
     if (groupRef.current) {
       const [x, y, z] = getOrbitalPosition(visualMissionTime)
-      groupRef.current.position.set(x - offset[0], y - offset[1], z - offset[2])
+      groupRef.current.position.set(x - frameOffset[0], y - frameOffset[1], z - frameOffset[2])
     }
 
     if (name === 'MOON' && moonLightRef.current) {
@@ -778,11 +819,13 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
     }
   })
 
-  const initialOrbitalPosition = getOrbitalPosition(missionTime > 0 ? missionTime : 0)
+  const initialVisualMissionTime = missionTime > 0 ? missionTime : 0
+  const initialOffset = resolveOffsetForTime(initialVisualMissionTime)
+  const initialOrbitalPosition = getOrbitalPosition(initialVisualMissionTime)
   const initialGroupPosition: [number, number, number] = [
-    initialOrbitalPosition[0] - offset[0],
-    initialOrbitalPosition[1] - offset[1],
-    initialOrbitalPosition[2] - offset[2],
+    initialOrbitalPosition[0] - initialOffset[0],
+    initialOrbitalPosition[1] - initialOffset[1],
+    initialOrbitalPosition[2] - initialOffset[2],
   ]
 
   return (
@@ -953,17 +996,17 @@ export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'S
       <ambientLight intensity={0.09} />
 
       {/* All solar system bodies */}
-      <Planet name="SUN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('SUN', centerOn)} />
-      <Planet name="MERCURY" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('MERCURY', centerOn)} />
-      <Planet name="VENUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('VENUS', centerOn)} />
-      <Planet name="EARTH" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('EARTH', centerOn)} />
-      <Planet name="MOON" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('MOON', centerOn)} />
-      <Planet name="MARS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('MARS', centerOn)} />
+      <Planet name="SUN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} centerOn={centerOn} renderRadius={getRenderRadius('SUN', centerOn)} />
+      <Planet name="MERCURY" showOrbit={showOrbits} missionTime={missionTime} offset={offset} centerOn={centerOn} renderRadius={getRenderRadius('MERCURY', centerOn)} />
+      <Planet name="VENUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} centerOn={centerOn} renderRadius={getRenderRadius('VENUS', centerOn)} />
+      <Planet name="EARTH" showOrbit={showOrbits} missionTime={missionTime} offset={offset} centerOn={centerOn} renderRadius={getRenderRadius('EARTH', centerOn)} />
+      <Planet name="MOON" showOrbit={showOrbits} missionTime={missionTime} offset={offset} centerOn={centerOn} renderRadius={getRenderRadius('MOON', centerOn)} />
+      <Planet name="MARS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} centerOn={centerOn} renderRadius={getRenderRadius('MARS', centerOn)} />
       <AsteroidBelt showAsteroids={true} asteroidCount={120} />
-      <Planet name="JUPITER" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('JUPITER', centerOn)} />
-      <Planet name="SATURN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('SATURN', centerOn)} />
-      <Planet name="URANUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('URANUS', centerOn)} />
-      <Planet name="NEPTUNE" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('NEPTUNE', centerOn)} />
+      <Planet name="JUPITER" showOrbit={showOrbits} missionTime={missionTime} offset={offset} centerOn={centerOn} renderRadius={getRenderRadius('JUPITER', centerOn)} />
+      <Planet name="SATURN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} centerOn={centerOn} renderRadius={getRenderRadius('SATURN', centerOn)} />
+      <Planet name="URANUS" showOrbit={showOrbits} missionTime={missionTime} offset={offset} centerOn={centerOn} renderRadius={getRenderRadius('URANUS', centerOn)} />
+      <Planet name="NEPTUNE" showOrbit={showOrbits} missionTime={missionTime} offset={offset} centerOn={centerOn} renderRadius={getRenderRadius('NEPTUNE', centerOn)} />
     </group>
   )
 }
@@ -972,9 +1015,10 @@ export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'S
 interface NasaPlanetProps {
   planetPosition: PlanetPosition;
   offset: [number, number, number];
+  moonBounceIntensity: number;
 }
 
-function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
+function NasaPlanet({ planetPosition, offset, moonBounceIntensity }: NasaPlanetProps) {
   const meshRef = useRef<THREE.Mesh>(null);
   const { name, position } = planetPosition;
 
@@ -1036,7 +1080,7 @@ function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
       {name === 'MOON' && (
         <pointLight
           color="#cfd8ff"
-          intensity={0.06}
+          intensity={moonBounceIntensity}
           distance={0.95}
           decay={2.4}
         />
@@ -1111,6 +1155,10 @@ export function NasaSolarSystem({
   }, [centerOn, renderPositions]);
 
   const offset: [number, number, number] = [centerPos[0], centerPos[1], centerPos[2]];
+  const moonBounceIntensity = useMemo(
+    () => moonBounceIntensityFromBodyPositions(renderPositions),
+    [renderPositions],
+  )
 
   useEffect(() => {
     onReferenceFrameChange?.({
@@ -1197,6 +1245,7 @@ export function NasaSolarSystem({
           key={planetPosition.name}
           planetPosition={planetPosition}
           offset={offset}
+          moonBounceIntensity={moonBounceIntensity}
         />
       ))}
 
