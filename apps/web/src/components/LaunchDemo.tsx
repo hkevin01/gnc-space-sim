@@ -131,6 +131,7 @@ export function LaunchDemo({
   const previousSoiOwnerRef = useRef<MissionSoiOwner>('EARTH')
   const missionHandoffStartRef = useRef<number | null>(null)
   const missionHandoffAnchorRef = useRef<Vec3 | null>(null)
+  const lastRenderedRocketPosRef = useRef<THREE.Vector3 | null>(null)
   const boosterSeparationTimeRef = useRef<number | null>(null)
   const coreSeparationTimeRef = useRef<number | null>(null)
 
@@ -384,6 +385,7 @@ export function LaunchDemo({
       previousSoiOwnerRef.current = 'EARTH'
       missionHandoffStartRef.current = null
       missionHandoffAnchorRef.current = null
+      lastRenderedRocketPosRef.current = null
       boosterSeparationTimeRef.current = null
       coreSeparationTimeRef.current = null
       setMissionTelemetry(null)
@@ -545,10 +547,14 @@ export function LaunchDemo({
         const activePoint = blendedMissionPoint ?? launchConstraint.point
         const activeVelocity = missionVehicle?.velocity
         const newPos = new THREE.Vector3(activePoint[0], activePoint[1], activePoint[2]);
+        const pathDirection = lastRenderedRocketPosRef.current
+          ? newPos.clone().sub(lastRenderedRocketPosRef.current)
+          : null
 
         // Validate position before setting (max ~10 scene units = lunar distance range)
         if (newPos.length() < 10) {
           vehicleRef.current.position.copy(newPos);
+          lastRenderedRocketPosRef.current = newPos.clone();
 
           const localUp = new THREE.Vector3(capeFrame.up[0], capeFrame.up[1], capeFrame.up[2]).normalize()
 
@@ -569,7 +575,9 @@ export function LaunchDemo({
               : ([0, 0, 0] as Vec3)
 
             const directionSource = activeVelocity ?? launchFrameVelocity
-            const vel = new THREE.Vector3(directionSource[0], directionSource[1], directionSource[2]);
+            const vel = pathDirection && pathDirection.lengthSq() > 1e-10
+              ? pathDirection
+              : new THREE.Vector3(directionSource[0], directionSource[1], directionSource[2]);
             if (vel.length() > 0) {
               const desiredDirection = vel.normalize()
               if (!shouldUseMissionPropagation) {

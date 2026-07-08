@@ -90,16 +90,30 @@ function distance(a: Vec3, b: Vec3): number {
   return Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2])
 }
 
-function buildLunarPosition(activePhase: (CompressedMissionPhase & { progress: number }) | null): { position: Vec3; segment: MissionTrailSegment } {
+function buildLunarPosition(
+  activePhase: (CompressedMissionPhase & { progress: number }) | null,
+  missionTime: number,
+): { position: Vec3; segment: MissionTrailSegment } {
   const earth: Vec3 = [0, 0, 0]
   const earthRadius = getBodySceneRadius('EARTH')
-  const moonPos = getBodyPositionRelativeToCenter('MOON', 'EARTH', 0)
+  const moonPos = getBodyPositionRelativeToCenter('MOON', 'EARTH', missionTime)
+  const sunPos = getBodyPositionRelativeToCenter('SUN', 'EARTH', missionTime)
   const moonRadius = getBodySceneRadius('MOON')
 
   const departure = [earthRadius * 3.2, 0.02, earthRadius * 0.4] as Vec3
-  const moonApproachDir = normalize(subtract(moonPos, earth))
-  const moonApproach = subtract(moonPos, scale(moonApproachDir, moonRadius * 4.5)) as Vec3
-  const outboundControl = [moonPos[0] * 0.45, 0.2, moonPos[2] * 0.2] as Vec3
+  const moonDarkSideDir = normalize(subtract(moonPos, sunPos))
+  const moonApproach = [
+    moonPos[0] + moonDarkSideDir[0] * moonRadius * 4.8,
+    moonPos[1] + moonDarkSideDir[1] * moonRadius * 4.8,
+    moonPos[2] + moonDarkSideDir[2] * moonRadius * 4.8,
+  ] as Vec3
+
+  // Bend the transfer arc above/below the ecliptic so the line clearly swings behind the Moon.
+  const outboundControl = [
+    moonPos[0] * 0.42 - moonDarkSideDir[0] * moonRadius * 1.2,
+    0.24 + moonDarkSideDir[1] * moonRadius * 0.35,
+    moonPos[2] * 0.24 - moonDarkSideDir[2] * moonRadius * 1.2,
+  ] as Vec3
   const returnControl = [moonPos[0] * 0.55, -0.22, -moonPos[2] * 0.22] as Vec3
   const earthReturn = [earthRadius * 2.8, -0.03, -earthRadius * 0.5] as Vec3
 
@@ -227,7 +241,7 @@ export function propagateMissionVehicle({
   dt,
 }: PropagationInput): PropagatedMissionVehicle {
   const missionPosition = selectedMission === 'lunarMission'
-    ? buildLunarPosition(activePhase)
+    ? buildLunarPosition(activePhase, missionTime)
     : selectedMission === 'marsTransfer'
       ? buildMarsPosition(activePhase, missionTime)
       : buildEarthOrbitPosition(activePhase)

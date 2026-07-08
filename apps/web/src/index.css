@@ -226,6 +226,13 @@ body {
     grid-template-areas:
       "main sidebar"
       "telemetry telemetry";
+    align-items: start;
+  }
+
+  .app-grid-sidebar {
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    padding-right: 0.2rem;
   }
 
   .app-telemetry-grid {
