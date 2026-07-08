@@ -256,13 +256,16 @@ export function LaunchDemo({
     if (isUserInteracting.current) return;
 
     const controls = controlsRef.current
-    const earthTarget = new THREE.Vector3(0, 0, 0)
+    const earthTarget = new THREE.Vector3(
+      capeFrame.surface[0],
+      capeFrame.surface[1],
+      capeFrame.surface[2],
+    )
     const idleForMs = Date.now() - lastUserInteraction.current
     const shouldResnapToEarth = idleForMs >= EARTH_CAMERA_IDLE_RESNAP_DELAY_MS && (!isLaunched || cameraMode === 'free')
 
     if (shouldResnapToEarth && controls) {
-      const currentTarget = controls.target.clone()
-      const orbitOffset = camera.position.clone().sub(currentTarget)
+      const orbitOffset = camera.position.clone().sub(earthTarget)
 
       if (orbitOffset.lengthSq() < 1e-8) {
         orbitOffset.set(EARTH_RADIUS_SCENE * 2.4, EARTH_RADIUS_SCENE * 0.9, EARTH_RADIUS_SCENE * 2.1)

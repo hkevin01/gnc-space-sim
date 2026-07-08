@@ -228,6 +228,111 @@ function OrbitLine({ radius, color = '#ffffff', opacity = 0.5 }: { radius: numbe
   )
 }
 
+function NebulaBackdrop() {
+  const nebulaGroupRef = useRef<THREE.Group>(null)
+
+  const nebulaTexture = useMemo(() => {
+    const size = 384
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+    const context = canvas.getContext('2d')
+
+    if (!context) return null
+
+    context.clearRect(0, 0, size, size)
+
+    // Build an irregular cloud texture from overlapping soft blobs.
+    for (let i = 0; i < 9; i++) {
+      const cx = size * (0.2 + Math.random() * 0.6)
+      const cy = size * (0.2 + Math.random() * 0.6)
+      const radius = size * (0.14 + Math.random() * 0.22)
+      const gradient = context.createRadialGradient(cx, cy, radius * 0.08, cx, cy, radius)
+      const tint = i % 3 === 0 ? '180,210,255' : i % 3 === 1 ? '147,173,255' : '120,205,195'
+
+      gradient.addColorStop(0, `rgba(${tint}, 0.24)`)
+      gradient.addColorStop(0.55, `rgba(${tint}, 0.11)`)
+      gradient.addColorStop(1, 'rgba(8, 18, 32, 0)')
+
+      context.fillStyle = gradient
+      context.fillRect(cx - radius, cy - radius, radius * 2, radius * 2)
+    }
+
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.needsUpdate = true
+    return texture
+  }, [])
+
+  const [dustGeometry, dustMaterial] = useMemo(() => {
+    const starCount = 2400
+    const positions = new Float32Array(starCount * 3)
+    const colors = new Float32Array(starCount * 3)
+    const geometry = new THREE.BufferGeometry()
+
+    for (let i = 0; i < starCount; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const radius = 6400 + (Math.random() - 0.5) * 2100
+      const verticalOffset = (Math.random() + Math.random() + Math.random() - 1.5) * 360
+
+      positions[i * 3] = Math.cos(angle) * radius
+      positions[i * 3 + 1] = verticalOffset
+      positions[i * 3 + 2] = Math.sin(angle) * radius
+
+      const brightness = 0.35 + Math.random() * 0.4
+      colors[i * 3] = brightness * 0.8
+      colors[i * 3 + 1] = brightness * 0.9
+      colors[i * 3 + 2] = brightness
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+
+    const material = new THREE.PointsMaterial({
+      size: 3.2,
+      sizeAttenuation: true,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.18,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+
+    return [geometry, material] as const
+  }, [])
+
+  useFrame((_, delta) => {
+    if (nebulaGroupRef.current) {
+      nebulaGroupRef.current.rotation.y += delta * 0.0003
+    }
+  })
+
+  if (!nebulaTexture) return null
+
+  return (
+    <group ref={nebulaGroupRef}>
+      {/* Milky-way-like dust lane made of faint additive points. */}
+      <group rotation={[0.42, 0.18, 0.05]}>
+        <points geometry={dustGeometry} material={dustMaterial} />
+      </group>
+
+      {/* Distant irregular nebula wisps. */}
+      <sprite position={[3000, 960, -3600]} scale={[1900, 1300, 1]}>
+        <spriteMaterial map={nebulaTexture} color="#9bbcff" opacity={0.14} transparent depthWrite={false} rotation={0.5} />
+      </sprite>
+      <sprite position={[-3200, -720, 3000]} scale={[2200, 1400, 1]}>
+        <spriteMaterial map={nebulaTexture} color="#bfabff" opacity={0.12} transparent depthWrite={false} rotation={-0.22} />
+      </sprite>
+      <sprite position={[760, -1240, 3900]} scale={[1500, 980, 1]}>
+        <spriteMaterial map={nebulaTexture} color="#7ad1c7" opacity={0.1} transparent depthWrite={false} rotation={0.12} />
+      </sprite>
+      <sprite position={[-1500, 1400, 4200]} scale={[1300, 820, 1]}>
+        <spriteMaterial map={nebulaTexture} color="#8fc9ff" opacity={0.09} transparent depthWrite={false} rotation={0.3} />
+      </sprite>
+    </group>
+  )
+}
+
 /**
  * ACCURATE SOLAR SYSTEM IMPLEMENTATION
  * ====================================
@@ -777,6 +882,7 @@ export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'S
     <group>
       {/* Star field background */}
       <StarField count={3200} radius={8000} />
+      <NebulaBackdrop />
 
       {/* Light source from the Sun */}
       <pointLight
@@ -955,6 +1061,7 @@ export function NasaSolarSystem({
       {/* Star field background - Enhanced for better visibility */}
       {/* Star field background with enhanced radius for larger solar system */}
       <StarField count={5000} radius={8000} />
+      <NebulaBackdrop />
 
       {/* Light source from the Sun */}
       <pointLight
