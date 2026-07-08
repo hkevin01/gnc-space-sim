@@ -121,11 +121,50 @@ function TexturedSphere({
     <mesh>
       <sphereGeometry args={[radius, 32, 32]} />
       {useUnlitMaterial ? (
-        <meshBasicMaterial
-          color="#ffffff"
-          map={texture}
-          toneMapped={false}
-        />
+        <>
+          <meshBasicMaterial
+            color="#ffd27a"
+            toneMapped={false}
+            side={THREE.DoubleSide}
+          />
+          <mesh scale={[1.002, 1.002, 1.002]}>
+            <sphereGeometry args={[radius, 32, 32]} />
+            <meshBasicMaterial
+              map={texture}
+              color="#ffefcf"
+              transparent
+              opacity={0.52}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              side={THREE.DoubleSide}
+              toneMapped={false}
+            />
+          </mesh>
+          <mesh scale={[1.008, 1.008, 1.008]}>
+            <sphereGeometry args={[radius, 24, 24]} />
+            <meshBasicMaterial
+              color="#ffb24a"
+              transparent
+              opacity={0.14}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              side={THREE.DoubleSide}
+              toneMapped={false}
+            />
+          </mesh>
+          <mesh scale={[1.045, 1.045, 1.045]}>
+            <sphereGeometry args={[radius, 24, 24]} />
+            <meshBasicMaterial
+              color="#ffcf7a"
+              transparent
+              opacity={0.16}
+              blending={THREE.AdditiveBlending}
+              depthWrite={false}
+              side={THREE.DoubleSide}
+              toneMapped={false}
+            />
+          </mesh>
+        </>
       ) : (
         <meshStandardMaterial
           color={materialColor}
