@@ -174,11 +174,11 @@ export function clampPointOutsideSphere(point: Vec3, center: Vec3, minimumDistan
 }
 
 export function cameraDistanceForAltitudeKm(altitudeKm: number): number {
-  if (altitudeKm < 50) return EARTH_RADIUS_SCENE * 0.5
-  if (altitudeKm < 200) return EARTH_RADIUS_SCENE * 0.8
-  if (altitudeKm < 500) return EARTH_RADIUS_SCENE * 1.5
-  if (altitudeKm < 2000) return EARTH_RADIUS_SCENE * 3.0
-  return EARTH_RADIUS_SCENE * 6.0
+  if (altitudeKm < 50) return EARTH_RADIUS_SCENE * 0.42
+  if (altitudeKm < 200) return EARTH_RADIUS_SCENE * 0.65
+  if (altitudeKm < 500) return EARTH_RADIUS_SCENE * 1.1
+  if (altitudeKm < 2000) return EARTH_RADIUS_SCENE * 2.1
+  return EARTH_RADIUS_SCENE * 4.2
 }
 
 export function followCameraTarget(
@@ -194,10 +194,10 @@ export function followCameraTarget(
   const frame = getCapeCanaveralWorldFrame(missionTime)
   const position = add(
     add(
-      add(rocketPos, scale(frame.east, d * 0.75)),
-      scale(frame.north, d * 0.18),
+      add(rocketPos, scale(frame.east, d * 0.62)),
+      scale(frame.north, d * 0.14),
     ),
-    scale(frame.up, d * 0.38),
+    scale(frame.up, d * 0.3),
   )
   return { distance: d, position, lookAt: rocketPos }
 }
