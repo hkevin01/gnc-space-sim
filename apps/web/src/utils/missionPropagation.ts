@@ -110,12 +110,12 @@ function buildLunarPosition(
 
   // Bend the transfer arc above/below the ecliptic so the line clearly swings behind the Moon.
   const outboundControl = [
-    moonPos[0] * 0.42 - moonDarkSideDir[0] * moonRadius * 1.2,
-    0.24 + moonDarkSideDir[1] * moonRadius * 0.35,
-    moonPos[2] * 0.24 - moonDarkSideDir[2] * moonRadius * 1.2,
+    moonPos[0] * 0.34 - moonDarkSideDir[0] * moonRadius * 2.0,
+    0.42 + moonDarkSideDir[1] * moonRadius * 0.6,
+    moonPos[2] * 0.34 - moonDarkSideDir[2] * moonRadius * 2.0,
   ] as Vec3
-  const returnControl = [moonPos[0] * 0.55, -0.22, -moonPos[2] * 0.22] as Vec3
-  const earthReturn = [earthRadius * 2.8, -0.03, -earthRadius * 0.5] as Vec3
+  const returnControl = [moonPos[0] * 0.58, -0.34, -moonPos[2] * 0.34] as Vec3
+  const earthReturn = [earthRadius * 2.8, -0.08, -earthRadius * 0.58] as Vec3
 
   if (!activePhase) {
     return { position: departure, segment: 'launch' }
