@@ -26,6 +26,7 @@ import {
   getBodyPositionRelativeToCenter,
   getBodySceneRadius,
   getMaxHeliocentricOrbitRadius,
+  SolarSystem,
   type SolarBodyName,
 } from './SolarSystem'
 import {
@@ -300,6 +301,8 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
   const [selectedTarget, setSelectedTarget] = useState<LaunchViewTarget>('HOME')
   const [referenceFrame, setReferenceFrame] = useState<LiveReferenceFrame | null>(null)
   const isLaunched = useLaunchControl((state) => state.isLaunched)
+  const launchTime = useLaunchControl((state) => state.launchTime)
+  const useStableScene = true
 
   useEffect(() => {
     return () => {
@@ -559,17 +562,34 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
 
         <RenderHealthProbe />
 
-        <LaunchDemo
-          selectedMission={selectedMission}
-          timeMultiplier={100}
-          showTrajectory={true}
-          cameraMode={cameraMode}
-          onCameraRef={(ref) => {
-            orbitControlsRef.current = ref.current
-          }}
-        />
-
-        {/* OrbitControls is managed inside LaunchDemo for camera follow */}
+        {useStableScene ? (
+          <>
+            <SolarSystem showOrbits={true} missionTime={Math.max(0, launchTime)} centerOn="EARTH" />
+            <OrbitControls
+              ref={orbitControlsRef}
+              enablePan={true}
+              enableZoom={true}
+              enableRotate={true}
+              enableDamping={true}
+              dampingFactor={0.08}
+              zoomSpeed={1.2}
+              panSpeed={0.7}
+              rotateSpeed={0.55}
+              minDistance={0.08}
+              maxDistance={900}
+            />
+          </>
+        ) : (
+          <LaunchDemo
+            selectedMission={selectedMission}
+            timeMultiplier={100}
+            showTrajectory={true}
+            cameraMode={cameraMode}
+            onCameraRef={(ref) => {
+              orbitControlsRef.current = ref.current
+            }}
+          />
+        )}
       </Canvas>
     </div>
   )
