@@ -97,12 +97,14 @@ function TexturedSphere({
   emissive,
   emissiveIntensity = 0,
   atmosphereGlow = false,
+  useUnlitMaterial = false,
 }: {
   textureUrl: string;
   radius: number;
   emissive?: string;
   emissiveIntensity?: number;
   atmosphereGlow?: boolean;
+  useUnlitMaterial?: boolean;
 }) {
   const texture = useLoader(TextureLoader, textureUrl)
   texture.colorSpace = THREE.SRGBColorSpace
@@ -118,16 +120,24 @@ function TexturedSphere({
   return (
     <mesh>
       <sphereGeometry args={[radius, 32, 32]} />
-      <meshStandardMaterial
-        color={materialColor}
-        map={texture}
-        roughness={0.82}
-        metalness={0.04}
-        emissive={materialEmissive}
-        emissiveIntensity={materialEmissiveIntensity}
-        transparent={atmosphereGlow}
-        opacity={materialOpacity}
-      />
+      {useUnlitMaterial ? (
+        <meshBasicMaterial
+          color="#ffffff"
+          map={texture}
+          toneMapped={false}
+        />
+      ) : (
+        <meshStandardMaterial
+          color={materialColor}
+          map={texture}
+          roughness={0.82}
+          metalness={0.04}
+          emissive={materialEmissive}
+          emissiveIntensity={materialEmissiveIntensity}
+          transparent={atmosphereGlow}
+          opacity={materialOpacity}
+        />
+      )}
     </mesh>
   )
 }
@@ -146,6 +156,7 @@ function SafeTexturedSphere(props: {
   emissive?: string;
   emissiveIntensity?: number;
   atmosphereGlow?: boolean;
+  useUnlitMaterial?: boolean;
 }) {
   const fallback = (
     <ColoredSphere
@@ -164,6 +175,7 @@ function SafeTexturedSphere(props: {
           emissive={props.emissive}
           emissiveIntensity={props.emissiveIntensity}
           atmosphereGlow={props.atmosphereGlow}
+          useUnlitMaterial={props.useUnlitMaterial}
         />
       </Suspense>
     </TextureErrorBoundary>
@@ -643,6 +655,7 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
               emissive={name === 'SUN' ? data.color : undefined}
               emissiveIntensity={name === 'SUN' ? 0.12 : 0}
               atmosphereGlow={name === 'EARTH'}
+              useUnlitMaterial={name === 'SUN'}
             />
           </group>
         ) : (
@@ -774,7 +787,7 @@ export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'S
       />
 
       {/* Ambient light for overall visibility */}
-      <ambientLight intensity={0.2} />
+      <ambientLight intensity={0.06} />
 
       {/* All solar system bodies */}
       <Planet name="SUN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('SUN', centerOn)} />
@@ -838,6 +851,7 @@ function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
             emissive={name === 'SUN' ? planetData.color : undefined}
             emissiveIntensity={name === 'SUN' ? 0.12 : 0}
             atmosphereGlow={name === 'EARTH'}
+            useUnlitMaterial={name === 'SUN'}
           />
         </group>
       ) : (
@@ -944,7 +958,7 @@ export function NasaSolarSystem({
       {/* Light source from the Sun */}
       <pointLight
         position={[-offset[0], -offset[1], -offset[2]]}
-        intensity={2}
+        intensity={8}
         color="#ffffff"
         shadow-mapSize={[2048, 2048]}
         shadow-camera-near={1}
@@ -952,7 +966,7 @@ export function NasaSolarSystem({
       />
 
       {/* Ambient light for overall visibility */}
-      <ambientLight intensity={0.3} />
+      <ambientLight intensity={0.08} />
 
       {/* Data source indicator */}
       {!loading && (
