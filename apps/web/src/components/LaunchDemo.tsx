@@ -21,9 +21,17 @@ import {
   ROCKET_VISUAL_SCALE,
   followCameraTarget,
   rocketScenePositionFromR,
+  applyBoundaryAwareCameraFraming,
+  type Vec3,
 } from '../utils/launchVisualBehavior';
-import { buildCompressedMissionTimeline, getCompressedMissionPhase, getLunarMissionTrailProgress } from '../utils/missionTimeline';
-import { buildSceneBodyBoundaries, constrainPointToBoundaries } from '../utils/sceneBoundaries';
+import { buildCompressedMissionTimeline, getCompressedMissionPhase } from '../utils/missionTimeline';
+import { buildSceneBodyBoundaries, constrainPointToBoundariesDetailed } from '../utils/sceneBoundaries';
+import {
+  propagateMissionVehicle,
+  resolveSoiOwner,
+  type MissionSoiOwner,
+  type MissionTrailSegment,
+} from '../utils/missionPropagation';
 
 /**
  * ID: SSIM-LAUNCH-001
@@ -67,6 +75,7 @@ export function LaunchDemo({
   const setLaunchTime = useLaunchControl((state) => state.setLaunchTime);
   const currentState = useLaunchControl((state) => state.currentState);
   const setCurrentState = useLaunchControl((state) => state.setCurrentState);
+  const setMissionTelemetry = useLaunchControl((state) => state.setMissionTelemetry);
   const resetLaunch = useLaunchControl((state) => state.resetLaunch);
   const isLaunched = useLaunchControl((state) => state.isLaunched);
 
@@ -102,6 +111,9 @@ export function LaunchDemo({
       capeFrame.surface[2],
     ),
   ]);
+  const [missionTrail, setMissionTrail] = useState<Array<{ point: Vec3; segment: MissionTrailSegment }>>([])
+  const previousMissionPointRef = useRef<Vec3 | undefined>(undefined)
+  const previousSoiOwnerRef = useRef<MissionSoiOwner>('EARTH')
 
   const guidance = useMemo(() => {
     return new GravityTurnGuidance(400000, (28.5 * Math.PI) / 180);
@@ -117,58 +129,24 @@ export function LaunchDemo({
     return getCompressedMissionPhase(lunarTimeline, launchTime)
   }, [launchTime, lunarTimeline, selectedMission])
 
-  const lunarTrailProgress = useMemo(() => {
-    if (selectedMission !== 'lunarMission') {
-      return { outbound: 0, operations: 0, returnLeg: 0 }
-    }
-    return getLunarMissionTrailProgress(lunarTimeline, Math.max(0, launchTime))
-  }, [launchTime, lunarTimeline, selectedMission])
-
-  const lunarTransferPreview = useMemo(() => {
-    if (selectedMission !== 'lunarMission') return null;
-
-    const moon = getBodyPositionRelativeToCenter('MOON', 'EARTH', 0);
-    const earth = new THREE.Vector3(0, 0, 0);
-    const moonPoint = new THREE.Vector3(moon[0], moon[1], moon[2]);
-    const moonOpsRadius = getBodySceneRadius('MOON') * 3.5;
-    const outbound = new THREE.QuadraticBezierCurve3(
-      earth,
-      new THREE.Vector3(moonPoint.x * 0.45, 0.18, moonPoint.z * 0.18),
-      moonPoint,
-    );
-    const lunarOps: Array<[number, number, number]> = [];
-    for (let index = 0; index <= 48; index += 1) {
-      const angle = (index / 48) * Math.PI * 2;
-      lunarOps.push([
-        moonPoint.x + Math.cos(angle) * moonOpsRadius,
-        moonPoint.y + Math.sin(angle) * moonOpsRadius * 0.25,
-        moonPoint.z + Math.sin(angle) * moonOpsRadius,
-      ]);
-    }
-    const inbound = new THREE.QuadraticBezierCurve3(
-      moonPoint,
-      new THREE.Vector3(moonPoint.x * 0.55, -0.2, -moonPoint.z * 0.22),
-      earth,
-    );
-
-    return {
-      moonPoint,
-      outbound: outbound.getPoints(64).map((point) => [point.x, point.y, point.z] as [number, number, number]),
-      lunarOps,
-      inbound: inbound.getPoints(64).map((point) => [point.x, point.y, point.z] as [number, number, number]),
-    };
-  }, [selectedMission]);
-
-  const slicePoints = useCallback((points: Array<[number, number, number]>, progress: number) => {
-    if (points.length < 2 || progress <= 0) return null;
-    if (progress >= 1) return points;
-    const targetCount = Math.max(2, Math.ceil((points.length - 1) * progress) + 1);
-    return points.slice(0, targetCount);
-  }, []);
-
   const protectedBodies = useMemo(() => {
     return buildSceneBodyBoundaries(launchTime, 'EARTH')
   }, [launchTime])
+
+  const outboundTrailPoints = useMemo(() => {
+    const points = missionTrail.filter((entry) => entry.segment === 'outbound').map((entry) => entry.point)
+    return points.length >= 2 ? points : null
+  }, [missionTrail])
+
+  const operationsTrailPoints = useMemo(() => {
+    const points = missionTrail.filter((entry) => entry.segment === 'operations' || entry.segment === 'arrival').map((entry) => entry.point)
+    return points.length >= 2 ? points : null
+  }, [missionTrail])
+
+  const returnTrailPoints = useMemo(() => {
+    const points = missionTrail.filter((entry) => entry.segment === 'return' || entry.segment === 'cruise').map((entry) => entry.point)
+    return points.length >= 2 ? points : null
+  }, [missionTrail])
 
   useEffect(() => {
     if (onCameraRef) {

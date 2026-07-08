@@ -1,5 +1,6 @@
 import { LaunchPhase, LaunchState } from '@gnc/core'
 import { create } from 'zustand'
+import type { MissionTelemetrySnapshot } from '../utils/missionPropagation'
 
 // Initial state for launch simulation
 const initialState: LaunchState = {
@@ -30,8 +31,10 @@ export interface LaunchControlState {
   isLaunched: boolean
   launchTime: number
   currentState: LaunchState | null
+  missionTelemetry: MissionTelemetrySnapshot | null
   setLaunchTime: (time: number | ((prev: number) => number)) => void
   setCurrentState: (state: LaunchState | null) => void
+  setMissionTelemetry: (telemetry: MissionTelemetrySnapshot | null) => void
   initiateLaunch: () => void
   resetLaunch: () => void
 }
@@ -40,6 +43,7 @@ export const useLaunchControl = create<LaunchControlState>((set) => ({
   isLaunched: false,
   launchTime: -10,
   currentState: initialState, // Initialize with initialState instead of null
+  missionTelemetry: null,
   setLaunchTime: (time) => {
     if (typeof time === 'function') {
       set((state) => ({ launchTime: time(state.launchTime) }))
@@ -48,6 +52,7 @@ export const useLaunchControl = create<LaunchControlState>((set) => ({
     }
   },
   setCurrentState: (state) => set({ currentState: state }),
+  setMissionTelemetry: (telemetry) => set({ missionTelemetry: telemetry }),
   initiateLaunch: () => {
     const launchState: LaunchState = {
       ...initialState,
@@ -57,7 +62,8 @@ export const useLaunchControl = create<LaunchControlState>((set) => ({
     set({
       isLaunched: true,
       launchTime: -10, // Start countdown at -10 seconds
-      currentState: launchState
+      currentState: launchState,
+      missionTelemetry: null,
     })
 
     // Auto-progress through countdown to actual launch
@@ -92,7 +98,8 @@ export const useLaunchControl = create<LaunchControlState>((set) => ({
     set({
       isLaunched: false,
       launchTime: -10,
-      currentState: initialState // Reset to initial state instead of null
+      currentState: initialState, // Reset to initial state instead of null
+      missionTelemetry: null,
     })
   },
 }))

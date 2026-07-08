@@ -201,3 +201,21 @@ export function followCameraTarget(
   )
   return { distance: d, position, lookAt: rocketPos }
 }
+
+export function applyBoundaryAwareCameraFraming(
+  desiredCameraPos: Vec3,
+  protectedCenter: Vec3,
+  protectedRadius: number,
+  minimumOffset: number = ROCKET_VISUAL_SCALE * 14,
+): Vec3 {
+  const delta = subtract(desiredCameraPos, protectedCenter)
+  const distance = Math.hypot(delta[0], delta[1], delta[2])
+  const requiredDistance = protectedRadius + minimumOffset
+
+  if (distance >= requiredDistance) {
+    return desiredCameraPos
+  }
+
+  const direction = distance > 1e-9 ? normalize(delta) : [1, 0, 0] as Vec3
+  return add(protectedCenter, scale(direction, requiredDistance))
+}
