@@ -780,9 +780,9 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
         {name === 'MOON' && (
           <pointLight
             color="#cfd8ff"
-            intensity={0.22}
-            distance={1.6}
-            decay={2}
+            intensity={0.07}
+            distance={0.9}
+            decay={2.4}
           />
         )}
 
@@ -990,9 +990,9 @@ function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
       {name === 'MOON' && (
         <pointLight
           color="#cfd8ff"
-          intensity={0.18}
-          distance={1.8}
-          decay={2}
+          intensity={0.06}
+          distance={0.95}
+          decay={2.4}
         />
       )}
 
