@@ -108,12 +108,8 @@ function TexturedSphere({
   return (
     <mesh>
       <sphereGeometry args={[radius, 32, 32]} />
-      <meshStandardMaterial
+      <meshBasicMaterial
         map={texture}
-        emissive={emissive || '#000000'}
-        emissiveIntensity={emissiveIntensity}
-        roughness={0.8}
-        metalness={0.1}
       />
     </mesh>
   )
@@ -170,12 +166,8 @@ function ColoredSphere({
   return (
     <mesh>
       <sphereGeometry args={[radius, 32, 32]} />
-      <meshStandardMaterial
+      <meshBasicMaterial
         color={color}
-        emissive={emissive || '#000000'}
-        emissiveIntensity={emissiveIntensity}
-        roughness={0.8}
-        metalness={0.1}
       />
     </mesh>
   )
@@ -591,6 +583,13 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
     }
   })
 
+  const initialOrbitalPosition = getOrbitalPosition()
+  const initialGroupPosition: [number, number, number] = [
+    initialOrbitalPosition[0] - offset[0],
+    initialOrbitalPosition[1] - offset[1],
+    initialOrbitalPosition[2] - offset[2],
+  ]
+
   return (
     <>
       {/* Orbital path - thin line */}
@@ -600,7 +599,7 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
         </group>
       )}
 
-      <group ref={groupRef}>
+      <group ref={groupRef} position={initialGroupPosition}>
         {/* Use SafeTexturedSphere (ErrorBoundary + Suspense) for planets with textures */}
         {hasTexture ? (
           <group ref={meshRef as unknown as React.RefObject<THREE.Group>}>

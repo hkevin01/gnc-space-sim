@@ -142,21 +142,21 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div className="app-shell container-fluid py-3 py-lg-4 px-3 px-lg-4">
-        <div className="row g-3 align-items-stretch app-main-row">
-          <main className="col-12 col-xl-8 d-flex order-1">
+        <div className="app-dashboard-grid app-main-row">
+          <main className="app-grid-main d-flex">
             <LaunchSimulation
               selectedMission={selectedMission}
               currentPhase={currentPhase}
             />
           </main>
 
-          <aside className="col-12 col-xl-4 d-flex flex-column gap-3 order-2">
-            <div className="app-surface p-3 p-lg-4">
+          <aside className="app-grid-sidebar d-flex flex-column gap-3">
+            <div className="app-surface app-widget">
               <h1 className="h4 mb-2">GNC Space Simulation</h1>
               <p className="app-muted mb-0">Responsive mission control, 3D launch view, and telemetry cards.</p>
             </div>
 
-            <div className="app-card p-3 p-lg-4">
+            <div className="app-card app-widget">
               <h2 className="h6 mb-3 text-light">Mission Selection</h2>
               <div className="d-grid gap-2">
                 {Object.entries(MISSION_SCENARIOS).map(([id, mission]) => (
@@ -177,7 +177,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className="app-card p-3 p-lg-4">
+            <div className="app-card app-widget">
               <h2 className="h6 mb-3 text-warning">Launch Control</h2>
               <div className="d-grid gap-2 app-text-xs">
                 <div className="text-secondary">Mission: {currentMission.name}</div>
@@ -220,7 +220,7 @@ export default function App() {
             </div>
 
             {isLaunched && currentMission && (
-              <div className="app-card p-3 p-lg-4">
+              <div className="app-card app-widget">
                 <h2 className="h6 mb-3 text-info">Mission Phases</h2>
                 <div className="d-grid gap-2">
                   {missionPhases.map((missionPhase, index) => {
@@ -263,7 +263,7 @@ export default function App() {
               </div>
             )}
 
-            <div className="app-card p-3 p-lg-4">
+            <div className="app-card app-widget">
               <h2 className="h6 mb-3 text-purple-300">Planetary Demos</h2>
               <div className="d-grid gap-2">
                 <button onClick={() => setDemoMode('orbital')} className="btn btn-outline-light text-start touch-target p-3">
@@ -277,34 +277,28 @@ export default function App() {
               </div>
             </div>
           </aside>
-        </div>
 
-        <div className="row g-3 mt-0 align-items-stretch">
-          <div className="col-12">
-            <div className="app-card p-3 p-lg-4">
-              <div className="row g-3 align-items-stretch">
-                <div className="col-12 col-xxl-3 d-flex">
-                  <div className="app-card app-card-inset p-3 w-100">
-                    <h2 className="h6 mb-3 text-success">Flight Status</h2>
-                    <div className="small text-secondary">
-                      <div>T{launchTime < 0 ? launchTime.toFixed(1) : `+${launchTime.toFixed(1)}`}s</div>
-                      <div>Mission: {currentMission.name}</div>
-                      <div>Phase: {currentPhase?.name || 'Pre-Launch'}</div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="col-12 col-xxl-9 d-flex">
-                  <GNCPanel
-                    launchState={liveTelemetryState}
-                    selectedMission={selectedMission}
-                    currentPhase={currentPhase}
-                    missionTelemetry={missionTelemetry}
-                  />
+          <section className="app-grid-telemetry app-card app-widget">
+            <div className="app-telemetry-grid">
+              <div className="app-card app-card-inset app-widget app-status-widget w-100">
+                <h2 className="h6 mb-3 text-success">Flight Status</h2>
+                <div className="small text-secondary">
+                  <div>T{launchTime < 0 ? launchTime.toFixed(1) : `+${launchTime.toFixed(1)}`}s</div>
+                  <div>Mission: {currentMission.name}</div>
+                  <div>Phase: {currentPhase?.name || 'Pre-Launch'}</div>
                 </div>
               </div>
+
+              <div className="d-flex">
+                <GNCPanel
+                  launchState={liveTelemetryState}
+                  selectedMission={selectedMission}
+                  currentPhase={currentPhase}
+                  missionTelemetry={missionTelemetry}
+                />
+              </div>
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </ErrorBoundary>

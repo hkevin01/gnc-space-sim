@@ -72,12 +72,51 @@ body {
   font-size: 0.875rem;
 }
 
+.app-widget {
+  padding: clamp(0.9rem, 1.6vw, 1.25rem);
+}
+
 .scene-panel {
   min-height: 70vh;
 }
 
 .app-main-row {
   min-height: calc(100vh - 2rem);
+}
+
+.app-dashboard-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "main"
+    "sidebar"
+    "telemetry";
+}
+
+.app-grid-main {
+  grid-area: main;
+  min-width: 0;
+}
+
+.app-grid-sidebar {
+  grid-area: sidebar;
+  min-width: 0;
+}
+
+.app-grid-telemetry {
+  grid-area: telemetry;
+  min-width: 0;
+}
+
+.app-telemetry-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.app-status-widget {
+  align-self: stretch;
 }
 
 .scene-surface {
@@ -177,5 +216,28 @@ body {
 
   .scene-meta-chip {
     width: 100%;
+  }
+}
+
+@media (min-width: 992px) {
+  .app-dashboard-grid {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    grid-template-areas:
+      "main sidebar"
+      "telemetry telemetry";
+  }
+
+  .app-telemetry-grid {
+    grid-template-columns: minmax(0, 0.34fr) minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1440px) {
+  .app-dashboard-grid {
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr) minmax(0, 0.9fr);
+    grid-template-areas:
+      "main main sidebar"
+      "telemetry telemetry sidebar";
+    align-items: start;
   }
 }

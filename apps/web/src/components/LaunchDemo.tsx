@@ -150,8 +150,27 @@ export function LaunchDemo({
   }, [missionTrail])
 
   useEffect(() => {
-    if (onCameraRef) {
-      onCameraRef(controlsRef);
+    if (!onCameraRef) return
+
+    let isMounted = true
+    let frameId = 0
+
+    const publishRef = () => {
+      if (!isMounted) return
+      onCameraRef(controlsRef)
+
+      if (!controlsRef.current) {
+        frameId = window.requestAnimationFrame(publishRef)
+      }
+    }
+
+    publishRef()
+
+    return () => {
+      isMounted = false
+      if (frameId) {
+        window.cancelAnimationFrame(frameId)
+      }
     }
   }, [onCameraRef]);
 

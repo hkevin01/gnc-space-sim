@@ -80,7 +80,7 @@ function computeLaunchPlanetOverviewPose(target: [number, number, number], scene
   }
 }
 
-const INITIAL_SOLAR_VIEW = computeLaunchSolarOverviewPose()
+const INITIAL_LAUNCH_VIEW = computeLaunchHomePose()
 
 interface LiveReferenceFrame {
   positions: Array<{ name: SolarBodyName; position: Vec3 }>
@@ -111,7 +111,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls> | null>(null)
   const [cameraMode, setCameraMode] = useState<'follow' | 'free'>('free')
-  const [selectedTarget, setSelectedTarget] = useState<LaunchViewTarget>('SOLAR_VIEW')
+  const [selectedTarget, setSelectedTarget] = useState<LaunchViewTarget>('HOME')
   const [referenceFrame, setReferenceFrame] = useState<LiveReferenceFrame | null>(null)
   const isLaunched = useLaunchControl((state) => state.isLaunched)
 
@@ -258,20 +258,30 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
       </div>
 
       <Canvas
+        frameloop="always"
         camera={{
           // Tilted overview gives a city-view style oblique read on the solar system.
-          position: INITIAL_SOLAR_VIEW.position,
+          position: INITIAL_LAUNCH_VIEW.position,
           fov: 60,
           near: 0.0001,
           far: 50000
         }}
         style={{ background: '#000000', width: '100%', height: '100%' }}
         className="scene-canvas"
-        onCreated={({ gl, camera }) => {
+        onCreated={({ gl, camera, invalidate }) => {
           // Favor interaction smoothness over expensive high-DPI/shadow rendering.
           gl.setPixelRatio(Math.min(window.devicePixelRatio, 1))
           gl.shadowMap.enabled = false
           cameraRef.current = camera as THREE.PerspectiveCamera
+
+          // Force an initial render tick after layout settles.
+          window.requestAnimationFrame(() => {
+            const rect = gl.domElement.getBoundingClientRect()
+            if (rect.width > 0 && rect.height > 0) {
+              gl.setSize(rect.width, rect.height, false)
+            }
+            invalidate()
+          })
 
           // Add context loss handling
           gl.domElement.addEventListener('webglcontextlost', (event) => {
