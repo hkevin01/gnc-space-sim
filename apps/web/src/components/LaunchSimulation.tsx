@@ -27,7 +27,18 @@ import {
 } from '../utils/orbitalReferenceFrame'
 import { useLaunchControl } from '../state/launchControlStore'
 
-type LaunchViewTarget = 'HOME' | 'SOLAR_VIEW' | 'SUN' | 'MERCURY' | 'VENUS' | 'EARTH' | 'MARS' | 'JUPITER'
+type LaunchViewTarget =
+  | 'HOME'
+  | 'SOLAR_VIEW'
+  | 'SUN'
+  | 'MERCURY'
+  | 'VENUS'
+  | 'EARTH'
+  | 'MARS'
+  | 'JUPITER'
+  | 'SATURN'
+  | 'URANUS'
+  | 'NEPTUNE'
 
 const READABLE_SOLAR_DISTANCE_SCALE = 8
 
@@ -125,11 +136,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
         }
       }
       const raw = getBodyPositionRelativeToCenter(bodyName, 'EARTH', 0)
-      const t: [number, number, number] = [
-        raw[0] / READABLE_SOLAR_DISTANCE_SCALE,
-        raw[1] / READABLE_SOLAR_DISTANCE_SCALE,
-        raw[2] / READABLE_SOLAR_DISTANCE_SCALE,
-      ]
+      const t: [number, number, number] = [raw[0], raw[1], raw[2]]
       return computeLaunchPlanetOverviewPose(
         t,
         getBodySceneRadius(bodyName),
@@ -287,6 +294,24 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
               Jupiter
             </button>
             <button
+              onClick={() => snapPlanet('SATURN')}
+              className={btnClass('SATURN', 'btn-secondary', 'btn-outline-secondary')}
+            >
+              Saturn
+            </button>
+            <button
+              onClick={() => snapPlanet('URANUS')}
+              className={btnClass('URANUS', 'btn-secondary', 'btn-outline-secondary')}
+            >
+              Uranus
+            </button>
+            <button
+              onClick={() => snapPlanet('NEPTUNE')}
+              className={btnClass('NEPTUNE', 'btn-secondary', 'btn-outline-secondary')}
+            >
+              Neptune
+            </button>
+            <button
               onClick={() => setCameraMode((m) => (m === 'free' ? 'follow' : 'free'))}
               className={`btn btn-sm touch-target ${cameraMode === 'free' ? 'btn-warning' : 'btn-outline-secondary'}`}
             >
@@ -341,6 +366,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
           timeMultiplier={100}
           showTrajectory={true}
           cameraMode={cameraMode}
+          allowAutoEarthResnap={selectedTarget === 'HOME' || selectedTarget === 'EARTH'}
           onCameraRef={(ref) => {
             orbitControlsRef.current = ref.current
           }}

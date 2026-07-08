@@ -68,12 +68,14 @@ export function LaunchDemo({
   timeMultiplier = 50, // Increased default for better visual pacing
   showTrajectory = true,
   cameraMode = 'follow',
+  allowAutoEarthResnap = true,
   onCameraRef,
 }: {
   selectedMission?: string;
   timeMultiplier?: number;
   showTrajectory?: boolean;
   cameraMode?: 'follow' | 'free';
+  allowAutoEarthResnap?: boolean;
   onCameraRef?: (ref: RefObject<ComponentRef<typeof OrbitControls> | null>) => void;
 }) {
   // Camera follow state
@@ -289,7 +291,9 @@ export function LaunchDemo({
     const controls = controlsRef.current
     const earthTarget = new THREE.Vector3(0, 0, 0)
     const idleForMs = Date.now() - lastUserInteraction.current
-    const shouldResnapToEarth = idleForMs >= EARTH_CAMERA_IDLE_RESNAP_DELAY_MS && (!isLaunched || cameraMode === 'free')
+    const shouldResnapToEarth = allowAutoEarthResnap
+      && idleForMs >= EARTH_CAMERA_IDLE_RESNAP_DELAY_MS
+      && (!isLaunched || cameraMode === 'free')
 
     if (shouldResnapToEarth && controls) {
       const orbitOffset = camera.position.clone().sub(earthTarget)
