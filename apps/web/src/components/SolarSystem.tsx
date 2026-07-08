@@ -781,13 +781,14 @@ export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'S
       {/* Light source from the Sun */}
       <pointLight
         position={[-offset[0], -offset[1], -offset[2]]}
-        intensity={12}
-        decay={2}
+        intensity={6}
+        decay={0}
+        distance={0}
         color="#ffffff"
       />
 
       {/* Ambient light for overall visibility */}
-      <ambientLight intensity={0.025} />
+      <ambientLight intensity={0.09} />
 
       {/* All solar system bodies */}
       <Planet name="SUN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('SUN', centerOn)} />
@@ -958,7 +959,9 @@ export function NasaSolarSystem({
       {/* Light source from the Sun */}
       <pointLight
         position={[-offset[0], -offset[1], -offset[2]]}
-        intensity={8}
+        intensity={5}
+        decay={0}
+        distance={0}
         color="#ffffff"
         shadow-mapSize={[2048, 2048]}
         shadow-camera-near={1}
@@ -966,7 +969,7 @@ export function NasaSolarSystem({
       />
 
       {/* Ambient light for overall visibility */}
-      <ambientLight intensity={0.03} />
+      <ambientLight intensity={0.1} />
 
       {/* Data source indicator */}
       {!loading && (

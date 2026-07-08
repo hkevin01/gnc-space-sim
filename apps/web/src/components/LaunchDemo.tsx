@@ -33,6 +33,10 @@ import {
   type MissionTrailSegment,
 } from '../utils/missionPropagation';
 
+const EARTH_CAMERA_IDLE_RESNAP_DELAY_MS = 1100
+const EARTH_CAMERA_RESNAP_POSITION_LERP = 0.025
+const EARTH_CAMERA_RESNAP_TARGET_LERP = 0.06
+
 const MIN_EARTH_SAFE_CAMERA_DISTANCE = EARTH_RADIUS_SCENE * 1.15
 
 /**
@@ -248,11 +252,36 @@ export function LaunchDemo({
 
   // Camera follow logic - zoom in when launch starts (skip when user is interacting)
   useFrame(() => {
-    if (cameraMode === 'free') return
-    if (!isLaunched || launchTime < 0) return
-
     // Skip camera follow if user is actively using OrbitControls
     if (isUserInteracting.current) return;
+
+    const controls = controlsRef.current
+    const earthTarget = new THREE.Vector3(0, 0, 0)
+    const idleForMs = Date.now() - lastUserInteraction.current
+    const shouldResnapToEarth = idleForMs >= EARTH_CAMERA_IDLE_RESNAP_DELAY_MS && (!isLaunched || cameraMode === 'free')
+
+    if (shouldResnapToEarth && controls) {
+      const currentTarget = controls.target.clone()
+      const orbitOffset = camera.position.clone().sub(currentTarget)
+
+      if (orbitOffset.lengthSq() < 1e-8) {
+        orbitOffset.set(EARTH_RADIUS_SCENE * 2.4, EARTH_RADIUS_SCENE * 0.9, EARTH_RADIUS_SCENE * 2.1)
+      }
+
+      const minDistance = EARTH_RADIUS_SCENE * 1.7
+      const maxDistance = 9
+      const clampedDistance = THREE.MathUtils.clamp(orbitOffset.length(), minDistance, maxDistance)
+      const desiredCameraPos = earthTarget.clone().add(orbitOffset.setLength(clampedDistance))
+
+      camera.position.lerp(desiredCameraPos, EARTH_CAMERA_RESNAP_POSITION_LERP)
+      controls.target.lerp(earthTarget, EARTH_CAMERA_RESNAP_TARGET_LERP)
+      camera.lookAt(controls.target)
+      controls.update()
+      return
+    }
+
+    if (cameraMode === 'free') return
+    if (!isLaunched || launchTime < 0) return
 
     if (vehicleRef.current) {
       const rocketPos = getRocketPosition();
