@@ -108,11 +108,11 @@ export function LaunchDemo({
         capeFrame.surface[2],
       );
       vehicleRef.current.quaternion.setFromUnitVectors(
-        new THREE.Vector3(1, 0, 0),
+        ROCKET_FORWARD_AXIS,
         new THREE.Vector3(capeFrame.up[0], capeFrame.up[1], capeFrame.up[2]),
       );
     }
-  }, [capeFrame.surface, isLaunched]);
+  }, [capeFrame.surface, capeFrame.up, isLaunched]);
 
   const [trajectory, setTrajectory] = useState<THREE.Vector3[]>(() => [
     new THREE.Vector3(

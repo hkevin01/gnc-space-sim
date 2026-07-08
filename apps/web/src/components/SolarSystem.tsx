@@ -94,15 +94,11 @@ const TEXTURE_URLS: Record<string, string> = {
 function TexturedSphere({
   textureUrl,
   radius,
-  emissive,
-  emissiveIntensity = 0,
   atmosphereGlow = false,
   useUnlitMaterial = false,
 }: {
   textureUrl: string;
   radius: number;
-  emissive?: string;
-  emissiveIntensity?: number;
   atmosphereGlow?: boolean;
   useUnlitMaterial?: boolean;
 }) {
@@ -111,10 +107,8 @@ function TexturedSphere({
   texture.needsUpdate = true
 
   const materialColor = atmosphereGlow ? '#fcfdff' : '#ffffff'
-  const materialEmissive = atmosphereGlow ? '#000000' : (emissive || '#000000')
-  const materialEmissiveIntensity = atmosphereGlow
-    ? Math.max(emissiveIntensity, 0.0)
-    : emissiveIntensity
+  const materialEmissive = '#000000'
+  const materialEmissiveIntensity = 0
   const materialOpacity = 1
 
   return (
@@ -194,8 +188,6 @@ function SafeTexturedSphere(props: {
   textureUrl: string;
   radius: number;
   color: string;
-  emissive?: string;
-  emissiveIntensity?: number;
   atmosphereGlow?: boolean;
   useUnlitMaterial?: boolean;
 }) {
@@ -203,8 +195,6 @@ function SafeTexturedSphere(props: {
     <ColoredSphere
       radius={props.radius}
       color={props.color}
-      emissive={props.emissive}
-      emissiveIntensity={props.emissiveIntensity}
     />
   )
   return (
@@ -213,8 +203,6 @@ function SafeTexturedSphere(props: {
         <TexturedSphere
           textureUrl={props.textureUrl}
           radius={props.radius}
-          emissive={props.emissive}
-          emissiveIntensity={props.emissiveIntensity}
           atmosphereGlow={props.atmosphereGlow}
           useUnlitMaterial={props.useUnlitMaterial}
         />
@@ -226,14 +214,10 @@ function SafeTexturedSphere(props: {
 // Fallback colored sphere for planets without textures
 function ColoredSphere({
   radius,
-  color,
-  emissive,
-  emissiveIntensity = 0
+  color
 }: {
   radius: number;
   color: string;
-  emissive?: string;
-  emissiveIntensity?: number;
 }) {
   return (
     <mesh>
@@ -886,8 +870,6 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
               textureUrl={TEXTURE_URLS[name]}
               radius={renderRadius}
               color={data.color}
-              emissive={name === 'SUN' ? data.color : undefined}
-              emissiveIntensity={name === 'SUN' ? 0.12 : 0}
               atmosphereGlow={name === 'EARTH'}
               useUnlitMaterial={name === 'SUN'}
             />
@@ -1096,8 +1078,6 @@ function NasaPlanet({ planetPosition, offset, moonBounceIntensity }: NasaPlanetP
             textureUrl={TEXTURE_URLS[name]}
             radius={renderRadius}
             color={planetData.color}
-            emissive={name === 'SUN' ? planetData.color : undefined}
-            emissiveIntensity={name === 'SUN' ? 0.12 : 0}
             atmosphereGlow={name === 'EARTH'}
             useUnlitMaterial={name === 'SUN'}
           />
