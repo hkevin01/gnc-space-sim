@@ -151,6 +151,7 @@ function RenderHealthProbe() {
   const [contextLost, setContextLost] = useState(false)
   const [errorCount, setErrorCount] = useState(0)
   const [lastError, setLastError] = useState<string>('none')
+  const [contextAlpha, setContextAlpha] = useState<string>('unknown')
   const [originNdc, setOriginNdc] = useState<{ x: number; y: number; z: number } | null>(null)
   const meshRef = useRef<THREE.Mesh | null>(null)
   const { camera, gl } = useThree()
@@ -192,6 +193,12 @@ function RenderHealthProbe() {
     gl.domElement.addEventListener('webglcontextlost', onContextLost)
     gl.domElement.addEventListener('webglcontextrestored', onContextRestored)
 
+    const ctxAttrs = gl.getContextAttributes()
+    setContextAlpha(ctxAttrs?.alpha === undefined ? 'unknown' : ctxAttrs.alpha ? 'true' : 'false')
+
+    // Keep cumulative render stats to avoid per-frame reset ambiguity during debugging.
+    gl.info.autoReset = false
+
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
       window.removeEventListener('focus', onFocus)
@@ -200,6 +207,7 @@ function RenderHealthProbe() {
       window.removeEventListener('unhandledrejection', onUnhandledRejection)
       gl.domElement.removeEventListener('webglcontextlost', onContextLost)
       gl.domElement.removeEventListener('webglcontextrestored', onContextRestored)
+      gl.info.autoReset = true
     }
   }, [gl])
 
@@ -262,6 +270,7 @@ function RenderHealthProbe() {
             `draw calls: ${drawCalls} | triangles: ${triangles}`,
             `fallback mesh visible: ${meshVisible ? 'yes' : 'no'}`,
             `visibility: ${visibilityState} | focus: ${hasFocus ? 'yes' : 'no'}`,
+            `ctx alpha: ${contextAlpha}`,
             `webgl context lost: ${contextLost ? 'yes' : 'no'}`,
             `runtime errors: ${errorCount} | last: ${lastError}`,
             `camera pos: ${cameraPos.map((value) => value.toFixed(2)).join(', ')} | |cam|=${originDistance.toFixed(2)}`,
@@ -431,6 +440,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
       </div>
 
       <Canvas
+        key="launch-sim-canvas-debug-v2"
         frameloop="always"
         gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
         camera={{
