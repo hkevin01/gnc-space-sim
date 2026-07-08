@@ -65,7 +65,7 @@ The project exists for three practical reasons. First, educational simulations a
 > This is a true camera-perspective screenshot from the live simulation runtime, not a raw texture asset.
 
 > [!IMPORTANT]
-> Screenshot refresh plan: these baseline camera captures can be replaced later with higher-fidelity mission snapshots whenever you provide new captures or request a new screenshot pass.
+> Screenshot refresh note: the current camera captures were refreshed from the live app and can be replaced again whenever the visuals change.
 
 ---
 
