@@ -36,6 +36,7 @@ import {
 const EARTH_CAMERA_IDLE_RESNAP_DELAY_MS = 1100
 const EARTH_CAMERA_RESNAP_POSITION_LERP = 0.025
 const EARTH_CAMERA_RESNAP_TARGET_LERP = 0.06
+const IDLE_VISUAL_MISSION_TIME_RATE = 4
 
 const MIN_EARTH_SAFE_CAMERA_DISTANCE = EARTH_RADIUS_SCENE * 1.15
 
@@ -251,16 +252,30 @@ export function LaunchDemo({
   }, [controlsRef]);
 
   // Camera follow logic - zoom in when launch starts (skip when user is interacting)
-  useFrame(() => {
+  useFrame((state) => {
+    const visualMissionTime = launchTime > 0
+      ? launchTime
+      : state.clock.elapsedTime * IDLE_VISUAL_MISSION_TIME_RATE
+
+    // Keep rocket anchored to the rotating Earth surface before launch.
+    if (!isLaunched && vehicleRef.current) {
+      const idleCapeFrame = getCapeCanaveralWorldFrame(visualMissionTime)
+      vehicleRef.current.position.set(
+        idleCapeFrame.surface[0],
+        idleCapeFrame.surface[1],
+        idleCapeFrame.surface[2],
+      )
+      vehicleRef.current.quaternion.setFromUnitVectors(
+        new THREE.Vector3(1, 0, 0),
+        new THREE.Vector3(idleCapeFrame.up[0], idleCapeFrame.up[1], idleCapeFrame.up[2]),
+      )
+    }
+
     // Skip camera follow if user is actively using OrbitControls
     if (isUserInteracting.current) return;
 
     const controls = controlsRef.current
-    const earthTarget = new THREE.Vector3(
-      capeFrame.surface[0],
-      capeFrame.surface[1],
-      capeFrame.surface[2],
-    )
+    const earthTarget = new THREE.Vector3(0, 0, 0)
     const idleForMs = Date.now() - lastUserInteraction.current
     const shouldResnapToEarth = idleForMs >= EARTH_CAMERA_IDLE_RESNAP_DELAY_MS && (!isLaunched || cameraMode === 'free')
 

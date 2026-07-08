@@ -777,6 +777,16 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
         )}
 
         {/* Saturn's rings */}
+        {name === 'MOON' && (
+          <pointLight
+            color="#cfd8ff"
+            intensity={0.22}
+            distance={1.6}
+            decay={2}
+          />
+        )}
+
+        {/* Saturn's rings */}
         {name === 'SATURN' && data.hasRings && (
           <mesh rotation={[Math.PI / 2, 0, 0]}>
             <ringGeometry args={[renderRadius * 1.2, renderRadius * 2.2, 64]} />
@@ -976,6 +986,15 @@ function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
 
       {/* Orbit visualization disabled - rendered centrally in NasaSolarSystem */}
       {/* Individual planet orbit removed to prevent double-rendering */}
+
+      {name === 'MOON' && (
+        <pointLight
+          color="#cfd8ff"
+          intensity={0.18}
+          distance={1.8}
+          decay={2}
+        />
+      )}
 
       {/* Special handling for Saturn's rings */}
       {planetData.hasRings && (
