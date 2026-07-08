@@ -589,6 +589,46 @@ const ORBIT_LINE_OPACITY: Record<(typeof HELIOCENTRIC_ORBIT_BODIES)[number], num
 const PLANET_ROTATION_VISUAL_MULTIPLIER = 0.2
 // Keep bodies moving before mission time starts so Earth/Moon never look frozen.
 const IDLE_VISUAL_MISSION_TIME_RATE = 4
+const MOON_BOUNCE_LIGHT_MIN_INTENSITY = 0.012
+const MOON_BOUNCE_LIGHT_MAX_INTENSITY = 0.075
+const MOON_PHASE_RESPONSE_GAMMA = 1.35
+
+function dot3(a: [number, number, number], b: [number, number, number]): number {
+  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+}
+
+function normalize3(v: [number, number, number]): [number, number, number] {
+  const mag = Math.hypot(v[0], v[1], v[2])
+  if (mag < 1e-9) return [0, 0, 0]
+  return [v[0] / mag, v[1] / mag, v[2] / mag]
+}
+
+function moonBounceIntensityForTime(visualMissionTime: number): number {
+  const moonPos = getBodyPosition('MOON', visualMissionTime)
+  const earthPos = getBodyPosition('EARTH', visualMissionTime)
+  const sunPos: [number, number, number] = [0, 0, 0]
+
+  const moonToSun = normalize3([
+    sunPos[0] - moonPos[0],
+    sunPos[1] - moonPos[1],
+    sunPos[2] - moonPos[2],
+  ])
+  const moonToEarth = normalize3([
+    earthPos[0] - moonPos[0],
+    earthPos[1] - moonPos[1],
+    earthPos[2] - moonPos[2],
+  ])
+
+  const cosPhaseAngle = THREE.MathUtils.clamp(dot3(moonToSun, moonToEarth), -1, 1)
+  const illuminatedFraction = (1 + cosPhaseAngle) * 0.5
+  const phaseWeight = Math.pow(illuminatedFraction, MOON_PHASE_RESPONSE_GAMMA)
+
+  return THREE.MathUtils.lerp(
+    MOON_BOUNCE_LIGHT_MIN_INTENSITY,
+    MOON_BOUNCE_LIGHT_MAX_INTENSITY,
+    phaseWeight,
+  )
+}
 
 export function ensureRenderablePlanetPositions(
   positions: PlanetPosition[],
@@ -638,6 +678,7 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
 
   const meshRef = useRef<THREE.Mesh>(null)
   const groupRef = useRef<THREE.Group>(null)
+  const moonLightRef = useRef<THREE.PointLight>(null)
 
   const resolveVisualMissionTime = (elapsedTime: number): number => {
     if (missionTime > 0) return missionTime
@@ -731,6 +772,10 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
       const [x, y, z] = getOrbitalPosition(visualMissionTime)
       groupRef.current.position.set(x - offset[0], y - offset[1], z - offset[2])
     }
+
+    if (name === 'MOON' && moonLightRef.current) {
+      moonLightRef.current.intensity = moonBounceIntensityForTime(visualMissionTime)
+    }
   })
 
   const initialOrbitalPosition = getOrbitalPosition(missionTime > 0 ? missionTime : 0)
@@ -779,8 +824,9 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
         {/* Saturn's rings */}
         {name === 'MOON' && (
           <pointLight
+            ref={moonLightRef}
             color="#cfd8ff"
-            intensity={0.07}
+            intensity={MOON_BOUNCE_LIGHT_MAX_INTENSITY}
             distance={0.9}
             decay={2.4}
           />
