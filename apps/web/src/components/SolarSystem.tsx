@@ -110,12 +110,12 @@ function TexturedSphere({
   texture.colorSpace = THREE.SRGBColorSpace
   texture.needsUpdate = true
 
-  const materialColor = atmosphereGlow ? '#f7fbff' : '#ffffff'
-  const materialEmissive = atmosphereGlow ? '#2c5f99' : (emissive || '#000000')
+  const materialColor = atmosphereGlow ? '#fcfdff' : '#ffffff'
+  const materialEmissive = atmosphereGlow ? '#000000' : (emissive || '#000000')
   const materialEmissiveIntensity = atmosphereGlow
-    ? Math.max(emissiveIntensity, 0.07)
+    ? Math.max(emissiveIntensity, 0.0)
     : emissiveIntensity
-  const materialOpacity = atmosphereGlow ? 0.96 : 1
+  const materialOpacity = 1
 
   return (
     <mesh>
@@ -134,7 +134,7 @@ function TexturedSphere({
           metalness={0.04}
           emissive={materialEmissive}
           emissiveIntensity={materialEmissiveIntensity}
-          transparent={atmosphereGlow}
+          transparent={false}
           opacity={materialOpacity}
         />
       )}
@@ -787,7 +787,7 @@ export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'S
       />
 
       {/* Ambient light for overall visibility */}
-      <ambientLight intensity={0.06} />
+      <ambientLight intensity={0.025} />
 
       {/* All solar system bodies */}
       <Planet name="SUN" showOrbit={showOrbits} missionTime={missionTime} offset={offset} renderRadius={getRenderRadius('SUN', centerOn)} />
@@ -966,7 +966,7 @@ export function NasaSolarSystem({
       />
 
       {/* Ambient light for overall visibility */}
-      <ambientLight intensity={0.08} />
+      <ambientLight intensity={0.03} />
 
       {/* Data source indicator */}
       {!loading && (
