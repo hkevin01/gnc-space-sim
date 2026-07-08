@@ -681,6 +681,10 @@ export function LaunchDemo({
   const showAttachedCore = !hasCoreSeparated;
   const showCoreSeparation = hasCoreSeparated && coreSeparationTimeRef.current !== null
     && (launchTime - coreSeparationTimeRef.current) <= SEPARATION_EFFECT_DURATION_S;
+  const isMissionTransferActive = missionTrail.length > 0
+    || (activeMissionPhase !== null && launchTime >= (missionTimeline[0]?.endTime ?? 60))
+  const showEngineFlames = !isMissionTransferActive
+    && (currentState?.phase === LaunchPhase.STAGE1_BURN || currentState?.phase === LaunchPhase.STAGE2_BURN)
   const showAttachedIcps = !phaseAfterIcpsSep;
   const showIcpsSeparation = phaseAfterIcpsSep;
   const showOrbitalInsertionLabel = phase === LaunchPhase.ORBITAL_INSERTION;
@@ -756,7 +760,7 @@ export function LaunchDemo({
         </mesh>
 
         {/* Engine Flames during burn phases */}
-        {(currentState?.phase === LaunchPhase.STAGE1_BURN || currentState?.phase === LaunchPhase.STAGE2_BURN) && (
+        {showEngineFlames && (
           <group>
             {/* Main engine flame */}
             <mesh position={[-ROCKET_VISUAL_SCALE * 2.5, 0, 0]} rotation={[0, 0, -Math.PI / 2]}>
