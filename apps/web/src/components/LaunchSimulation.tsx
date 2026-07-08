@@ -102,11 +102,50 @@ interface LaunchSimulationProps {
   } | null
 }
 
+function BlackCanvasSanityProbe() {
+  const cubeRef = useRef<THREE.Mesh | null>(null)
+  const { camera, gl, size } = useThree()
+
+  useEffect(() => {
+    // Keep projection and drawing buffer in sync with layout changes.
+    const safeWidth = Math.max(1, size.width)
+    const safeHeight = Math.max(1, size.height)
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.aspect = safeWidth / safeHeight
+      camera.updateProjectionMatrix()
+    }
+    gl.setSize(safeWidth, safeHeight, false)
+
+    // Ensure the startup camera actually points at the scene origin.
+    if (camera.position.lengthSq() < 1e-6) {
+      camera.position.set(0.42, 0.08, 0.22)
+    }
+    camera.lookAt(0, 0, 0)
+  }, [camera, gl, size.height, size.width])
+
+  useFrame((_state, delta) => {
+    if (!cubeRef.current) return
+    cubeRef.current.rotation.x += delta * 0.8
+    cubeRef.current.rotation.y += delta * 1.15
+  })
+
+  return (
+    <mesh ref={cubeRef} position={[0, 0, 0]} frustumCulled={false} renderOrder={998}>
+      <boxGeometry args={[0.05, 0.05, 0.05]} />
+      <meshStandardMaterial color="#4ade80" emissive="#052e16" emissiveIntensity={0.6} />
+    </mesh>
+  )
+}
+
 function RenderHealthProbe() {
   const frameCountRef = useRef(0)
   const startRef = useRef(performance.now())
   const [fps, setFps] = useState(0)
   const [meshVisible, setMeshVisible] = useState(false)
+  const [drawCalls, setDrawCalls] = useState(0)
+  const [triangles, setTriangles] = useState(0)
+  const [cameraPos, setCameraPos] = useState<[number, number, number]>([0, 0, 0])
+  const [originDistance, setOriginDistance] = useState(0)
   const [originNdc, setOriginNdc] = useState<{ x: number; y: number; z: number } | null>(null)
   const meshRef = useRef<THREE.Mesh | null>(null)
   const { camera, gl } = useThree()
@@ -121,6 +160,15 @@ function RenderHealthProbe() {
       setFps(computedFps)
       frameCountRef.current = 0
       startRef.current = now
+
+      const renderInfo = gl.info.render
+      setDrawCalls(renderInfo.calls)
+      setTriangles(renderInfo.triangles)
+
+      const worldPos = new THREE.Vector3()
+      camera.getWorldPosition(worldPos)
+      setCameraPos([worldPos.x, worldPos.y, worldPos.z])
+      setOriginDistance(worldPos.length())
 
       const probe = new THREE.Vector3(0, 0, 0).project(camera)
       setOriginNdc({ x: probe.x, y: probe.y, z: probe.z })
@@ -158,7 +206,9 @@ function RenderHealthProbe() {
           {[
             `r3f fps: ${fps}`,
             `canvas: ${gl.domElement.width}x${gl.domElement.height}`,
+            `draw calls: ${drawCalls} | triangles: ${triangles}`,
             `fallback mesh visible: ${meshVisible ? 'yes' : 'no'}`,
+            `camera pos: ${cameraPos.map((value) => value.toFixed(2)).join(', ')} | |cam|=${originDistance.toFixed(2)}`,
             originNdc
               ? `origin ndc: ${originNdc.x.toFixed(2)}, ${originNdc.y.toFixed(2)}, ${originNdc.z.toFixed(2)}`
               : 'origin ndc: pending',
@@ -326,6 +376,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
 
       <Canvas
         frameloop="always"
+        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
         camera={{
           // Tilted overview gives a city-view style oblique read on the solar system.
           position: INITIAL_LAUNCH_VIEW.position,
@@ -338,6 +389,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
         onCreated={({ gl, camera, invalidate }) => {
           // Favor interaction smoothness over expensive high-DPI/shadow rendering.
           gl.setPixelRatio(Math.min(window.devicePixelRatio, 1))
+          gl.setClearColor(0x000000, 1)
           gl.shadowMap.enabled = false
           cameraRef.current = camera as THREE.PerspectiveCamera
 
@@ -364,6 +416,8 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
         <ambientLight intensity={0.2} />
         <pointLight position={[10, 10, 10]} intensity={1} />
         <pointLight position={[-10, -10, -10]} intensity={0.5} />
+
+        <BlackCanvasSanityProbe />
 
         <RenderHealthProbe />
 
