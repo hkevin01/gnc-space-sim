@@ -16,8 +16,8 @@
  * Verification: Manual smoke test; slsMockSimulation.spec.ts for state data contract.
  * References: LaunchDemo.tsx SSIM-LAUNCHDEMO-001; SolarSystem.tsx SSIM-SOLARSYS-001.
  */
-import { OrbitControls } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
+import { Html, OrbitControls } from '@react-three/drei'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { LaunchDemo } from './LaunchDemo'
 import { MissionEvent } from './MissionTypes'
@@ -100,6 +100,73 @@ interface LaunchSimulationProps {
     requirements: string[]
     events: MissionEvent[]
   } | null
+}
+
+function RenderHealthProbe() {
+  const frameCountRef = useRef(0)
+  const startRef = useRef(performance.now())
+  const [fps, setFps] = useState(0)
+  const [meshVisible, setMeshVisible] = useState(false)
+  const [originNdc, setOriginNdc] = useState<{ x: number; y: number; z: number } | null>(null)
+  const meshRef = useRef<THREE.Mesh | null>(null)
+  const { camera, gl } = useThree()
+
+  useFrame(() => {
+    frameCountRef.current += 1
+
+    const now = performance.now()
+    const elapsedMs = now - startRef.current
+    if (elapsedMs >= 1000) {
+      const computedFps = Math.round((frameCountRef.current * 1000) / elapsedMs)
+      setFps(computedFps)
+      frameCountRef.current = 0
+      startRef.current = now
+
+      const probe = new THREE.Vector3(0, 0, 0).project(camera)
+      setOriginNdc({ x: probe.x, y: probe.y, z: probe.z })
+      if (meshRef.current) {
+        setMeshVisible(meshRef.current.visible)
+      }
+    }
+  })
+
+  return (
+    <>
+      {/* Always-on fallback mesh near origin to validate draw/material path. */}
+      <mesh ref={meshRef} position={[0, 0, 0]} frustumCulled={false} renderOrder={999}>
+        <boxGeometry args={[0.06, 0.06, 0.06]} />
+        <meshBasicMaterial color="#00ff88" toneMapped={false} depthTest={false} depthWrite={false} />
+      </mesh>
+
+      <Html position={[0.08, 0.08, 0]} transform={false} prepend zIndexRange={[1000, 0]}>
+        <div
+          style={{
+            fontFamily: 'monospace',
+            fontSize: '11px',
+            lineHeight: 1.4,
+            color: '#d1fae5',
+            background: 'rgba(0,0,0,0.82)',
+            border: '1px solid rgba(16,185,129,0.7)',
+            borderRadius: '6px',
+            padding: '6px 8px',
+            minWidth: '220px',
+            pointerEvents: 'none',
+            whiteSpace: 'pre-line',
+          }}
+          aria-label="Render health overlay"
+        >
+          {[
+            `r3f fps: ${fps}`,
+            `canvas: ${gl.domElement.width}x${gl.domElement.height}`,
+            `fallback mesh visible: ${meshVisible ? 'yes' : 'no'}`,
+            originNdc
+              ? `origin ndc: ${originNdc.x.toFixed(2)}, ${originNdc.y.toFixed(2)}, ${originNdc.z.toFixed(2)}`
+              : 'origin ndc: pending',
+          ].join('\n')}
+        </div>
+      </Html>
+    </>
+  )
 }
 
 /**
@@ -297,6 +364,8 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
         <ambientLight intensity={0.2} />
         <pointLight position={[10, 10, 10]} intensity={1} />
         <pointLight position={[-10, -10, -10]} intensity={0.5} />
+
+        <RenderHealthProbe />
 
         <LaunchDemo
           selectedMission={selectedMission}

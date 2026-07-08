@@ -221,7 +221,7 @@ body {
 
 @media (min-width: 992px) {
   .app-dashboard-grid {
-    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.85fr) minmax(0, 0.55fr);
     grid-template-areas:
       "main sidebar"
       "telemetry telemetry";
@@ -234,7 +234,7 @@ body {
 
 @media (min-width: 1440px) {
   .app-dashboard-grid {
-    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.75fr) minmax(0, 0.9fr);
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.95fr) minmax(0, 0.45fr);
     grid-template-areas:
       "main main sidebar"
       "telemetry telemetry sidebar";
