@@ -3,7 +3,7 @@ import {
   getRenderRadius,
   type SolarBodyName,
 } from '../components/SolarSystem'
-import { clampPointOutsideSphere, ROCKET_VISUAL_SCALE, type Vec3 } from './launchVisualBehavior'
+import { ROCKET_VISUAL_SCALE, type Vec3 } from './launchVisualBehavior'
 
 export interface SceneBodyBoundary {
   name: SolarBodyName

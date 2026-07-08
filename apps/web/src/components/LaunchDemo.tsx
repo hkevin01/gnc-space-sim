@@ -12,7 +12,7 @@ import type { ComponentRef, RefObject } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { useLaunchControl } from '../state/launchControlStore';
-import { getBodyPositionRelativeToCenter, getBodySceneRadius, getRenderRadius, SolarSystem, type SolarBodyName } from './SolarSystem';
+import { SolarSystem } from './SolarSystem';
 import { MISSION_SCENARIOS } from './MissionTypes';
 import {
   EARTH_RADIUS_SCENE,
@@ -76,6 +76,7 @@ export function LaunchDemo({
   const currentState = useLaunchControl((state) => state.currentState);
   const setCurrentState = useLaunchControl((state) => state.setCurrentState);
   const setMissionTelemetry = useLaunchControl((state) => state.setMissionTelemetry);
+  const missionTelemetry = useLaunchControl((state) => state.missionTelemetry);
   const resetLaunch = useLaunchControl((state) => state.resetLaunch);
   const isLaunched = useLaunchControl((state) => state.isLaunched);
 
@@ -119,15 +120,15 @@ export function LaunchDemo({
     return new GravityTurnGuidance(400000, (28.5 * Math.PI) / 180);
   }, []);
 
-  const lunarTimeline = useMemo(() => {
-    if (selectedMission !== 'lunarMission') return []
-    return buildCompressedMissionTimeline(MISSION_SCENARIOS.lunarMission.phases)
+  const missionTimeline = useMemo(() => {
+    if (!selectedMission || !MISSION_SCENARIOS[selectedMission]) return []
+    return buildCompressedMissionTimeline(MISSION_SCENARIOS[selectedMission].phases)
   }, [selectedMission])
 
   const activeMissionPhase = useMemo(() => {
-    if (selectedMission !== 'lunarMission' || launchTime < 0) return null
-    return getCompressedMissionPhase(lunarTimeline, launchTime)
-  }, [launchTime, lunarTimeline, selectedMission])
+    if (!selectedMission || launchTime < 0) return null
+    return getCompressedMissionPhase(missionTimeline, launchTime)
+  }, [launchTime, missionTimeline, selectedMission])
 
   const protectedBodies = useMemo(() => {
     return buildSceneBodyBoundaries(launchTime, 'EARTH')
@@ -274,7 +275,12 @@ export function LaunchDemo({
           altitude,
           launchTime,
         );
-        const targetCamPos = new THREE.Vector3(cam.position[0], cam.position[1], cam.position[2]);
+        const protectedBody = missionTelemetry?.soiOwner ?? 'EARTH'
+        const boundary = protectedBodies.find((candidate) => candidate.name === protectedBody) ?? protectedBodies[0]
+        const framedCamPos = boundary
+          ? applyBoundaryAwareCameraFraming(cam.position, boundary.center, boundary.altitudeFloorRadius)
+          : cam.position
+        const targetCamPos = new THREE.Vector3(framedCamPos[0], framedCamPos[1], framedCamPos[2]);
         if (!isFiniteVector3(targetCamPos)) return;
         camera.position.lerp(targetCamPos, 0.03); // Smooth following
 
@@ -289,14 +295,18 @@ export function LaunchDemo({
         }
       }
     }
-  });
+  }, 1);
 
   // Reset zoom flag when launch is reset
   useEffect(() => {
     if (!isLaunched) {
       hasZoomedToRocket.current = false;
+      previousMissionPointRef.current = undefined
+      previousSoiOwnerRef.current = 'EARTH'
+      setMissionTelemetry(null)
+      setMissionTrail([])
     }
-  }, [isLaunched]);
+  }, [isLaunched, setMissionTelemetry]);
 
   useEffect(() => {
     if (!trajectoryRef.current) {
@@ -325,7 +335,7 @@ export function LaunchDemo({
     return arr.length === 3 && arr.every((x) => Number.isFinite(x));
   }
 
-  useFrame((state, deltaTime) => {
+  useFrame((_state, deltaTime) => {
     if (!isLaunched || launchTime < 0) return;
 
     // Adaptive time scaling based on mission phase for visual appeal
@@ -345,6 +355,7 @@ export function LaunchDemo({
 
     const dt = Math.min(deltaTime * adaptiveMultiplier, 0.1);
     const nextTime = launchTime + deltaTime;
+    const launchCutoverTime = missionTimeline[0]?.endTime ?? 60
 
     try {
       const nextState = integrateLaunchTrajectory(stateRef.current, LAUNCH_VEHICLES.FALCON_9, guidance, dt);
@@ -383,40 +394,63 @@ export function LaunchDemo({
         // Continue without KF if it fails
       }
 
+      const shouldUseMissionPropagation = nextTime >= launchCutoverTime && activeMissionPhase !== null
+
       if (vehicleRef.current && isFiniteArray(nextState.r)) {
         // Scale: position in metres → scene units using ROCKET_POS_SCALE (1e-9)
         // This keeps the rocket at the correct physical position relative to Earth origin.
         // The NasaSolarSystem offsets Earth to world-origin so (r - Earth_centre) * posScale
         // gives the displacement from Earth's visual centre in scene units.
-        const p = rocketScenePositionFromR(nextState.r as [number, number, number], undefined, nextTime);
-        const clamped = constrainPointToBoundaries(p, protectedBodies)
-        const newPos = new THREE.Vector3(clamped[0], clamped[1], clamped[2]);
+        const launchPoint = rocketScenePositionFromR(nextState.r as [number, number, number], undefined, nextTime);
+        const launchConstraint = constrainPointToBoundariesDetailed(launchPoint, protectedBodies)
+
+        const missionVehicle = shouldUseMissionPropagation
+          ? propagateMissionVehicle({
+            selectedMission,
+            missionTime: nextTime,
+            activePhase: activeMissionPhase,
+            boundaries: protectedBodies,
+            previousPosition: previousMissionPointRef.current,
+            previousSoiOwner: previousSoiOwnerRef.current,
+            dt,
+          })
+          : null
+
+        const activePoint = missionVehicle?.position ?? launchConstraint.point
+        const activeVelocity = missionVehicle?.velocity
+        const newPos = new THREE.Vector3(activePoint[0], activePoint[1], activePoint[2]);
 
         // Validate position before setting (max ~10 scene units = lunar distance range)
         if (newPos.length() < 10) {
           vehicleRef.current.position.copy(newPos);
 
-          const altitudeKm = nextState.altitude / 1000
           const localUp = new THREE.Vector3(capeFrame.up[0], capeFrame.up[1], capeFrame.up[2]).normalize()
 
-          if (altitudeKm < 25) {
+          if (!shouldUseMissionPropagation && (nextState.altitude / 1000) < 25) {
             const launchQuaternion = new THREE.Quaternion().setFromUnitVectors(
               new THREE.Vector3(1, 0, 0),
               localUp,
             )
             vehicleRef.current.quaternion.copy(launchQuaternion)
-          } else if (isFiniteArray(nextState.v)) {
-            const worldVelocity = launchSiteSceneVectorFromLocalFrame(
-              nextState.v[0] * 1e-9,
-              nextState.v[1] * 1e-9,
-              nextState.v[2] * 1e-9,
-              nextTime,
-            );
-            const vel = new THREE.Vector3(worldVelocity[0], worldVelocity[1], worldVelocity[2]);
+          } else {
+            const launchFrameVelocity = isFiniteArray(nextState.v)
+              ? launchSiteSceneVectorFromLocalFrame(
+                nextState.v[0] * 1e-9,
+                nextState.v[1] * 1e-9,
+                nextState.v[2] * 1e-9,
+                nextTime,
+              )
+              : ([0, 0, 0] as Vec3)
+
+            const directionSource = activeVelocity ?? launchFrameVelocity
+            const vel = new THREE.Vector3(directionSource[0], directionSource[1], directionSource[2]);
             if (vel.length() > 0) {
               const desiredDirection = vel.normalize()
-              const blend = Math.min(Math.max((altitudeKm - 25) / 75, 0), 1)
-              desiredDirection.lerp(localUp, 1 - blend).normalize()
+              if (!shouldUseMissionPropagation) {
+                const altitudeKm = nextState.altitude / 1000
+                const blend = Math.min(Math.max((altitudeKm - 25) / 75, 0), 1)
+                desiredDirection.lerp(localUp, 1 - blend).normalize()
+              }
               const flightQuaternion = new THREE.Quaternion().setFromUnitVectors(
                 new THREE.Vector3(1, 0, 0),
                 desiredDirection,
@@ -425,9 +459,43 @@ export function LaunchDemo({
             }
           }
         }
+
+        if (missionVehicle) {
+          previousMissionPointRef.current = missionVehicle.position
+          previousSoiOwnerRef.current = missionVehicle.telemetry.soiOwner
+          setMissionTelemetry(missionVehicle.telemetry)
+
+          const frameCount = Math.floor(nextTime * 12) % 8
+          if (frameCount === 0) {
+            setMissionTrail((prev) => {
+              const nextTrail = [...prev, { point: missionVehicle.position, segment: missionVehicle.trailSegment }]
+              return nextTrail.length > 900 ? nextTrail.slice(-900) : nextTrail
+            })
+          }
+        } else {
+          const launchSoiOwner = resolveSoiOwner(launchConstraint.point, nextTime, previousSoiOwnerRef.current)
+          const transition = launchSoiOwner !== previousSoiOwnerRef.current
+            ? { from: previousSoiOwnerRef.current, to: launchSoiOwner, missionTime: nextTime }
+            : null
+
+          previousSoiOwnerRef.current = launchSoiOwner
+
+          setMissionTelemetry({
+            nearestBody: launchConstraint.nearestBody,
+            nearestDistance: launchConstraint.nearestDistance,
+            clearanceMargin: launchConstraint.clearanceMargin,
+            soiOwner: launchSoiOwner,
+            soiTransition: transition,
+            boundaryEvents: launchConstraint.events.map((event) => ({
+              body: event.body,
+              type: event.type,
+              penetration: event.penetration,
+            })),
+          })
+        }
       }
 
-      if (showTrajectory && isFiniteArray(nextState.r)) {
+      if (showTrajectory && !shouldUseMissionPropagation && isFiniteArray(nextState.r)) {
         const p = rocketScenePositionFromR(nextState.r as [number, number, number], undefined, nextTime);
         const newPoint = new THREE.Vector3(p[0], p[1], p[2]);
 
@@ -476,9 +544,7 @@ export function LaunchDemo({
   const showIcpsSeparation = phaseAfterIcpsSep;
   const showOrbitalInsertionLabel = phase === LaunchPhase.ORBITAL_INSERTION;
   const showEarthReturnLabel = activeMissionPhase?.name === 'Earth Return';
-  const outboundPoints = lunarTransferPreview ? slicePoints(lunarTransferPreview.outbound, lunarTrailProgress.outbound) : null;
-  const lunarOpsPoints = lunarTransferPreview ? slicePoints(lunarTransferPreview.lunarOps, lunarTrailProgress.operations) : null;
-  const returnPoints = lunarTransferPreview ? slicePoints(lunarTransferPreview.inbound, lunarTrailProgress.returnLeg) : null;
+  const earthReturnLabelPosition: [number, number, number] = [EARTH_RADIUS_SCENE * 2.8, 0.14, -EARTH_RADIUS_SCENE * 0.42]
 
   const labelStyle: React.CSSProperties = {
     background: 'rgba(2, 6, 23, 0.82)',
@@ -654,9 +720,9 @@ export function LaunchDemo({
 
       {trajectoryRef.current && <primitive object={trajectoryRef.current} />}
 
-      {outboundPoints && (
+      {outboundTrailPoints && (
         <Line
-          points={outboundPoints}
+          points={outboundTrailPoints}
           color="#7dd3fc"
           lineWidth={2}
           renderOrder={12}
@@ -666,9 +732,9 @@ export function LaunchDemo({
         />
       )}
 
-      {lunarOpsPoints && (
+      {operationsTrailPoints && (
         <Line
-          points={lunarOpsPoints}
+          points={operationsTrailPoints}
           color="#fde68a"
           lineWidth={1.8}
           renderOrder={12}
@@ -678,9 +744,9 @@ export function LaunchDemo({
         />
       )}
 
-      {returnPoints && (
+      {returnTrailPoints && (
         <Line
-          points={returnPoints}
+          points={returnTrailPoints}
           color="#fca5a5"
           lineWidth={2}
           renderOrder={12}
@@ -690,8 +756,8 @@ export function LaunchDemo({
         />
       )}
 
-      {showEarthReturnLabel && lunarTransferPreview && (
-        <Html position={[lunarTransferPreview.moonPoint.x * 0.45, 0.14, lunarTransferPreview.moonPoint.z * -0.08]} center>
+      {showEarthReturnLabel && (
+        <Html position={earthReturnLabelPosition} center>
           <div style={labelStyle}>EARTH RETURN CORRIDOR</div>
         </Html>
       )}

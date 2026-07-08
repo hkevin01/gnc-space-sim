@@ -1,12 +1,14 @@
 import React, { useState } from 'react'
 import { LaunchPhase, LaunchState } from '@gnc/core'
 import { MissionEvent } from './MissionTypes'
+import type { MissionTelemetrySnapshot } from '../utils/missionPropagation'
 
 interface GNCPanelProps {
   launchState: LaunchState
   currentState?: Record<string, unknown>
   missionTime?: number
   selectedMission?: string
+  missionTelemetry?: MissionTelemetrySnapshot | null
   currentPhase?: {
     progress: number
     timeInPhase: number
@@ -18,7 +20,7 @@ interface GNCPanelProps {
   } | null
 }
 
-export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPanelProps) {
+export function GNCPanel({ launchState, selectedMission, currentPhase, missionTelemetry }: GNCPanelProps) {
   const [activeTab, setActiveTab] = useState<'guidance' | 'navigation' | 'control' | 'mission'>('mission')
 
   const launchPhaseLabelMap: Partial<Record<LaunchPhase, string>> = {
@@ -46,6 +48,12 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
     ? `T${launchState.mission_time.toFixed(0)}s`
     : `T+${launchState.mission_time.toFixed(1)}s`
   const launchStage = launchPhaseLabelMap[launchState.phase] || 'Mission Flight'
+  const nearestBody = missionTelemetry?.nearestBody || 'EARTH'
+  const soiOwner = missionTelemetry?.soiOwner || 'EARTH'
+  const nearestDistance = missionTelemetry ? missionTelemetry.nearestDistance.toFixed(3) : 'n/a'
+  const clearanceMargin = missionTelemetry ? missionTelemetry.clearanceMargin.toFixed(3) : 'n/a'
+  const boundaryEventCount = missionTelemetry?.boundaryEvents.length || 0
+  const latestBoundaryEvent = missionTelemetry?.boundaryEvents[missionTelemetry.boundaryEvents.length - 1]
 
   const tabs = [
     { id: 'mission' as const, icon: '🚀', label: 'MISSION', color: 'text-orange-400' },
@@ -84,6 +92,7 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
               <div className="font-semibold text-orange-300 mb-1">Launch Timeline</div>
               <div>Mission clock: {missionClock}</div>
               <div>Vehicle stage: {launchStage}</div>
+              <div>SOI owner: {soiOwner}</div>
             </div>
 
             <div className="text-orange-400 font-bold text-xs md:text-sm mb-3">MISSION STATUS</div>
@@ -95,6 +104,10 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
               <div className="flex justify-between gap-2 whitespace-nowrap">
                 <span className="text-zinc-400 shrink-0">Current Phase:</span>
                 <span className="text-orange-400 truncate text-right min-w-0">{currentPhase?.name || 'Pre-Launch'}</span>
+              </div>
+              <div className="flex justify-between gap-2 whitespace-nowrap">
+                <span className="text-zinc-400 shrink-0">Nearest Body:</span>
+                <span className="text-orange-400 truncate text-right min-w-0">{nearestBody}</span>
               </div>
               {currentPhase && (
                 <>
@@ -145,6 +158,7 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
               <div className="font-semibold text-cyan-300 mb-1">Guidance Stage</div>
               <div>{launchStage}</div>
               <div>Mission clock: {missionClock}</div>
+              <div>SOI owner: {soiOwner}</div>
             </div>
 
             <div className="text-cyan-400 font-bold text-sm mb-3">TARGET PARAMETERS</div>
@@ -189,6 +203,10 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
                 <span className="text-zinc-400">T/W Estimate:</span>
                 <span className="text-cyan-400">{(Math.hypot(...launchState.thrust) / Math.max(launchState.mass * 9.80665, 1)).toFixed(2)}</span>
               </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Boundary Events:</span>
+                <span className="text-cyan-400">{boundaryEventCount}</span>
+              </div>
             </div>
 
             <div className="bg-zinc-800/60 border border-zinc-700 rounded p-3 text-xs text-zinc-300">
@@ -196,6 +214,9 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
               <div>Hold pitch within the gravity-turn corridor until staging.</div>
               <div>Use throttle to manage dynamic pressure near max-Q.</div>
               <div>Target climb: {targetAltitudeKm} km, {targetVelocityKms} km/s insertion.</div>
+              {missionTelemetry?.soiTransition && (
+                <div>SOI transition: {missionTelemetry.soiTransition.from} → {missionTelemetry.soiTransition.to}</div>
+              )}
             </div>
           </div>
         )}
@@ -206,6 +227,7 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
               <div className="font-semibold text-green-300 mb-1">Navigation Stage</div>
               <div>{launchStage}</div>
               <div>Mission clock: {missionClock}</div>
+              <div>Nearest body: {nearestBody}</div>
             </div>
 
             <div className="text-green-400 font-bold text-sm mb-3">POSITION & VELOCITY</div>
@@ -233,6 +255,14 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
               <div className="flex justify-between">
                 <span className="text-zinc-400">Speed Magnitude:</span>
                 <span className="text-green-400">{speedKms} km/s</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Body Distance:</span>
+                <span className="text-green-400">{nearestDistance} su</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-400">Clearance Margin:</span>
+                <span className="text-green-400">{clearanceMargin} su</span>
               </div>
             </div>
 
@@ -271,6 +301,7 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
               <div className="font-semibold text-yellow-300 mb-1">Control Stage</div>
               <div>{launchStage}</div>
               <div>Mission clock: {missionClock}</div>
+              <div>Boundary monitor: {boundaryEventCount > 0 ? 'Active' : 'Nominal'}</div>
             </div>
 
             <div className="text-yellow-400 font-bold text-sm mb-3">VEHICLE SYSTEMS</div>
@@ -313,7 +344,7 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
               </div>
               <div className="flex justify-between">
                 <span className="text-zinc-400">Telemetry Link:</span>
-                <span className="text-yellow-400">Nominal</span>
+                <span className="text-yellow-400">{boundaryEventCount > 0 ? 'Boundary events detected' : 'Nominal'}</span>
               </div>
             </div>
 
@@ -338,6 +369,9 @@ export function GNCPanel({ launchState, selectedMission, currentPhase }: GNCPane
               <div>Use gimbal control to keep lateral acceleration within limits.</div>
               <div>Throttle down through max-Q, then return to ascent thrust as density drops.</div>
               <div>Fuel state: {throttlePct}% commanded throttle at {thrustKn} kN thrust.</div>
+              {latestBoundaryEvent && (
+                <div>Latest boundary: {latestBoundaryEvent.type} at {latestBoundaryEvent.body} ({latestBoundaryEvent.penetration.toFixed(4)} su)</div>
+              )}
             </div>
           </div>
         )}

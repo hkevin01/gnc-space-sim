@@ -34,7 +34,7 @@ export default function App() {
   const [demoMode, setDemoMode] = useState<'main' | 'orbital' | 'nasa'>('main')
 
   // Launch control state
-  const { launchTime, initiateLaunch, resetLaunch, isLaunched, currentState } = useLaunchControl()
+  const { launchTime, initiateLaunch, resetLaunch, isLaunched, currentState, missionTelemetry } = useLaunchControl()
   const launchTelemetryState: LaunchState = {
     r: [6371000, 0, 50000],
     v: [0, 1500, 200],
@@ -299,6 +299,7 @@ export default function App() {
                     launchState={liveTelemetryState}
                     selectedMission={selectedMission}
                     currentPhase={currentPhase}
+                    missionTelemetry={missionTelemetry}
                   />
                 </div>
               </div>
