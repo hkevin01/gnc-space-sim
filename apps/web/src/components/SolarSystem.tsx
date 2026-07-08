@@ -95,21 +95,35 @@ function TexturedSphere({
   textureUrl,
   radius,
   emissive,
-  emissiveIntensity = 0
+  emissiveIntensity = 0,
+  atmosphereGlow = false,
 }: {
   textureUrl: string;
   radius: number;
   emissive?: string;
   emissiveIntensity?: number;
+  atmosphereGlow?: boolean;
 }) {
   const texture = useLoader(TextureLoader, textureUrl)
   texture.colorSpace = THREE.SRGBColorSpace
   texture.needsUpdate = true
+
+  const materialColor = atmosphereGlow ? '#d9ecff' : '#ffffff'
+  const materialEmissive = atmosphereGlow ? '#3f93ff' : (emissive || '#000000')
+  const materialEmissiveIntensity = atmosphereGlow
+    ? Math.max(emissiveIntensity, 0.18)
+    : emissiveIntensity
+
   return (
     <mesh>
       <sphereGeometry args={[radius, 32, 32]} />
-      <meshBasicMaterial
+      <meshStandardMaterial
+        color={materialColor}
         map={texture}
+        roughness={0.82}
+        metalness={0.04}
+        emissive={materialEmissive}
+        emissiveIntensity={materialEmissiveIntensity}
       />
     </mesh>
   )
@@ -128,6 +142,7 @@ function SafeTexturedSphere(props: {
   color: string;
   emissive?: string;
   emissiveIntensity?: number;
+  atmosphereGlow?: boolean;
 }) {
   const fallback = (
     <ColoredSphere
@@ -145,6 +160,7 @@ function SafeTexturedSphere(props: {
           radius={props.radius}
           emissive={props.emissive}
           emissiveIntensity={props.emissiveIntensity}
+          atmosphereGlow={props.atmosphereGlow}
         />
       </Suspense>
     </TextureErrorBoundary>
@@ -623,6 +639,7 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
               color={data.color}
               emissive={name === 'SUN' ? data.color : undefined}
               emissiveIntensity={name === 'SUN' ? 0.12 : 0}
+              atmosphereGlow={name === 'EARTH'}
             />
           </group>
         ) : (
@@ -817,6 +834,7 @@ function NasaPlanet({ planetPosition, offset }: NasaPlanetProps) {
             color={planetData.color}
             emissive={name === 'SUN' ? planetData.color : undefined}
             emissiveIntensity={name === 'SUN' ? 0.12 : 0}
+            atmosphereGlow={name === 'EARTH'}
           />
         </group>
       ) : (

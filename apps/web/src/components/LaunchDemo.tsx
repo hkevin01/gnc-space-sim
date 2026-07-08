@@ -587,29 +587,6 @@ export function LaunchDemo({
         missionTime={launchTime}
       />
 
-      <group>
-        <mesh>
-          <sphereGeometry args={[EARTH_RADIUS_SCENE * 1.035, 48, 48]} />
-          <meshBasicMaterial
-            color="#6ec1ff"
-            transparent
-            opacity={0.08}
-            side={THREE.BackSide}
-            depthWrite={false}
-          />
-        </mesh>
-        <mesh>
-          <sphereGeometry args={[EARTH_RADIUS_SCENE * 1.07, 32, 32]} />
-          <meshBasicMaterial
-            color="#38bdf8"
-            transparent
-            opacity={0.035}
-            side={THREE.BackSide}
-            depthWrite={false}
-          />
-        </mesh>
-      </group>
-
       {/* Rocket Vehicle Group - visible scale */}
       <group ref={vehicleRef}>
         {/* SLS Core Stage - Orange tank */}
