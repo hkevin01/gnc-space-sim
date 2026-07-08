@@ -1183,9 +1183,6 @@ export function NasaSolarSystem({
         decay={0}
         distance={0}
         color="#ffffff"
-        shadow-mapSize={[2048, 2048]}
-        shadow-camera-near={1}
-        shadow-camera-far={1000}
       />
 
       {/* Ambient light for overall visibility */}
