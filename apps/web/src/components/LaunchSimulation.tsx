@@ -293,6 +293,7 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls> | null>(null)
   const pendingViewTargetRef = useRef<[number, number, number] | null>(null)
+  const hasLockedInitialViewRef = useRef(false)
   const [cameraMode, setCameraMode] = useState<'follow' | 'free'>('free')
   const [selectedTarget, setSelectedTarget] = useState<LaunchViewTarget>('HOME')
   const [referenceFrame, setReferenceFrame] = useState<LiveReferenceFrame | null>(null)
@@ -471,22 +472,42 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
       <Canvas
         key="launch-sim-canvas-debug-v2"
         frameloop="always"
-        gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
+        gl={(defaults) => {
+          // Build renderer with explicit params once so context behavior is stable across reloads.
+          const renderer = new THREE.WebGLRenderer({
+            ...(defaults as THREE.WebGLRendererParameters),
+            antialias: true,
+            alpha: false,
+            powerPreference: 'high-performance',
+          })
+          renderer.setClearColor(0x000000, 1)
+          renderer.shadowMap.enabled = false
+          renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1))
+          renderer.autoClear = true
+          return renderer
+        }}
         camera={{
           // Tilted overview gives a city-view style oblique read on the solar system.
           position: INITIAL_LAUNCH_VIEW.position,
           fov: 60,
-          near: 0.0001,
-          far: 50000
+          near: 0.001,
+          far: 2500
         }}
         style={{ background: '#000000', width: '100%', height: '100%' }}
         className="scene-canvas"
         onCreated={({ gl, camera, invalidate }) => {
-          // Favor interaction smoothness over expensive high-DPI/shadow rendering.
-          gl.setPixelRatio(Math.min(window.devicePixelRatio, 1))
-          gl.setClearColor(0x000000, 1)
-          gl.shadowMap.enabled = false
           cameraRef.current = camera as THREE.PerspectiveCamera
+
+          if (!hasLockedInitialViewRef.current) {
+            const initialPose = computeLaunchHomePose()
+            camera.position.set(initialPose.position[0], initialPose.position[1], initialPose.position[2])
+            camera.lookAt(initialPose.target[0], initialPose.target[1], initialPose.target[2])
+            if (camera instanceof THREE.PerspectiveCamera) {
+              camera.updateProjectionMatrix()
+            }
+            pendingViewTargetRef.current = initialPose.target
+            hasLockedInitialViewRef.current = true
+          }
 
           // Force an initial render tick after layout settles.
           window.requestAnimationFrame(() => {

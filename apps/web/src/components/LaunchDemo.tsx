@@ -792,8 +792,8 @@ export function LaunchDemo({
         zoomSpeed={1.5}
         panSpeed={0.8}
         rotateSpeed={0.5}
-        minDistance={0.02}
-        maxDistance={15000}  // Allow exploring out past the full outer-planet extent
+        minDistance={0.08}
+        maxDistance={900}
       />
     </group>
   );
