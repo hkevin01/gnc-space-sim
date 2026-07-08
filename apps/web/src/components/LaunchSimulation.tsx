@@ -27,7 +27,7 @@ import {
 } from '../utils/orbitalReferenceFrame'
 import { useLaunchControl } from '../state/launchControlStore'
 
-type LaunchViewTarget = 'HOME' | 'SOLAR_VIEW' | 'SUN' | 'EARTH' | 'MARS' | 'JUPITER'
+type LaunchViewTarget = 'HOME' | 'SOLAR_VIEW' | 'SUN' | 'MERCURY' | 'VENUS' | 'EARTH' | 'MARS' | 'JUPITER'
 
 const READABLE_SOLAR_DISTANCE_SCALE = 8
 
@@ -255,6 +255,18 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
               className={btnClass('SUN', 'btn-warning', 'btn-outline-warning')}
             >
               Sun
+            </button>
+            <button
+              onClick={() => snapPlanet('MERCURY')}
+              className={btnClass('MERCURY', 'btn-secondary', 'btn-outline-secondary')}
+            >
+              Mercury
+            </button>
+            <button
+              onClick={() => snapPlanet('VENUS')}
+              className={btnClass('VENUS', 'btn-secondary', 'btn-outline-secondary')}
+            >
+              Venus
             </button>
             <button
               onClick={() => snapPlanet('EARTH')}

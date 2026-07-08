@@ -480,6 +480,8 @@ export function getRenderRadius(name: SolarBodyName, centerOn: 'SUN' | 'EARTH' |
 
   if (centerOn === 'EARTH') {
     if (name === 'SUN') return baseRadius * 0.12
+    if (name === 'MERCURY') return baseRadius * 1.45
+    if (name === 'VENUS') return baseRadius * 1.25
     if (name === 'EARTH') return baseRadius * 1.4
     if (name === 'MOON') return baseRadius
   }
@@ -729,7 +731,7 @@ export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'S
   return (
     <group>
       {/* Star field background */}
-      <StarField count={5000} radius={8000} />
+      <StarField count={3200} radius={8000} />
 
       {/* Light source from the Sun */}
       <pointLight
@@ -737,10 +739,6 @@ export function SolarSystem({ showOrbits = false, missionTime = 0, centerOn = 'S
         intensity={12}
         decay={2}
         color="#ffffff"
-        castShadow
-        shadow-mapSize={[2048, 2048]}
-        shadow-camera-near={1}
-        shadow-camera-far={2000}
       />
 
       {/* Ambient light for overall visibility */}

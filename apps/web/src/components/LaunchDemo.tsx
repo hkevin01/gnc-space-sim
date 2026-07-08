@@ -787,8 +787,7 @@ export function LaunchDemo({
         enablePan={true}
         enableZoom={true}
         enableRotate={true}
-        enableDamping={true}
-        dampingFactor={0.08}
+        enableDamping={false}
         zoomSpeed={1.5}
         panSpeed={0.8}
         rotateSpeed={0.5}
