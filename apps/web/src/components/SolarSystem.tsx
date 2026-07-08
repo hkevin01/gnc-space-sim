@@ -129,7 +129,7 @@ function TexturedSphere({
               transparent
               opacity={0.34}
               depthWrite={false}
-              depthTest={false}
+              depthTest
               side={THREE.DoubleSide}
               toneMapped={false}
             />
@@ -142,7 +142,7 @@ function TexturedSphere({
               opacity={0.06}
               blending={THREE.AdditiveBlending}
               depthWrite={false}
-              depthTest={false}
+              depthTest
               side={THREE.DoubleSide}
               toneMapped={false}
             />
@@ -155,7 +155,7 @@ function TexturedSphere({
               opacity={0.08}
               blending={THREE.AdditiveBlending}
               depthWrite={false}
-              depthTest={false}
+              depthTest
               side={THREE.DoubleSide}
               toneMapped={false}
             />
