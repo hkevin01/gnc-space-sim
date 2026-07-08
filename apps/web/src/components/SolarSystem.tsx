@@ -451,6 +451,8 @@ const ORBIT_LINE_OPACITY: Record<(typeof HELIOCENTRIC_ORBIT_BODIES)[number], num
 
 // Global multiplier for visible planet spin in UI scenes.
 const PLANET_ROTATION_VISUAL_MULTIPLIER = 0.2
+// Keep bodies moving before mission time starts so Earth/Moon never look frozen.
+const IDLE_VISUAL_MISSION_TIME_RATE = 4
 
 export function ensureRenderablePlanetPositions(
   positions: PlanetPosition[],
@@ -501,12 +503,17 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
   const meshRef = useRef<THREE.Mesh>(null)
   const groupRef = useRef<THREE.Group>(null)
 
+  const resolveVisualMissionTime = (elapsedTime: number): number => {
+    if (missionTime > 0) return missionTime
+    return elapsedTime * IDLE_VISUAL_MISSION_TIME_RATE
+  }
+
   // Calculate realistic orbital position based on mission time and astronomical data
-  const getOrbitalPosition = (): [number, number, number] => {
+  const getOrbitalPosition = (visualMissionTime: number): [number, number, number] => {
     if (name === 'SUN') return [0, 0, 0]
 
     // Convert mission time to days (assuming missionTime is in some unit we can scale)
-    const timeInDays = missionTime * 0.01 // Scale factor for visualization
+    const timeInDays = visualMissionTime * 0.01 // Scale factor for visualization
 
     if (name === 'MOON' && data.parentOrbitRadius !== undefined) {
       // Moon orbits Earth - use realistic orbital mechanics
@@ -563,32 +570,34 @@ export function Planet({ name, showOrbit = false, missionTime = 0, offset = [0, 
   }
 
   // Calculate realistic rotation based on actual planetary rotation periods
-  const getRealisticRotation = (): number => {
+  const getRealisticRotation = (visualMissionTime: number): number => {
     if (name === 'SUN') return 0
 
-    const timeInHours = missionTime * 0.01 * 24 * PLANET_ROTATION_VISUAL_MULTIPLIER
+    const timeInHours = visualMissionTime * 0.01 * 24 * PLANET_ROTATION_VISUAL_MULTIPLIER
     const rotationsCompleted = timeInHours / data.rotationPeriodHours
     const rotationAngle = (rotationsCompleted * 2 * Math.PI) * data.rotationDirection
 
     return rotationAngle
   }
 
-  useFrame(() => {
+  useFrame((state) => {
+    const visualMissionTime = resolveVisualMissionTime(state.clock.elapsedTime)
+
     if (meshRef.current) {
       // Use realistic rotation based on actual planetary rotation periods and directions
-      meshRef.current.rotation.y = getRealisticRotation()
+      meshRef.current.rotation.y = getRealisticRotation(visualMissionTime)
 
       // Apply axial tilt for more realistic appearance
       const tiltRad = (data.axialTilt * Math.PI) / 180
       meshRef.current.rotation.z = tiltRad
     }
     if (groupRef.current) {
-      const [x, y, z] = getOrbitalPosition()
+      const [x, y, z] = getOrbitalPosition(visualMissionTime)
       groupRef.current.position.set(x - offset[0], y - offset[1], z - offset[2])
     }
   })
 
-  const initialOrbitalPosition = getOrbitalPosition()
+  const initialOrbitalPosition = getOrbitalPosition(missionTime > 0 ? missionTime : 0)
   const initialGroupPosition: [number, number, number] = [
     initialOrbitalPosition[0] - offset[0],
     initialOrbitalPosition[1] - offset[1],
