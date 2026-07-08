@@ -21,6 +21,15 @@ interface SpacecraftProps {
   showEngineEffects?: boolean
 }
 
+export const ARTEMIS_TEXTURES = {
+  coreStage: '/assets/spacecraft/artemis/core-stage.jpg',
+  boosters: '/assets/spacecraft/artemis/booster-skin.jpg',
+  icps: '/assets/spacecraft/artemis/upper-stage.jpg',
+  orionCapsule: '/assets/spacecraft/artemis/orion-capsule.jpg',
+  orionService: '/assets/spacecraft/artemis/orion-service-module.jpg',
+  starshipBody: '/assets/spacecraft/artemis/starship-body.jpg',
+} as const
+
 export enum SpacecraftType {
   FALCON9 = 'falcon9',
   DRAGON = 'dragon',

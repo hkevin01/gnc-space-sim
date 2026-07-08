@@ -6,7 +6,10 @@ import {
   getBodySceneRadius,
   type SolarBodyName,
 } from '../components/SolarSystem'
-import type { Vec3 } from './launchVisualBehavior'
+import {
+  launchSiteScenePositionFromLocalFrame,
+  type Vec3,
+} from './launchVisualBehavior'
 
 export type MissionSoiOwner = 'EARTH' | 'MOON' | 'MARS'
 
@@ -58,6 +61,15 @@ const SOI_FACTORS: Record<MissionSoiOwner, number> = {
   MARS: 2.4,
 }
 
+export type LaunchStageLandingTarget = 'BOOSTER' | 'CORE'
+
+const STAGE_SPLASHDOWN_DURATION_S = 210
+
+function smoothStep(value: number): number {
+  const clamped = Math.min(Math.max(value, 0), 1)
+  return clamped * clamped * (3 - 2 * clamped)
+}
+
 function lerp(a: Vec3, b: Vec3, t: number): Vec3 {
   return [
     a[0] + (b[0] - a[0]) * t,
@@ -94,7 +106,6 @@ function buildLunarPosition(
   activePhase: (CompressedMissionPhase & { progress: number }) | null,
   missionTime: number,
 ): { position: Vec3; segment: MissionTrailSegment } {
-  const earth: Vec3 = [0, 0, 0]
   const earthRadius = getBodySceneRadius('EARTH')
   const moonPos = getBodyPositionRelativeToCenter('MOON', 'EARTH', missionTime)
   const sunPos = getBodyPositionRelativeToCenter('SUN', 'EARTH', missionTime)
@@ -199,6 +210,28 @@ function buildEarthOrbitPosition(activePhase: (CompressedMissionPhase & { progre
     position: [Math.cos(angle) * orbitRadius, Math.sin(angle) * orbitRadius * 0.1, Math.sin(angle) * orbitRadius],
     segment: 'operations',
   }
+}
+
+export function buildLaunchStageSplashdownPosition(
+  stage: LaunchStageLandingTarget,
+  separationTime: number,
+  missionTime: number,
+): Vec3 {
+  const elapsedSeconds = Math.max(missionTime - separationTime, 0)
+  const progress = smoothStep(elapsedSeconds / STAGE_SPLASHDOWN_DURATION_S)
+
+  const eastBase = stage === 'BOOSTER' ? 4.8 : -4.8
+  const northBase = stage === 'BOOSTER' ? -1.15 : 0.85
+  const eastDrift = stage === 'BOOSTER' ? 1.9 : -1.7
+  const northDrift = stage === 'BOOSTER' ? 0.24 : -0.18
+  const radialOffset = stage === 'BOOSTER' ? 0.08 : 0.075
+
+  return launchSiteScenePositionFromLocalFrame(
+    getBodySceneRadius('EARTH') * radialOffset,
+    eastBase + eastDrift * progress,
+    northBase + northDrift * Math.sin(progress * Math.PI),
+    missionTime,
+  )
 }
 
 export function resolveSoiOwner(position: Vec3, missionTime: number, previousOwner: MissionSoiOwner = 'EARTH'): MissionSoiOwner {

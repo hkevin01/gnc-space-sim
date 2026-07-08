@@ -115,7 +115,6 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
   const [selectedTarget, setSelectedTarget] = useState<LaunchViewTarget>('HOME')
   const [referenceFrame, setReferenceFrame] = useState<LiveReferenceFrame | null>(null)
   const isLaunched = useLaunchControl((state) => state.isLaunched)
-  const launchTime = useLaunchControl((state) => state.launchTime)
 
   useEffect(() => {
     if (isLaunched) setCameraMode('follow')

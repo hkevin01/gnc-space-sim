@@ -29,6 +29,7 @@ import { buildSceneBodyBoundaries, constrainPointToBoundariesDetailed } from '..
 import {
   propagateMissionVehicle,
   resolveSoiOwner,
+  buildLaunchStageSplashdownPosition,
   type MissionSoiOwner,
   type MissionTrailSegment,
 } from '../utils/missionPropagation';
@@ -39,10 +40,10 @@ const EARTH_CAMERA_RESNAP_TARGET_LERP = 0.06
 const IDLE_VISUAL_MISSION_TIME_RATE = 4
 const ROCKET_FORWARD_AXIS = new THREE.Vector3(1, 0, 0)
 const MISSION_HANDOFF_BLEND_SECONDS = 18
-const BOOSTER_SEPARATION_ALTITUDE_KM = 42
-const CORE_SEPARATION_ALTITUDE_KM = 118
-const BOOSTER_SEPARATION_TIME_S = 125
-const CORE_SEPARATION_TIME_S = 230
+const BOOSTER_SEPARATION_ALTITUDE_KM = 18
+const CORE_SEPARATION_ALTITUDE_KM = 72
+const BOOSTER_SEPARATION_TIME_S = 92
+const CORE_SEPARATION_TIME_S = 178
 const SEPARATION_EFFECT_DURATION_S = 10
 
 const MIN_EARTH_SAFE_CAMERA_DISTANCE = EARTH_RADIUS_SCENE * 1.15
@@ -697,11 +698,19 @@ export function LaunchDemo({
   )
 
   const showAttachedBoosters = !hasBoosterSeparated;
-  const showBoosterSeparation = hasBoosterSeparated && boosterSeparationTimeRef.current !== null
-    && (launchTime - boosterSeparationTimeRef.current) <= SEPARATION_EFFECT_DURATION_S;
+  const boosterSplashdownPosition = boosterSeparationTimeRef.current !== null
+    ? buildLaunchStageSplashdownPosition('BOOSTER', boosterSeparationTimeRef.current, launchTime)
+    : null
+  const showBoosterSeparation = boosterSplashdownPosition !== null
+    && boosterSeparationTimeRef.current !== null
+    && (launchTime - boosterSeparationTimeRef.current) <= SEPARATION_EFFECT_DURATION_S + 210;
   const showAttachedCore = !hasCoreSeparated;
-  const showCoreSeparation = hasCoreSeparated && coreSeparationTimeRef.current !== null
-    && (launchTime - coreSeparationTimeRef.current) <= SEPARATION_EFFECT_DURATION_S;
+  const coreSplashdownPosition = coreSeparationTimeRef.current !== null
+    ? buildLaunchStageSplashdownPosition('CORE', coreSeparationTimeRef.current, launchTime)
+    : null
+  const showCoreSeparation = coreSplashdownPosition !== null
+    && coreSeparationTimeRef.current !== null
+    && (launchTime - coreSeparationTimeRef.current) <= SEPARATION_EFFECT_DURATION_S + 210;
   const isMissionTransferActive = missionTrail.length > 0
     || (activeMissionPhase !== null && launchTime >= (missionTimeline[0]?.endTime ?? 60))
   const showEngineFlames = !isMissionTransferActive
@@ -806,8 +815,8 @@ export function LaunchDemo({
         )}
 
         {/* SRB Separation visualization */}
-        {showBoosterSeparation && (
-          <group>
+        {showBoosterSeparation && boosterSplashdownPosition && (
+          <group position={boosterSplashdownPosition}>
             {/* Separating left SRB */}
             <mesh position={[ROCKET_VISUAL_SCALE * -1, ROCKET_VISUAL_SCALE * 1.2, 0]} rotation={[0, 0, Math.PI / 2 + 0.2]}>
               <cylinderGeometry args={[ROCKET_VISUAL_SCALE * 0.15, ROCKET_VISUAL_SCALE * 0.15, ROCKET_VISUAL_SCALE * 3.5, 12]} />
@@ -819,16 +828,19 @@ export function LaunchDemo({
               <meshStandardMaterial color="#CCCCCC" metalness={0.6} roughness={0.4} />
             </mesh>
             <Html position={[0, ROCKET_VISUAL_SCALE * 2.1, 0]} center>
-              <div style={labelStyle}>BOOSTER SEPARATION</div>
+              <div style={labelStyle}>ATLANTIC SPLASHDOWN</div>
             </Html>
           </group>
         )}
 
         {/* Core stage separation visualization */}
-        {showCoreSeparation && (
-          <mesh position={[-ROCKET_VISUAL_SCALE * 1.4, 0, 0]} rotation={[0, 0, Math.PI / 2 - 0.1]}>
+        {showCoreSeparation && coreSplashdownPosition && (
+          <mesh position={coreSplashdownPosition} rotation={[0, 0, Math.PI / 2 - 0.1]}>
             <cylinderGeometry args={[ROCKET_VISUAL_SCALE * 0.4, ROCKET_VISUAL_SCALE * 0.35, ROCKET_VISUAL_SCALE * 3.2, 16]} />
             <meshStandardMaterial color="#CC5500" metalness={0.6} roughness={0.45} />
+            <Html position={[0, ROCKET_VISUAL_SCALE * 1.8, 0]} center>
+              <div style={labelStyle}>PACIFIC SPLASHDOWN</div>
+            </Html>
           </mesh>
         )}
 
