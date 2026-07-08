@@ -340,17 +340,28 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
 
   const selectedTelemetry = useMemo(() => {
     if (selectedTarget === 'HOME') {
-      return { label: 'Home', dataSource: 'launch frame', target: [0, 0, 0] as [number, number, number] }
+      return {
+        label: 'Home',
+        dataSource: 'launch frame',
+        target: [0, 0, 0] as [number, number, number],
+        targetLabel: 'Earth-centered origin',
+      }
     }
 
     if (selectedTarget === 'SOLAR_VIEW') {
-      return { label: 'Solar View', dataSource: 'condensed orbital model', target: [0, 0, 0] as [number, number, number] }
+      return {
+        label: 'Solar View',
+        dataSource: 'condensed orbital model',
+        target: [0, 0, 0] as [number, number, number],
+        targetLabel: 'Sun-centered overview origin',
+      }
     }
 
     return {
       label: selectedTarget,
       dataSource: 'condensed orbital model',
       target: getBodyPositionRelativeToCenter(selectedTarget, 'EARTH', 0),
+      targetLabel: `${selectedTarget} focus point`,
     }
   }, [selectedTarget])
 
@@ -421,7 +432,11 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
             <span className="scene-meta-value">{selectedTelemetry.dataSource}</span>
             <span className="scene-meta-separator" aria-hidden="true">|</span>
             <span className="scene-meta-label">Target</span>
-            <span className="scene-meta-value">{selectedTelemetry.target.map((value) => value.toFixed(2)).join(', ')}</span>
+            <span className="scene-meta-value">
+              {selectedTelemetry.targetLabel}
+              {' '}
+              ({selectedTelemetry.target.map((value) => value.toFixed(2)).join(', ')})
+            </span>
           </div>
           <div className="d-flex flex-wrap gap-2">
             <button onClick={snapHome} className={getTargetButtonClass('HOME', 'btn-light', 'btn-outline-light')}>Home</button>
