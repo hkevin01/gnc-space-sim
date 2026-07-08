@@ -2,8 +2,33 @@
 # Download NASA/USGS/SDO textures to local assets folder
 set -e
 
-echo "Downloading Earth/Moon/Mars textures..."
-mkdir -p earth mars moon sun
+echo "Downloading planetary textures into local assets folders..."
+mkdir -p earth mars moon sun mercury venus jupiter saturn uranus neptune
+
+echo "Downloading Mercury/Venus/Jupiter/Saturn/Uranus/Neptune textures..."
+wget -O mercury/mercury_2k.jpg "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/mercury.jpg" || \
+curl -L -o mercury/mercury_2k.jpg "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/mercury.jpg" || \
+echo "Failed to download Mercury texture"
+
+wget -O venus/venus_2k.jpg "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/venus.jpg" || \
+curl -L -o venus/venus_2k.jpg "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/venus.jpg" || \
+echo "Failed to download Venus texture"
+
+wget -O jupiter/jupiter_2k.jpg "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/jupiter.jpg" || \
+curl -L -o jupiter/jupiter_2k.jpg "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/jupiter.jpg" || \
+echo "Failed to download Jupiter texture"
+
+wget -O saturn/saturn_2k.jpg "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/saturn.jpg" || \
+curl -L -o saturn/saturn_2k.jpg "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/saturn.jpg" || \
+echo "Failed to download Saturn texture"
+
+wget -O uranus/uranus_2k.jpg "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/uranus.jpg" || \
+curl -L -o uranus/uranus_2k.jpg "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/uranus.jpg" || \
+echo "Failed to download Uranus texture"
+
+wget -O neptune/neptune_2k.jpg "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/neptune.jpg" || \
+curl -L -o neptune/neptune_2k.jpg "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/neptune.jpg" || \
+echo "Failed to download Neptune texture"
 
 # Earth Day texture (NASA Blue Marble: December, 5400x2700)
 wget -O earth/earth_day.jpg "https://eoimages.gsfc.nasa.gov/images/imagerecords/74000/74218/world.200412.3x5400x2700.jpg" || \
@@ -60,7 +85,7 @@ curl -L -o sun/sun_color.jpg "https://sdo.gsfc.nasa.gov/assets/img/latest/latest
 echo "Failed to download Sun texture"
 
 echo "Download complete. Listing files:"
-ls -lh earth/ mars/ moon/ sun/ 2>/dev/null || echo "No files downloaded"
+ls -lh earth/ mars/ moon/ sun/ mercury/ venus/ jupiter/ saturn/ uranus/ neptune/ 2>/dev/null || echo "No files downloaded"
 
 cat << 'EOS'
 

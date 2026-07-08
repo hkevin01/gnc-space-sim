@@ -70,8 +70,15 @@ class TextureErrorBoundary extends Component<TextureErrorBoundaryProps, TextureE
 // Texture URL map for planets
 const TEXTURE_URLS: Record<string, string> = {
   SUN: '/assets/sun/sun_color.jpg',
+  MERCURY: '/assets/mercury/mercury_2k.jpg',
+  VENUS: '/assets/venus/venus_2k.jpg',
   EARTH: '/assets/earth/earth_2k.jpg',
   MOON: '/assets/moon/moon_2k.jpg',
+  MARS: '/assets/mars/mars_color.jpg',
+  JUPITER: '/assets/jupiter/jupiter_2k.jpg',
+  SATURN: '/assets/saturn/saturn_2k.jpg',
+  URANUS: '/assets/uranus/uranus_2k.jpg',
+  NEPTUNE: '/assets/neptune/neptune_2k.jpg',
 }
 
 /**
