@@ -592,13 +592,13 @@ Estimated effort assumes a contributor who is comfortable with TypeScript and ba
 | You changed package exports | Run workspace typecheck before tests | Catch symbol collisions and export-surface regressions early |
 
 <div align="center">
-  <img src="documentation/images/readme/sim-camera-nasa-sun-close.jpg" alt="NASA demo Sun camera screenshot" width="860" />
+  <img src="documentation/images/readme/sim-camera-launch-gnc-status.jpg" alt="Launch view showing rocket ascent with Flight Status and GNC telemetry" width="860" />
   <br />
-  <sub>Figure 4. NASA demo Sun-centered camera capture from the running simulation, highlighting textured solar rendering.</sub>
+  <sub>Figure 4. Active launch capture showing rocket ascent in motion with Flight Status and GNC telemetry panels visible.</sub>
 </div>
 
 > [!NOTE]
-> Even when a mission profile does not target Mars directly, keeping this body visible in the scene helps test rendering stability, asset fallback behavior, and cross-body scaling consistency.
+> This screenshot is captured from the live launch loop so contributors can evaluate guidance/telemetry behavior alongside scene rendering in one frame.
 
 > [!WARNING]
 > Avoid blending rendering-side scaling constants with algorithm-side physical constants. Keep conversion boundaries explicit so units remain auditable.
