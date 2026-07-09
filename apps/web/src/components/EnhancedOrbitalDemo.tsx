@@ -13,6 +13,7 @@ import { StarField } from './StarField'
 
 interface EnhancedOrbitalDemoProps {
   className?: string
+  graphicsProfile?: 'balanced' | 'safe'
 }
 
 function TimeDisplay({ simulationTime }: { simulationTime: number }) {
@@ -135,11 +136,12 @@ function TimeDisplay({ simulationTime }: { simulationTime: number }) {
   )
 }
 
-export function EnhancedOrbitalDemo({ className }: EnhancedOrbitalDemoProps) {
+export function EnhancedOrbitalDemo({ className, graphicsProfile = 'balanced' }: EnhancedOrbitalDemoProps) {
   const [showOrbits, setShowOrbits] = useState(true)
   const [showLabels, setShowLabels] = useState(true)
   const [timeMultiplier, setTimeMultiplier] = useState(10)
   const [simulationTime, setSimulationTime] = useState(0)
+  const safeMode = graphicsProfile === 'safe'
 
   return (
     <div className={`relative w-full h-screen bg-black ${className}`}>
@@ -159,17 +161,28 @@ export function EnhancedOrbitalDemo({ className }: EnhancedOrbitalDemoProps) {
           position: [400, 200, 400],
           fov: 60
         }}
-        gl={{ antialias: true }}
-        shadows
+        gl={{
+          antialias: !safeMode,
+          powerPreference: safeMode ? 'low-power' : 'high-performance',
+        }}
+        shadows={!safeMode}
+        dpr={safeMode ? [0.65, 0.85] : [1, 1.25]}
       >
         <color attach="background" args={['#000011']} />
 
         {/* StarField background */}
-        <StarField count={6000} radius={3000} />
+        <StarField count={safeMode ? 3600 : 6000} radius={3000} />
 
         {/* Lighting */}
         <ambientLight intensity={0.15} />
-        <pointLight position={[0, 0, 0]} intensity={12} decay={2} color="#ffffff" castShadow shadow-mapSize={[2048, 2048]} />
+        <pointLight
+          position={[0, 0, 0]}
+          intensity={safeMode ? 10 : 12}
+          decay={2}
+          color="#ffffff"
+          castShadow={!safeMode}
+          shadow-mapSize={safeMode ? [1024, 1024] : [2048, 2048]}
+        />
         <directionalLight position={[50, 50, 50]} intensity={0.6} />
 
         {/* Solar System with animated time */}

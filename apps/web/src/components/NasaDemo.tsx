@@ -26,6 +26,7 @@ import {
 
 interface NasaDemoProps {
   className?: string
+  graphicsProfile?: 'balanced' | 'safe'
 }
 
 type NasaViewTarget = 'HOME' | 'SOLAR_VIEW' | 'SUN' | 'EARTH' | 'MARS' | 'JUPITER'
@@ -37,7 +38,7 @@ interface ReferenceFrameSnapshot {
   loading: boolean
 }
 
-export function NasaDemo({ className }: NasaDemoProps) {
+export function NasaDemo({ className, graphicsProfile = 'balanced' }: NasaDemoProps) {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls> | null>(null)
   const [useNasaData, setUseNasaData] = useState(true)
@@ -158,6 +159,8 @@ export function NasaDemo({ className }: NasaDemoProps) {
     }
   }, [centerOn])
 
+  const safeMode = graphicsProfile === 'safe'
+
   return (
     <div className={`container-fluid py-3 py-lg-4 ${className || ''}`}>
       <div className="row g-3 mb-3">
@@ -259,18 +262,29 @@ export function NasaDemo({ className }: NasaDemoProps) {
           }}
           onCreated={({ camera, gl }) => {
             cameraRef.current = camera as THREE.PerspectiveCamera
-            gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.25))
+            const dprCap = safeMode ? 0.85 : 1.25
+            gl.setPixelRatio(Math.min(window.devicePixelRatio, dprCap))
             gl.shadowMap.enabled = false
           }}
-          gl={{ antialias: true }}
-          shadows
+          gl={{
+            antialias: !safeMode,
+            powerPreference: safeMode ? 'low-power' : 'high-performance',
+          }}
+          shadows={!safeMode}
           style={{ width: '100%', height: '100%' }}
           className="scene-canvas"
         >
           <color attach="background" args={['#000011']} />
 
           <ambientLight intensity={0.15} />
-          <pointLight position={[0, 0, 0]} intensity={12} decay={2} color="#ffffff" castShadow shadow-mapSize={[2048, 2048]} />
+          <pointLight
+            position={[0, 0, 0]}
+            intensity={safeMode ? 10 : 12}
+            decay={2}
+            color="#ffffff"
+            castShadow={!safeMode}
+            shadow-mapSize={safeMode ? [1024, 1024] : [2048, 2048]}
+          />
 
           {useNasaData ? (
             <NasaSolarSystem

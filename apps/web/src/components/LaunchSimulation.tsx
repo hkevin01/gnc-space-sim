@@ -96,6 +96,7 @@ interface LiveReferenceFrame {
 
 interface LaunchSimulationProps {
   selectedMission: string
+  graphicsProfile?: 'balanced' | 'safe'
   currentPhase: {
     progress: number
     timeInPhase: number
@@ -107,7 +108,7 @@ interface LaunchSimulationProps {
   } | null
 }
 
-export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimulationProps) {
+export function LaunchSimulation({ selectedMission, currentPhase, graphicsProfile = 'balanced' }: LaunchSimulationProps) {
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null)
   const orbitControlsRef = useRef<React.ComponentRef<typeof OrbitControls> | null>(null)
   const pendingViewTargetRef = useRef<[number, number, number] | null>(null)
@@ -335,7 +336,11 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
 
       <Canvas
         frameloop="always"
-        gl={{ antialias: true, alpha: false }}
+        gl={{
+          antialias: graphicsProfile === 'balanced',
+          alpha: false,
+          powerPreference: graphicsProfile === 'safe' ? 'low-power' : 'high-performance',
+        }}
         camera={{
           position: INITIAL_LAUNCH_VIEW.position,
           fov: 60,
@@ -346,7 +351,8 @@ export function LaunchSimulation({ selectedMission, currentPhase }: LaunchSimula
         className="scene-canvas"
         onCreated={({ gl, camera }) => {
           gl.setClearColor(0x000000, 1)
-          gl.setPixelRatio(Math.min(window.devicePixelRatio, 1))
+          const dprCap = graphicsProfile === 'safe' ? 0.85 : 1.1
+          gl.setPixelRatio(Math.min(window.devicePixelRatio, dprCap))
           gl.shadowMap.enabled = false
           cameraRef.current = camera as THREE.PerspectiveCamera
           camera.position.set(

@@ -8,6 +8,8 @@ import { GNCPanel } from './components/GNCPanel'
 import { LaunchPhase, type LaunchState } from '@gnc/core'
 import { buildCompressedMissionTimeline, getCompressedMissionPhase } from './utils/missionTimeline'
 
+type GraphicsProfile = 'balanced' | 'safe'
+
 const EnhancedOrbitalDemo = lazy(async () => {
   const module = await import('./components/EnhancedOrbitalDemo')
   return { default: module.EnhancedOrbitalDemo }
@@ -32,6 +34,15 @@ export default function App() {
   const setPhase = useMissionStore((s: MissionState) => s.setPhase)
   const [selectedMission, setSelectedMission] = useState<string>('earthOrbit')
   const [demoMode, setDemoMode] = useState<'main' | 'orbital' | 'nasa'>('main')
+  const [graphicsProfile, setGraphicsProfile] = useState<GraphicsProfile>(() => {
+    if (typeof window === 'undefined') return 'balanced'
+    const saved = window.localStorage.getItem('gnc.graphicsProfile')
+    return saved === 'safe' ? 'safe' : 'balanced'
+  })
+
+  useEffect(() => {
+    window.localStorage.setItem('gnc.graphicsProfile', graphicsProfile)
+  }, [graphicsProfile])
 
   // Launch control state
   const { launchTime, initiateLaunch, resetLaunch, isLaunched, currentState, missionTelemetry } = useLaunchControl()
@@ -95,7 +106,7 @@ export default function App() {
             </div>
           </div>
           <Suspense fallback={<DemoLoadingFallback />}>
-            <EnhancedOrbitalDemo />
+            <EnhancedOrbitalDemo graphicsProfile={graphicsProfile} />
           </Suspense>
         </div>
       </ErrorBoundary>
@@ -123,7 +134,7 @@ export default function App() {
             </div>
           </div>
           <Suspense fallback={<DemoLoadingFallback />}>
-            <NasaDemo />
+            <NasaDemo graphicsProfile={graphicsProfile} />
           </Suspense>
         </div>
       </ErrorBoundary>
@@ -147,6 +158,7 @@ export default function App() {
             <LaunchSimulation
               selectedMission={selectedMission}
               currentPhase={currentPhase}
+              graphicsProfile={graphicsProfile}
             />
           </main>
 
@@ -154,6 +166,21 @@ export default function App() {
             <div className="app-surface app-widget">
               <h1 className="h4 mb-2">GNC Space Simulation</h1>
               <p className="app-muted mb-0">Responsive mission control, 3D launch view, and telemetry cards.</p>
+              <div className="mt-3 d-flex flex-wrap align-items-center gap-2">
+                <span className="small text-secondary">Graphics</span>
+                <button
+                  onClick={() => setGraphicsProfile('balanced')}
+                  className={`btn btn-sm touch-target ${graphicsProfile === 'balanced' ? 'btn-primary' : 'btn-outline-secondary'}`}
+                >
+                  Balanced
+                </button>
+                <button
+                  onClick={() => setGraphicsProfile('safe')}
+                  className={`btn btn-sm touch-target ${graphicsProfile === 'safe' ? 'btn-warning' : 'btn-outline-secondary'}`}
+                >
+                  Safe
+                </button>
+              </div>
             </div>
 
             <div className="app-card app-widget">
